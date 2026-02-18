@@ -1,0 +1,73 @@
+{
+  "description": "Column specification for NOAA GHCN-Daily validation Parquet files stored in data/raw/noaa/.",
+  "purpose": "Ground-station observations used to cross-validate CMIP6 historical data and establish baseline climate statistics independently of model data.",
+  "format": "Apache Parquet, wide format (one row = one calendar day)",
+  "file_naming_convention": "{county}_{station_id}_{start_year}_{end_year}.parquet",
+  "file_naming_examples": [
+    "culberson_USC00412019_2000_2024.parquet",
+    "concho_USC00411962_2000_2024.parquet"
+  ],
+  "data_source": "NOAA Global Historical Climatology Network Daily (GHCN-D) via NOAA NCEI API (https://www.ncdc.noaa.gov/cdo-web/api/v2/)",
+  "columns": {
+    "date": {
+      "dtype": "datetime64[ns]",
+      "description": "Observation date (local station time, treated as UTC)"
+    },
+    "year": {
+      "dtype": "int16",
+      "description": "Calendar year"
+    },
+    "month": {
+      "dtype": "int8",
+      "description": "Calendar month (1–12)"
+    },
+    "doy": {
+      "dtype": "int16",
+      "description": "Day of year (1–366)"
+    },
+    "tmax": {
+      "dtype": "float32",
+      "unit": "degC",
+      "description": "Daily maximum temperature (GHCN-D element: TMAX)",
+      "valid_range": [-50, 60],
+      "null_handling": "keep as NaN — do not interpolate without documenting"
+    },
+    "tmin": {
+      "dtype": "float32",
+      "unit": "degC",
+      "description": "Daily minimum temperature (GHCN-D element: TMIN)",
+      "valid_range": [-60, 50],
+      "null_handling": "keep as NaN"
+    },
+    "prcp": {
+      "dtype": "float32",
+      "unit": "mm/day",
+      "description": "Daily precipitation (GHCN-D element: PRCP)",
+      "valid_range": [0, 1000],
+      "null_handling": "keep as NaN"
+    },
+    "awnd": {
+      "dtype": "float32",
+      "unit": "m/s",
+      "description": "Average daily wind speed (GHCN-D element: AWND). May be absent at some stations.",
+      "valid_range": [0, 100],
+      "null_handling": "keep as NaN — not all stations record wind"
+    },
+    "station_id": {
+      "dtype": "str",
+      "description": "NOAA GHCN station identifier",
+      "example": "USC00412019"
+    },
+    "county": {
+      "dtype": "str",
+      "description": "County name (lower case, underscore-separated)",
+      "example": "culberson"
+    }
+  },
+  "notes": [
+    "NOAA data has gaps — do not assume daily completeness.",
+    "Wind speed (awnd) is often missing — cross-check against ERA5 baseline if needed.",
+    "Relative humidity (hurs) and solar radiation (rsds) are NOT available from GHCN-D; use ERA5 baseline for those variables.",
+    "Temperature units in raw GHCN-D are tenths of degrees C — convert on ingestion."
+  ]
+}

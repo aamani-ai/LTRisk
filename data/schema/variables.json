@@ -1,0 +1,153 @@
+{
+  "_comment": "Single source of truth for all climate variable definitions. See VARIABLES.md for a human-readable version with priority tables.",
+  "_api_confirmed": "All variables below marked api_confirmed=true were verified via scripts/tests/probe_openmeteo_variables.py against EC_Earth3P_HR on 2026-02-18.",
+  "_priority_levels": {
+    "P1_core": "Required for SCVR computation. Notebook cannot run without this.",
+    "P2_performance": "Required for Pathway B (asset performance modeling). Not needed for SCVR alone.",
+    "P3_additional": "Nice-to-have. Improves model quality but can be deferred."
+  },
+
+  "tasmax": {
+    "priority": "P1_core",
+    "full_name": "Daily Maximum Near-Surface Air Temperature",
+    "unit": "degC",
+    "source": "api",
+    "open_meteo_param": "temperature_2m_max",
+    "open_meteo_api": "climate",
+    "api_confirmed": true,
+    "confirmed_models": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR", "CMCC_CM2_VHR4"],
+    "cmip6_standard_name": "air_temperature",
+    "cmip6_cell_methods": "time: maximum within days",
+    "scvr_indices": ["heat_wave_days", "icing_days"],
+    "downstream": ["heat_wave_scvr", "freeze_icing_scvr", "efr_temperature_coefficient", "fire_weather_index"],
+    "scvr_direction": "higher_is_worse",
+    "notes": "Primary driver of heat stress on solar panels and icing day detection (tasmax < 0°C = icing day)."
+  },
+
+  "tasmin": {
+    "priority": "P1_core",
+    "full_name": "Daily Minimum Near-Surface Air Temperature",
+    "unit": "degC",
+    "source": "api",
+    "open_meteo_param": "temperature_2m_min",
+    "open_meteo_api": "climate",
+    "api_confirmed": true,
+    "confirmed_models": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR", "CMCC_CM2_VHR4"],
+    "cmip6_standard_name": "air_temperature",
+    "cmip6_cell_methods": "time: minimum within days",
+    "scvr_indices": ["heat_wave_days", "cold_wave_days", "frost_days"],
+    "downstream": ["heat_wave_scvr", "cold_wave_scvr", "frost_day_scvr", "efr_freeze_thaw"],
+    "scvr_direction": "lower_is_worse_for_freeze",
+    "notes": "Frost days: tasmin < 0°C. Used jointly with tasmax for heat/cold wave detection."
+  },
+
+  "tas": {
+    "priority": "P1_core",
+    "full_name": "Daily Mean Near-Surface Air Temperature",
+    "unit": "degC",
+    "source": "api",
+    "open_meteo_param": "temperature_2m_mean",
+    "open_meteo_api": "climate",
+    "api_confirmed": true,
+    "confirmed_models": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR", "CMCC_CM2_VHR4"],
+    "cmip6_standard_name": "air_temperature",
+    "cmip6_cell_methods": "time: mean within days",
+    "scvr_indices": [],
+    "downstream": ["efr_pecks_model", "fire_weather_index", "general_climate_trend"],
+    "scvr_direction": "higher_is_worse",
+    "notes": "Available directly from API. Can also be derived as (tasmax + tasmin) / 2 if needed as fallback."
+  },
+
+  "pr": {
+    "priority": "P1_core",
+    "full_name": "Daily Precipitation Sum",
+    "unit": "mm/day",
+    "source": "api",
+    "open_meteo_param": "precipitation_sum",
+    "open_meteo_api": "climate",
+    "api_confirmed": true,
+    "confirmed_models": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR", "CMCC_CM2_VHR4"],
+    "cmip6_standard_name": "precipitation_flux",
+    "cmip6_cell_methods": "time: sum within days",
+    "scvr_indices": ["rx5day", "max_dry_spell_days"],
+    "downstream": ["extreme_precipitation_scvr", "dry_spell_scvr", "flood_hcr", "fire_weather_index"],
+    "scvr_direction": "extremes_both_directions",
+    "notes": "Both high extremes (flood HCR via Rx5day) and zero runs (dry spell → soiling, wildfire FWI) matter."
+  },
+
+  "sfcWind": {
+    "priority": "P1_core",
+    "full_name": "Daily Mean Near-Surface Wind Speed",
+    "unit": "m/s",
+    "source": "api",
+    "open_meteo_param": "wind_speed_10m_mean",
+    "open_meteo_api": "climate",
+    "api_confirmed": true,
+    "confirmed_models": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR", "CMCC_CM2_VHR4"],
+    "cmip6_standard_name": "wind_speed",
+    "cmip6_cell_methods": "time: mean within days",
+    "scvr_indices": ["wind_cutout_days"],
+    "downstream": ["wind_extreme_scvr", "cut_out_day_scvr", "efr_palmgren_miner", "fire_weather_index", "wind_generation_performance"],
+    "scvr_direction": "higher_extremes_are_worse",
+    "notes": "Daily mean used as proxy for storm intensity. Turbine cut-out threshold: 25 m/s. Instantaneous gust not available in CMIP6."
+  },
+
+  "hurs": {
+    "priority": "P1_core",
+    "full_name": "Daily Mean Near-Surface Relative Humidity",
+    "unit": "percent",
+    "source": "api",
+    "open_meteo_param": "relative_humidity_2m_mean",
+    "open_meteo_api": "climate",
+    "api_confirmed": true,
+    "confirmed_models": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR"],
+    "model_caveat": "CMCC_CM2_VHR4 returns hurs as null in probe — verify before using that model.",
+    "cmip6_standard_name": "relative_humidity",
+    "cmip6_cell_methods": "time: mean within days",
+    "scvr_indices": [],
+    "downstream": ["efr_pecks_model", "icing_hcr", "fire_weather_index"],
+    "scvr_direction": "context_dependent",
+    "notes": "Required for Peck's aging model (heat × humidity → accelerated degradation). Also sets icing condition (T<0 AND hurs>75%). Was the suspected cause of the 400 error — turns out the problem was invalid model name MRI_ESM2_0, not missing variable."
+  },
+
+  "rsds": {
+    "priority": "P2_performance",
+    "full_name": "Surface Downwelling Shortwave Radiation",
+    "unit": "MJ/m2/day",
+    "source": "api",
+    "open_meteo_param": "shortwave_radiation_sum",
+    "open_meteo_api": "climate",
+    "api_confirmed": true,
+    "confirmed_models": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR"],
+    "model_caveat": "CMCC_CM2_VHR4 does NOT provide rsds — do not use CMCC for solar performance work.",
+    "cmip6_standard_name": "surface_downwelling_shortwave_flux_in_air",
+    "cmip6_cell_methods": "time: sum within days",
+    "scvr_indices": [],
+    "downstream": ["solar_generation_performance"],
+    "scvr_direction": "not_primary_scvr_variable",
+    "notes": "Equivalent to GHI (Global Horizontal Irradiance). Direct input to pvlib for solar performance modeling. Not used in SCVR computation but required for Pathway B (Step 2)."
+  },
+
+  "wind_speed_10m_max": {
+    "priority": "P3_additional",
+    "full_name": "Daily Maximum Near-Surface Wind Speed",
+    "unit": "m/s",
+    "source": "api",
+    "open_meteo_param": "wind_speed_10m_max",
+    "open_meteo_api": "climate",
+    "api_confirmed": true,
+    "confirmed_models": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR", "CMCC_CM2_VHR4"],
+    "downstream": ["wind_gust_proxy", "structural_fatigue_hcr"],
+    "notes": "Better proxy for wind gusts than daily mean. Not required for current SCVR — deferred to HCR calibration phase."
+  },
+
+  "noaa_tmax": {
+    "priority": "P3_additional",
+    "full_name": "Observed Daily Maximum Temperature (NOAA GHCN-D)",
+    "unit": "degC",
+    "source": "noaa_api",
+    "open_meteo_param": null,
+    "api_confirmed": true,
+    "notes": "Ground station observations for cross-validating CMIP6 historical data. Not required for SCVR computation. See data/schema/noaa_schema.json."
+  }
+}

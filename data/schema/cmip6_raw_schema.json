@@ -1,0 +1,127 @@
+{
+  "description": "Column specification for wide-format daily CMIP6 Parquet files stored in data/raw/cmip6/<site_id>/.",
+  "format": "Apache Parquet, wide format (one row = one calendar day)",
+  "file_naming_convention": "{scenario}_{model}_{start_year}_{end_year}.parquet",
+  "file_naming_examples": [
+    "baseline_EC-Earth3P-HR_1980_2014.parquet",
+    "ssp245_EC-Earth3P-HR_2015_2050.parquet"
+  ],
+  "data_source": "Open-Meteo Climate API (https://open-meteo.com/en/docs/climate-api)",
+  "confirmed_primary_model": "EC_Earth3P_HR",
+  "confirmed_alternative_models": ["NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR"],
+  "invalid_model_names": {
+    "MRI_ESM2_0": "Returns 400 — not a valid Open-Meteo model identifier",
+    "MPI_ESM1_2_HR": "Returns 400 — not a valid Open-Meteo model identifier",
+    "MRI-ESM2-0": "Returns 400 — hyphenated form also invalid"
+  },
+  "api_verification_script": "scripts/tests/probe_openmeteo_variables.py",
+  "columns": {
+    "date": {
+      "dtype": "datetime64[ns]",
+      "description": "Calendar date (UTC midnight)",
+      "source": "derived from API time field",
+      "example": "1980-01-01"
+    },
+    "year": {
+      "dtype": "int16",
+      "description": "Calendar year",
+      "source": "derived from date"
+    },
+    "month": {
+      "dtype": "int8",
+      "description": "Calendar month (1–12)",
+      "source": "derived from date"
+    },
+    "doy": {
+      "dtype": "int16",
+      "description": "Day of year (1–366)",
+      "source": "derived from date"
+    },
+    "tasmax": {
+      "dtype": "float32",
+      "unit": "degC",
+      "open_meteo_param": "temperature_2m_max",
+      "priority": "P1_core",
+      "api_confirmed": true,
+      "valid_range": [-60, 60]
+    },
+    "tasmin": {
+      "dtype": "float32",
+      "unit": "degC",
+      "open_meteo_param": "temperature_2m_min",
+      "priority": "P1_core",
+      "api_confirmed": true,
+      "valid_range": [-80, 50]
+    },
+    "tas": {
+      "dtype": "float32",
+      "unit": "degC",
+      "open_meteo_param": "temperature_2m_mean",
+      "priority": "P1_core",
+      "api_confirmed": true,
+      "fallback": "derive as (tasmax + tasmin) / 2 if API does not return it",
+      "valid_range": [-70, 55]
+    },
+    "pr": {
+      "dtype": "float32",
+      "unit": "mm/day",
+      "open_meteo_param": "precipitation_sum",
+      "priority": "P1_core",
+      "api_confirmed": true,
+      "valid_range": [0, 1000]
+    },
+    "sfcWind": {
+      "dtype": "float32",
+      "unit": "m/s",
+      "open_meteo_param": "wind_speed_10m_mean",
+      "priority": "P1_core",
+      "api_confirmed": true,
+      "valid_range": [0, 120]
+    },
+    "hurs": {
+      "dtype": "float32",
+      "unit": "percent",
+      "open_meteo_param": "relative_humidity_2m_mean",
+      "priority": "P1_core",
+      "api_confirmed": true,
+      "model_caveat": "CMCC_CM2_VHR4 returns nulls for this variable — use EC_Earth3P_HR",
+      "valid_range": [0, 100]
+    },
+    "rsds": {
+      "dtype": "float32",
+      "unit": "MJ/m2/day",
+      "open_meteo_param": "shortwave_radiation_sum",
+      "priority": "P2_performance",
+      "api_confirmed": true,
+      "model_caveat": "CMCC_CM2_VHR4 does NOT provide this — do not use CMCC for solar",
+      "valid_range": [0, 50]
+    },
+    "site_id": {
+      "dtype": "str",
+      "description": "Site identifier matching keys in sites.json",
+      "source": "set at ingestion time",
+      "example": "hayhurst_solar"
+    },
+    "scenario": {
+      "dtype": "str",
+      "description": "Climate scenario identifier",
+      "allowed_values": ["historical", "ssp245", "ssp585"],
+      "note": "Use 'historical' for the 1950-2014 model baseline run, not 'ERA5'",
+      "example": "ssp245"
+    },
+    "model": {
+      "dtype": "str",
+      "description": "Open-Meteo model identifier (as passed to the API)",
+      "confirmed_working": ["EC_Earth3P_HR", "NICAM16_8S", "FGOALS_f3_H", "HiRAM_SIT_HR"],
+      "example": "EC_Earth3P_HR"
+    }
+  },
+  "invariant_checks": [
+    "tasmin <= tas <= tasmax for all rows",
+    "pr >= 0 for all rows",
+    "sfcWind >= 0 for all rows",
+    "0 <= hurs <= 100 for all rows",
+    "rsds >= 0 for all rows",
+    "no duplicate dates within the same (site_id, scenario, model) combination"
+  ]
+}

@@ -1,0 +1,42 @@
+# Climate Risk Assessment Framework - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core Data Processing
+pandas>=1.5.0
+numpy>=1.23.0
+scipy>=1.9.0
+
+# Data Acquisition
+requests>=2.28.0
+urllib3>=1.26.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+plotly>=5.10.0
+
+# Dashboard
+dash>=2.7.0
+dash-core-components>=2.0.0
+dash-html-components>=2.0.0
+
+# Statistical Analysis
+statsmodels>=0.13.0
+scikit-learn>=1.2.0
+
+# Utilities
+python-dateutil>=2.8.0
+pytz>=2022.1
+tqdm>=4.64.0
+
+# Optional: For advanced downscaling (if implementing full RF/QRF)
+# xgboost>=1.7.0
+# lightgbm>=3.3.0
+
+# Optional: For netCDF climate data files
+# netCDF4>=1.6.0
+# xarray>=2022.11.0
+
+# Optional: For parallel processing
+# joblib>=1.2.0
+# dask>=2022.12.0

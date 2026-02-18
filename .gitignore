@@ -1,0 +1,36 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Jupyter
+.ipynb_checkpoints/
+*_executed.ipynb
+
+# Data files — raw and processed data is NOT committed
+# Only schemas (data/schema/) and .gitkeep placeholders are committed
+data/raw/
+data/processed/
+
+# Probe results (auto-generated, not needed in repo)
+scripts/tests/probe_results.json
+
+# macOS
+.DS_Store
+
+# Environment variables
+.env
+
+# IDE
+.cursor/
+*.code-workspace
+
+# Logs
+*.log

@@ -1,0 +1,90 @@
+{
+  "description": "Column specification and methodology documentation for SCVR output Parquet files stored in data/processed/scvr/<site_id>/.",
+  "format": "Apache Parquet, long format (one row = one variable × one center_year combination)",
+  "file_naming_convention": "{scenario}_{model}_scvr.parquet",
+  "file_naming_examples": [
+    "ssp245_MRI-ESM2-0_scvr.parquet",
+    "ssp585_MRI-ESM2-0_scvr.parquet"
+  ],
+  "methodology": {
+    "definition": "SCVR (Severe Climate Variability Rating) quantifies the fractional increase in the area under the empirical exceedance curve for a future climate period compared to the historical baseline. A positive SCVR means extreme events are more frequent or more severe than the baseline.",
+    "formula": "SCVR = (area_future - area_baseline) / area_baseline",
+    "exceedance_area": "Computed using the trapezoidal rule over rank-sorted daily values: area = trapz(sorted_values, linspace(0, 1, n))",
+    "window_approach": "Future values are drawn from a 20-year window centered on each target year (e.g., 2030 uses data from 2020–2040). This suppresses inter-annual natural variability and isolates the climate trend signal.",
+    "baseline_period": "1980–2014 (ERA5-calibrated). All exceedance thresholds and percentiles are derived from this period.",
+    "target_years": [2030, 2035, 2040, 2045, 2050],
+    "reference": "Methodology aligned with team proposal in docs/drive_docs/LT Risk Evolution Framework.md"
+  },
+  "interpretation": {
+    "scvr_zero": "No change from baseline — future distribution identical to historical.",
+    "scvr_positive": "Extremes are more frequent or more intense (e.g., more hot days, more heavy rain).",
+    "scvr_negative": "Extremes are less frequent (e.g., fewer freeze days under warming — important for icing risk).",
+    "magnitude_guide": {
+      "0.00_to_0.10": "Low change (<10%)",
+      "0.10_to_0.30": "Moderate change (10–30%)",
+      "0.30_to_0.60": "High change (30–60%)",
+      "above_0.60": "Very high change (>60%) — review carefully, may indicate tail sensitivity"
+    }
+  },
+  "columns": {
+    "site_id": {
+      "dtype": "str",
+      "description": "Site identifier matching sites.json"
+    },
+    "scenario": {
+      "dtype": "str",
+      "description": "Climate scenario",
+      "allowed_values": ["ssp245", "ssp585"]
+    },
+    "model": {
+      "dtype": "str",
+      "description": "CMIP6 model identifier"
+    },
+    "center_year": {
+      "dtype": "int16",
+      "description": "Center year of the 20-year future window",
+      "allowed_values": [2030, 2035, 2040, 2045, 2050]
+    },
+    "variable": {
+      "dtype": "str",
+      "description": "Climate variable identifier matching variables.json keys",
+      "allowed_values": ["tasmax", "tasmin", "tas", "pr", "sfcWind", "hurs", "rsds",
+                        "heat_wave_days", "frost_days", "icing_days", "rx5day",
+                        "max_dry_spell_days", "wind_cutout_days", "fwi_mean"]
+    },
+    "scvr": {
+      "dtype": "float32",
+      "description": "SCVR value: fractional change in exceedance area vs baseline",
+      "valid_range": [-1.0, 10.0]
+    },
+    "area_baseline": {
+      "dtype": "float32",
+      "description": "Area under baseline exceedance curve (trapz integral)"
+    },
+    "area_future": {
+      "dtype": "float32",
+      "description": "Area under future exceedance curve (trapz integral)"
+    },
+    "window_start_year": {
+      "dtype": "int16",
+      "description": "First year of future data window used (center_year - 10)"
+    },
+    "window_end_year": {
+      "dtype": "int16",
+      "description": "Last year of future data window used (center_year + 10)"
+    },
+    "n_baseline_days": {
+      "dtype": "int32",
+      "description": "Number of valid (non-null) baseline days used in computation"
+    },
+    "n_future_days": {
+      "dtype": "int32",
+      "description": "Number of valid (non-null) future days used in computation"
+    }
+  },
+  "downstream_use": {
+    "hcr_computation": "SCVR feeds into HCR (Hazard Change Ratio) via hazard-specific scaling factors derived from published literature (notebook 02).",
+    "efr_computation": "SCVR feeds into EFR (Equipment Failure Ratio) via Peck's Model, Coffin-Manson, and Palmgren-Miner engineering models (notebook 02).",
+    "nav_impairment": "SCVR is the central hub connecting climate projections to financial impact (BI losses and IUL shortening)."
+  }
+}
