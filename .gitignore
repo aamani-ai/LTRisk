@@ -18,6 +18,7 @@ __pycache__/
 # Only schemas (data/schema/) and .gitkeep placeholders are committed
 data/raw/
 data/processed/
+data/extra/
 
 # Probe results (auto-generated, not needed in repo)
 scripts/tests/probe_results.json

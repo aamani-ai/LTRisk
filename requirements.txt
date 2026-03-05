@@ -16,6 +16,12 @@ seaborn>=0.12
 
 # Storage
 pyarrow>=14.0
+google-cloud-storage>=2.0
+openpyxl>=3.1
+
+# Climate data (NetCDF / CMIP6)
+xarray>=2023.0
+cftime>=1.6
 
 # Utilities
 python-dateutil>=2.8
