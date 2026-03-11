@@ -283,4 +283,4 @@ tasmax_day_ACCESS-CM2_ssp245_r1i1p1f1_gn_2040.nc
 
 ## Next
 
-- [03 - SSP Scenarios Deep Dive](03_ssp_scenarios.md) — The five future pathways in detail
+- [03 - Scenarios and Time Windows](03_scenarios_and_time_windows.md) — The five future pathways in detail

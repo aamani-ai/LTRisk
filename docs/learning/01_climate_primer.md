@@ -1,4 +1,4 @@
-# Climate Science Fundamentals
+# Climate Science Primer
 
 > This guide covers the basic climate science concepts you need to understand before diving into the LTRisk codebase. No prior climate science knowledge is assumed.
 
@@ -72,11 +72,11 @@ Global warming is not uniform. The global average temperature has risen ~1.2C, b
 ```
 WARMING IS NOT UNIFORM
 
-                              Arctic: +3 to +4C
-                                  /
-Global average: +1.2C --------- Land: +1.7C (faster than oceans)
-                                  \
-                              Oceans: +0.8C (absorb heat slowly)
+                          Arctic: +3 to +4C
+                              /
+Global average: +1.2C ------- Land: +1.7C (faster than oceans)
+                              \
+                          Oceans: +0.8C (absorb heat slowly)
 
 AND within "land":
   - Desert/arid zones: more extreme heat peaks
@@ -92,9 +92,9 @@ AND within "land":
 
 ---
 
-## 4. The Six Climate Variables We Track
+## 4. The Seven Climate Variables We Track
 
-These are the variables that directly affect solar and wind infrastructure:
+These are the variables that directly affect solar and wind infrastructure.
 
 ### Temperature Variables
 
@@ -114,20 +114,22 @@ Temp  40C ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  * ─ ─ ─ ─  <- tasmax 
           midnight  6am    noon    6pm    midnight
 ```
 
-| Variable | Full Name | Unit | Why It Matters |
-|---|---|---|---|
-| **tasmax** | Daily Maximum Temperature | C | Heat stress on panels, icing detection (tasmax < 0C) |
-| **tasmin** | Daily Minimum Temperature | C | Frost days (tasmin < 0C), freeze-thaw cycling |
-| **tas** | Daily Mean Temperature | C | Overall thermal aging (Peck's model), fire weather |
+| Variable | Full Name | Unit | Why It Matters | scvr_direction |
+|---|---|---|---|---|
+| **tasmax** | Daily Maximum Temperature | °C | Heat stress on panels, icing detection (tasmax < 0°C) | higher_is_worse |
+| **tasmin** | Daily Minimum Temperature | °C | Frost days (tasmin < 0°C), freeze-thaw cycling, Peck's aging (nights staying hot) | lower_is_worse_for_freeze |
+| **tas** | Daily Mean Temperature | °C | Overall thermal aging (Peck's model), fire weather | higher_is_worse |
 
 ### Other Variables
 
-| Variable | Full Name | Unit | Why It Matters |
-|---|---|---|---|
-| **pr** | Daily Precipitation | mm/day | Flood risk (extreme rain), dry spell risk (soiling, fire) |
-| **sfcWind** | Daily Mean Wind Speed | m/s | Turbine cut-out (>25 m/s), structural fatigue |
-| **hurs** | Daily Mean Relative Humidity | % | Corrosion, icing (T<0 AND hurs>75%), Peck's aging model |
-| **rsds** | Surface Downwelling Shortwave Radiation | MJ/m2/day | Solar energy input (GHI equivalent) — solar sites only |
+| Variable | Full Name | Unit | Why It Matters | scvr_direction |
+|---|---|---|---|---|
+| **pr** | Daily Precipitation | mm/day | Flood risk (extreme rain), dry spell risk (soiling, fire) | extremes_both_directions |
+| **sfcWind** | Daily Mean Wind Speed | m/s | Turbine cut-out (>25 m/s), structural fatigue | higher_extremes_are_worse |
+| **hurs** | Daily Mean Relative Humidity | % | Corrosion, icing (T<0 AND hurs>75%), Peck's aging model | context_dependent |
+| **rsds** | Surface Downwelling Shortwave Radiation | MJ/m²/day | Solar energy input (GHI equivalent) — solar sites only | **not a SCVR variable** |
+
+> **rsds** is the exception: it does NOT participate in the SCVR hazard chain. It feeds Pathway B (solar performance modeling) as an absolute value, not a distribution comparison. See [05_variables_and_use_cases.md](05_variables_and_use_cases.md) for the detailed explanation.
 
 ### Priority Tiers
 
@@ -239,4 +241,4 @@ This is why our baseline is 30 years (1985-2014) and our future window is 30 yea
 
 ## Next
 
-- [02 - CMIP6 and Climate Models](02_cmip6_and_climate_models.md) — How scientists actually simulate future climate
+- [02 - CMIP6 and Climate Models](02_cmip6_models.md) — How scientists actually simulate future climate

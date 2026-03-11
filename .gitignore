@@ -19,6 +19,7 @@ __pycache__/
 data/raw/
 data/processed/
 data/extra/
+data/cache/
 
 # Probe results (auto-generated, not needed in repo)
 scripts/tests/probe_results.json
@@ -31,7 +32,12 @@ scripts/tests/probe_results.json
 
 # IDE
 .cursor/
+.claude/
 *.code-workspace
 
 # Logs
 *.log
+
+# Exports and archives
+docs/exports/
+docs/learning.zip

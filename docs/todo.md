@@ -1,6 +1,6 @@
 # LTRisk — Project TODO
 
-> Last updated: 2026-03-05
+> Last updated: 2026-03-09
 
 ---
 
@@ -39,13 +39,30 @@
 - [x] Plots: exceedance curves, bar chart, spaghetti, strip plot
 - [ ] **Run notebook end-to-end** — verify all cells execute without error
 - [ ] Verify SCVR signs make physical sense (tasmax +, sfcWind ~0, SSP585 > SSP245)
+- [ ] **CORRECTION: Refactor SCVR from 5 target years to annual computation**
+  - Current: 20-year rolling windows at 5 discrete years (2030, 2035, 2040, 2045, 2050)
+  - Target: Annual SCVR(t) for each year 2026–2055, per team framework annual tables
+  - Annual SCVR maps directly to CFADS cash flow adjustments at each time step
+  - Consider: use all 34 available models instead of 6 for per-year statistical robustness
+  - Reference: `docs/learning/07_hcr_hazard_change.md` §3, `docs/learning/09_nav_impairment_chain.md` §1
 
 ### Notebook 04: HCR + EFR -> IUL -> NAV Impairment
 - [ ] Design cell structure and plan
-- [ ] Implement HCR = SCVR x hazard_scaling_factor
-- [ ] Implement EFR using Peck's model, Coffin-Manson, Palmgren-Miner
-- [ ] Business interruption and useful life shortening
-- [ ] NAV = asset_value - (BI_losses + IUL_shortening_cost)
+- [ ] Implement annual HCR(t) = SCVR(t) × hazard_scaling_factor (see `docs/learning/07_hcr_hazard_change.md`)
+  - Per hazard: heat stress (×2.5), flood (×1.5-2.0), freeze-thaw (×1.0-1.5), soiling, fire weather
+  - Allow negative HCR (warming reduces icing, freeze events)
+  - Cross-validate against NB01 annual climate indices (heat_wave_days, frost_days, rx5day)
+- [ ] Implement annual EFR(t) using engineering models (see `docs/learning/08_efr_equipment_degradation.md`)
+  - Peck's thermal aging: AF = exp(Ea/k × (1/T_ref − 1/T_stress)) × (RH/RH_ref)^n
+  - Coffin-Manson thermal cycling: N_f = C × (ΔT)^(−β)
+  - Palmgren-Miner wind fatigue: D = Σ(n_i / N_i)
+  - Report both linearised and full exponential Peck's estimates
+- [ ] Combine EFR: weighted sum (w₁=0.7 Peck's, w₂=0.2 C-M, w₃=0.1 HCR-events)
+- [ ] Compute IUL = EUL × (1 − EFR_combined_avg)
+- [ ] Compute annual generation: Gen(t) = Gen_base × (1−std_degrad)^t × (1−climate_degrad) × (1−hazard_BI)
+- [ ] NAV impairment = Σ (standard_Gen − climate_Gen) × price × discount
+- [ ] Output annual HCR and EFR to Parquet
+- [ ] Sensitivity analysis: report NAV under low/mid/high scaling factor scenarios
 
 ---
 
@@ -77,21 +94,55 @@ Future runs:  all_daily.parquet --> DATA dict  (instant, skip THREDDS)
 ## Phase 3 — Documentation
 
 ### Learning Guides (`docs/learning/`)
-- [x] 00_index.md — Table of contents with reading orders
-- [x] 01_climate_science_fundamentals.md
-- [x] 02_cmip6_and_climate_models.md
-- [x] 03_ssp_scenarios.md
+- [x] 00_index.md — Table of contents with section headers (A-D) and reading orders
+- [x] 01_climate_primer.md
+- [x] 02_cmip6_models.md
+- [x] 03_scenarios_and_time_windows.md
 - [x] 04_scvr_methodology.md
-- [x] 05_data_pipeline.md
-- [x] 06_baseline_vs_future.md
-- [x] 07_from_climate_to_finance.md
+- [x] 05_variables_and_use_cases.md
+- [x] 06_scenario_comparison.md
+- [x] 07_hcr_hazard_change.md — HCR deep dive (hazard amplification, scaling factors, annual computation)
+- [x] 08_efr_equipment_degradation.md — EFR deep dive (Peck's, Coffin-Manson, Palmgren-Miner, IUL)
+- [x] 09_nav_impairment_chain.md — Complete SCVR→NAV pipeline (CFADS overlay, three channels, dollar amounts)
+- [x] 10_data_pipeline.md (was 08)
+- [x] 11_distribution_shift_methods.md (was 09)
 
 ### Implementation Docs (`docs/implementation/`)
 - [x] 02_nex_gddp_cmip6_thredds.md
-- [ ] 03_integrated_scvr_cmip6.md — document nb03 design decisions
+- [x] 03_integrated_scvr_cmip6.md — document nb03 design decisions
 
 ### Plan Docs (`docs/plan/`)
 - [x] plan.md — Notebook 03 build plan
+
+---
+
+## Phase 3.5 — Visualization Improvements
+
+> Identified after writing the SCVR learning docs. The core insight: at large n,
+> SCVR ≈ fractional change in E[X] (the distribution mean). Plots should reflect this.
+
+### `scripts/presentation/ensemble_exceedance.py`
+
+- [ ] **Fix SCVR annotation text** (line 446): change `"SCVR (computed via value-integrated area):"` →
+  `"SCVR = (E[X_future] − E[X_baseline]) / E[X_baseline]"` — more interpretable, matches what the math actually does at large n
+- [ ] **Fix caption text** (line 470): change `"fractional change in value-integrated exceedance area"` →
+  `"SCVR ≈ fractional change in mean daily value — computed via rank-based exceedance area ratio"`
+- [ ] **Add mean (E[X]) vertical lines** on the traditional exceedance plot: vertical dashed lines at
+  `np.nanmean(baseline_pool)`, `np.nanmean(ssp245_pool)`, `np.nanmean(ssp585_pool)` — the gap between
+  these lines is proportional to SCVR and visually shows what the number measures
+- [ ] **Add dual-convention subplot** (optional, educational): second panel showing SCVR convention
+  (x = exceedance probability, y = value, sorted descending) — the SCVR area is the actual shaded gap
+  between the baseline and future curves in this view. Helps explain why traditional view arrow ≠ SCVR.
+- [ ] **CORRECTION: Support annual SCVR visualisation** — add mode to show SCVR progression over time
+  (annual SCVR(t) line plot). Currently computes one SCVR per entire period; needs to support the
+  annual framing from the team framework.
+
+### Notebook 03 — Plot Improvements
+
+- [ ] **Add mean lines** to existing exceedance curve plots (same as above) — makes SCVR interpretable
+  without having to read the number
+- [ ] **Label the P90 arrow** in exceedance plots as `"P90 shift (not SCVR)"` to avoid confusion between
+  the horizontal threshold shift (arrow) and SCVR (which is a ratio of full-distribution areas)
 
 ---
 

@@ -354,4 +354,4 @@ QUALITY CHECK TABLE
 
 ## Next
 
-- [06 - Baseline vs Future](06_baseline_vs_future.md) — Why we split time the way we do
+- [03 - Scenarios and Time Windows](03_scenarios_and_time_windows.md) — Why we split time the way we do
