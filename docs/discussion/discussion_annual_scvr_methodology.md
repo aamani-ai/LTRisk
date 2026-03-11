@@ -11,9 +11,9 @@ context: >
   tradeoffs, and a recommendation so the team can make a concrete decision before
   any NB03 refactoring or NB04 implementation begins.
 relates-to:
-  - docs/learning/04_scvr_methodology.md
-  - docs/learning/07_hcr_hazard_change.md
-  - docs/learning/09_nav_impairment_chain.md
+  - docs/learning/B_scvr_methodology/04_scvr_methodology.md
+  - docs/learning/C_financial_translation/07_hcr_hazard_change.md
+  - docs/learning/C_financial_translation/09_nav_impairment_chain.md
   - docs/background/drive_docs/LT Risk Evolution Framework.md
   - docs/implementation/03_integrated_scvr_cmip6.md
   - docs/todo.md

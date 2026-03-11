@@ -44,15 +44,15 @@
   - Target: Annual SCVR(t) for each year 2026–2055, per team framework annual tables
   - Annual SCVR maps directly to CFADS cash flow adjustments at each time step
   - Consider: use all 34 available models instead of 6 for per-year statistical robustness
-  - Reference: `docs/learning/07_hcr_hazard_change.md` §3, `docs/learning/09_nav_impairment_chain.md` §1
+  - Reference: `docs/learning/C_financial_translation/07_hcr_hazard_change.md` §3, `docs/learning/C_financial_translation/09_nav_impairment_chain.md` §1
 
 ### Notebook 04: HCR + EFR -> IUL -> NAV Impairment
 - [ ] Design cell structure and plan
-- [ ] Implement annual HCR(t) = SCVR(t) × hazard_scaling_factor (see `docs/learning/07_hcr_hazard_change.md`)
+- [ ] Implement annual HCR(t) = SCVR(t) × hazard_scaling_factor (see `docs/learning/C_financial_translation/07_hcr_hazard_change.md`)
   - Per hazard: heat stress (×2.5), flood (×1.5-2.0), freeze-thaw (×1.0-1.5), soiling, fire weather
   - Allow negative HCR (warming reduces icing, freeze events)
   - Cross-validate against NB01 annual climate indices (heat_wave_days, frost_days, rx5day)
-- [ ] Implement annual EFR(t) using engineering models (see `docs/learning/08_efr_equipment_degradation.md`)
+- [ ] Implement annual EFR(t) using engineering models (see `docs/learning/C_financial_translation/08_efr_equipment_degradation.md`)
   - Peck's thermal aging: AF = exp(Ea/k × (1/T_ref − 1/T_stress)) × (RH/RH_ref)^n
   - Coffin-Manson thermal cycling: N_f = C × (ΔT)^(−β)
   - Palmgren-Miner wind fatigue: D = Σ(n_i / N_i)
@@ -95,17 +95,17 @@ Future runs:  all_daily.parquet --> DATA dict  (instant, skip THREDDS)
 
 ### Learning Guides (`docs/learning/`)
 - [x] 00_index.md — Table of contents with section headers (A-D) and reading orders
-- [x] 01_climate_primer.md
-- [x] 02_cmip6_models.md
-- [x] 03_scenarios_and_time_windows.md
-- [x] 04_scvr_methodology.md
-- [x] 05_variables_and_use_cases.md
-- [x] 06_scenario_comparison.md
-- [x] 07_hcr_hazard_change.md — HCR deep dive (hazard amplification, scaling factors, annual computation)
-- [x] 08_efr_equipment_degradation.md — EFR deep dive (Peck's, Coffin-Manson, Palmgren-Miner, IUL)
-- [x] 09_nav_impairment_chain.md — Complete SCVR→NAV pipeline (CFADS overlay, three channels, dollar amounts)
-- [x] 10_data_pipeline.md (was 08)
-- [x] 11_distribution_shift_methods.md (was 09)
+- [x] A_climate_foundations/01_climate_primer.md
+- [x] A_climate_foundations/02_cmip6_models.md
+- [x] A_climate_foundations/03_scenarios_and_time_windows.md
+- [x] B_scvr_methodology/04_scvr_methodology.md
+- [x] B_scvr_methodology/05_variables_and_use_cases.md
+- [x] B_scvr_methodology/06_scenario_comparison.md
+- [x] C_financial_translation/07_hcr_hazard_change.md — HCR deep dive (hazard amplification, scaling factors, annual computation)
+- [x] C_financial_translation/08_efr_equipment_degradation.md — EFR deep dive (Peck's, Coffin-Manson, Palmgren-Miner, IUL)
+- [x] C_financial_translation/09_nav_impairment_chain.md — Complete SCVR→NAV pipeline (CFADS overlay, three channels, dollar amounts)
+- [x] D_technical_reference/10_data_pipeline.md (was 08)
+- [x] D_technical_reference/11_distribution_shift_methods.md (was 09)
 
 ### Implementation Docs (`docs/implementation/`)
 - [x] 02_nex_gddp_cmip6_thredds.md

@@ -376,8 +376,8 @@ Step 2: annual means → P10/P50/P90 across models, per year
 ---
 
 *Related documentation:*
-- [docs/learning/04_scvr_methodology.md](../learning/04_scvr_methodology.md) — SCVR formula and intuition
-- [docs/learning/05_data_pipeline.md](../learning/05_data_pipeline.md) — THREDDS, NetCDF, caching
-- [docs/learning/06_baseline_vs_future.md](../learning/06_baseline_vs_future.md) — why 1985-2014 baseline, why the 2015-2025 gap is intentional
-- [docs/learning/07_from_climate_to_finance.md](../learning/07_from_climate_to_finance.md) — full SCVR → HCR → EFR → NAV chain
+- [docs/learning/04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) — SCVR formula and intuition
+- [docs/learning/10_data_pipeline.md](../learning/D_technical_reference/10_data_pipeline.md) — THREDDS, NetCDF, caching
+- [docs/learning/03_scenarios_and_time_windows.md](../learning/A_climate_foundations/03_scenarios_and_time_windows.md) — why 1985-2014 baseline, why the 2015-2025 gap is intentional
+- [docs/learning/09_nav_impairment_chain.md](../learning/C_financial_translation/09_nav_impairment_chain.md) — full SCVR → HCR → EFR → NAV chain
 - [docs/plan/plan.md](../plan/plan.md) — original build plan for this notebook

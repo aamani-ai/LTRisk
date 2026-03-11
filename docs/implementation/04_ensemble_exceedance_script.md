@@ -156,8 +156,8 @@ def compute_scvr(baseline_values, future_values):
 Exact port from `notebook_analysis/01_hayhurst_solar_scvr.ipynb`. At n≈65,700 daily values
 (6 models × 30 years × ~365.25 days), the trapezoid error is < 0.0001% — negligible.
 
-See [docs/learning/04_scvr_methodology.md](../learning/04_scvr_methodology.md) for the
-formula derivation, and [docs/learning/08_distribution_shift_methods.md](../learning/08_distribution_shift_methods.md)
+See [docs/learning/04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) for the
+formula derivation, and [docs/learning/11_distribution_shift_methods.md](../learning/D_technical_reference/11_distribution_shift_methods.md)
 for how SCVR relates to Wasserstein W1 and other industry methods.
 
 ---
@@ -348,6 +348,5 @@ unless the cache is cleared. Probe results in `model_probe_cache.json` are also 
 ## Cross-References
 
 - [03_integrated_scvr_cmip6.md](03_integrated_scvr_cmip6.md) — Notebook 03 implementation doc (same THREDDS pipeline)
-- [docs/learning/04_scvr_methodology.md](../learning/04_scvr_methodology.md) — SCVR formula detail
-- [docs/learning/08_distribution_shift_methods.md](../learning/08_distribution_shift_methods.md) — how SCVR relates to Wasserstein W1 / AAL / CVaR
-- [docs/learning/scvr/01_what_is_scvr.md](../learning/scvr/01_what_is_scvr.md) — exceedance curve conventions, trapezoid error, empirical vs theoretical
+- [docs/learning/04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) — SCVR formula detail
+- [docs/learning/11_distribution_shift_methods.md](../learning/D_technical_reference/11_distribution_shift_methods.md) — how SCVR relates to Wasserstein W1 / AAL / CVaR

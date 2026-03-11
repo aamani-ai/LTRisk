@@ -8,32 +8,32 @@ A comprehensive guide to the climate science, data engineering, and financial me
 
 | # | Topic | What You'll Learn |
 |---|---|---|
-| [01](01_climate_primer.md) | **Climate Science Primer** | Climate vs weather, greenhouse effect, what warming means for Texas assets, all 7 variables with units and SCVR direction, extreme events, feedback loops |
-| [02](02_cmip6_models.md) | **CMIP6 and Climate Models** | What a climate model simulates, CMIP6 history, the 34 NEX-GDDP models, ensemble approach, bias correction, model naming conventions |
-| [03](03_scenarios_and_time_windows.md) | **Scenarios and Time Windows** | All 5 SSP pathways, why we use SSP2-4.5 + SSP5-8.5, why 1985-2014 baseline, why 2026-2055 future, why the gap is correct, ensemble pooling mechanics |
+| [01](A_climate_foundations/01_climate_primer.md) | **Climate Science Primer** | Climate vs weather, greenhouse effect, what warming means for Texas assets, all 7 variables with units and SCVR direction, extreme events, feedback loops |
+| [02](A_climate_foundations/02_cmip6_models.md) | **CMIP6 and Climate Models** | What a climate model simulates, CMIP6 history, the 34 NEX-GDDP models, ensemble approach, bias correction, model naming conventions |
+| [03](A_climate_foundations/03_scenarios_and_time_windows.md) | **Scenarios and Time Windows** | All 5 SSP pathways, why we use SSP2-4.5 + SSP5-8.5, why 1985-2014 baseline, why 2026-2055 future, why the gap is correct, ensemble pooling mechanics |
 
 ## Section B: SCVR Methodology
 
 | # | Topic | What You'll Learn |
 |---|---|---|
-| [04](04_scvr_methodology.md) | **SCVR Methodology** | Definitive reference: step-by-step computation, empirical vs theoretical exceedance (deep dive), trapezoid error analysis, actual code, edge cases, interpretation guide |
-| [05](05_variables_and_use_cases.md) | **Variables and Asset Use Cases** | What SCVR means per variable, failure pathways, real Hayhurst Solar walkthrough, Maverick Creek Wind walkthrough, solar vs wind comparison |
-| [06](06_scenario_comparison.md) | **Scenario Comparison** | SSP2-4.5 vs SSP5-8.5 — how much the emissions pathway changes SCVR, and when to use each |
+| [04](B_scvr_methodology/04_scvr_methodology.md) | **SCVR Methodology** | Definitive reference: step-by-step computation, empirical vs theoretical exceedance (deep dive), trapezoid error analysis, actual code, edge cases, interpretation guide |
+| [05](B_scvr_methodology/05_variables_and_use_cases.md) | **Variables and Asset Use Cases** | What SCVR means per variable, failure pathways, real Hayhurst Solar walkthrough, Maverick Creek Wind walkthrough, solar vs wind comparison |
+| [06](B_scvr_methodology/06_scenario_comparison.md) | **Scenario Comparison** | SSP2-4.5 vs SSP5-8.5 — how much the emissions pathway changes SCVR, and when to use each |
 
 ## Section C: Financial Translation
 
 | # | Topic | What You'll Learn |
 |---|---|---|
-| [07](07_hcr_hazard_change.md) | **HCR: Hazard Change Ratio** | How SCVR translates to hazard-specific impact — non-linear tail amplification, variable-to-hazard mapping, annual HCR computation, scaling factors, worked examples for heat and precipitation, negative HCR (warming benefits), compound events |
-| [08](08_efr_equipment_degradation.md) | **EFR: Equipment Degradation** | Peck's thermal aging (deep dive), Coffin-Manson thermal cycling, Palmgren-Miner wind fatigue, temperature coefficient derating, combining EFR, IUL computation, standard vs climate degradation, the revised generation formula |
-| [09](09_nav_impairment_chain.md) | **NAV Impairment Chain** | The complete SCVR → HCR → EFR → CFADS → NAV pipeline with annual framing, CFADS chart overlay, three channels of financial impact, worked examples with real dollar amounts, investor/lender/insurance perspectives |
+| [07](C_financial_translation/07_hcr_hazard_change.md) | **HCR: Hazard Change Ratio** | How SCVR translates to hazard-specific impact — non-linear tail amplification, variable-to-hazard mapping, annual HCR computation, scaling factors, worked examples for heat and precipitation, negative HCR (warming benefits), compound events |
+| [08](C_financial_translation/08_efr_equipment_degradation.md) | **EFR: Equipment Degradation** | Peck's thermal aging (deep dive), Coffin-Manson thermal cycling, Palmgren-Miner wind fatigue, temperature coefficient derating, combining EFR, IUL computation, standard vs climate degradation, the revised generation formula |
+| [09](C_financial_translation/09_nav_impairment_chain.md) | **NAV Impairment Chain** | The complete SCVR → HCR → EFR → CFADS → NAV pipeline with annual framing, CFADS chart overlay, three channels of financial impact, worked examples with real dollar amounts, investor/lender/insurance perspectives |
 
 ## Section D: Technical Reference
 
 | # | Topic | What You'll Learn |
 |---|---|---|
-| [10](10_data_pipeline.md) | **Data Pipeline** | THREDDS server, NCSS point extraction, NetCDF format, the calendar problem, two-level caching, unit conversion, model probing, full fetch loop |
-| [11](11_distribution_shift_methods.md) | **Distribution Shift Methods** | How SCVR relates to Wasserstein W1, CVaR, AAL, KS statistic, PSI, and non-stationary hydrology — the full cross-industry landscape |
+| [10](D_technical_reference/10_data_pipeline.md) | **Data Pipeline** | THREDDS server, NCSS point extraction, NetCDF format, the calendar problem, two-level caching, unit conversion, model probing, full fetch loop |
+| [11](D_technical_reference/11_distribution_shift_methods.md) | **Distribution Shift Methods** | How SCVR relates to Wasserstein W1, CVaR, AAL, KS statistic, PSI, and non-stationary hydrology — the full cross-industry landscape |
 
 ---
 
