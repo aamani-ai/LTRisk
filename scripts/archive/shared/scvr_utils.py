@@ -377,6 +377,64 @@ def compute_cvar(values, alpha=0.95):
     return float(np.mean(tail))
 
 
+def compute_report_card(mean_scvr, tail_scvr_p95, cvar95_ratio, iqr,
+                         extreme_scvr_p99=None):
+    """
+    Compute SCVR report card with Tail Confidence flag.
+
+    Classifies the reliability of SCVR as a proxy for tail behavior:
+      HIGH      — mean and tail agree, models converge
+      MODERATE  — partial agreement or moderate model spread
+      LOW       — weak mean-tail link or large model disagreement
+      DIVERGENT — mean and tail have opposite signs
+
+    Parameters
+    ----------
+    mean_scvr : float
+        Pooled SCVR (mean ratio).
+    tail_scvr_p95 : float
+        Fractional change in 95th percentile.
+    cvar95_ratio : float
+        Fractional change in CVaR at 95%.
+    iqr : float
+        Inter-quartile range of per-model SCVR values.
+    extreme_scvr_p99 : float, optional
+        Fractional change in 99th percentile.
+
+    Returns
+    -------
+    dict with report card fields + tail_confidence flag.
+    """
+    # Mean-Tail Ratio
+    if mean_scvr != 0 and np.sign(mean_scvr) == np.sign(tail_scvr_p95):
+        mean_tail_ratio = tail_scvr_p95 / mean_scvr
+    else:
+        mean_tail_ratio = None  # signs differ or mean ≈ 0
+
+    # Tail Confidence flag
+    if (np.sign(mean_scvr) != np.sign(tail_scvr_p95)
+            and (abs(mean_scvr) > 0.005 or abs(tail_scvr_p95) > 0.005)):
+        confidence = "DIVERGENT"
+    elif mean_tail_ratio is not None and abs(mean_tail_ratio) < 0.3:
+        confidence = "LOW"
+    elif iqr > 2 * abs(mean_scvr) and abs(mean_scvr) > 0.005:
+        confidence = "LOW"
+    elif mean_tail_ratio is not None and mean_tail_ratio > 0.6:
+        confidence = "HIGH"
+    else:
+        confidence = "MODERATE"
+
+    return {
+        "mean_scvr": mean_scvr,
+        "tail_scvr_p95": tail_scvr_p95,
+        "cvar95_ratio": cvar95_ratio,
+        "extreme_scvr_p99": extreme_scvr_p99,
+        "mean_tail_ratio": round(mean_tail_ratio, 4) if mean_tail_ratio is not None else None,
+        "model_iqr": iqr,
+        "tail_confidence": confidence,
+    }
+
+
 def fit_gev_single_model(series, block="annual_max"):
     """
     Fit GEV to annual block maxima from a single model's daily series.

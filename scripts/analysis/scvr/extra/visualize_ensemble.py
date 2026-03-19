@@ -79,7 +79,7 @@ try:
     from scvr_utils import (
         compute_anchor_fit, compute_shape_metrics, fit_gev,
         exceedance_curve_gev, fit_gpd, exceedance_curve_gpd, pool_window,
-        compute_cvar, fit_gev_single_model,
+        compute_cvar, fit_gev_single_model, compute_report_card,
     )
     SHARED_AVAILABLE = True
 except ImportError:
@@ -1187,6 +1187,85 @@ def plot_scvr_decomposition(baseline_daily, future_daily, scvr_results):
             f95 = np.percentile(f, 95)
             per_model_tail_scvr[scen][model] = (f95 - b95) / abs(b95) if b95 != 0 else 0
 
+    # ── Epoch Report Card ─────────────────────────────────────────────────────
+    epoch_report_card = {}
+    for scen in SCENARIOS:
+        epoch_report_card[scen] = compute_report_card(
+            mean_scvr=tail_metrics[scen]["mean_scvr"],
+            tail_scvr_p95=tail_metrics[scen]["tail_scvr_p95"],
+            cvar95_ratio=tail_metrics[scen]["cvar95_ratio"],
+            iqr=per_model_stats[scen]["iqr"],
+            extreme_scvr_p99=tail_metrics[scen]["extreme_scvr_p99"],
+        )
+
+    # ── Decade Report Cards ───────────────────────────────────────────────────
+    # Baseline pool is always the full 1985-2014 period (fixed reference)
+    base_pool_all = np.concatenate([s.values for s in baseline_daily.values()])
+    base_pool_clean = base_pool_all[~np.isnan(base_pool_all)]
+    if VARIABLE == "pr":
+        base_tail_all = base_pool_clean[base_pool_clean > 0.1]
+    else:
+        base_tail_all = base_pool_clean
+    b_p95_all = np.percentile(base_tail_all, 95)
+    b_p99_all = np.percentile(base_tail_all, 99)
+    b_cvar_all = compute_cvar(base_tail_all, 0.95)
+
+    decade_report_cards = {}
+    for scen in SCENARIOS:
+        decade_report_cards[scen] = {}
+        for dec_label, dec_start, dec_end in DECADE_WINDOWS:
+            # Pool future daily values for this decade only
+            dec_parts = []
+            dec_model_scvrs = []
+            for model in baseline_daily:
+                if model not in future_daily.get(scen, {}):
+                    continue
+                series = future_daily[scen][model]
+                mask = (series.index.year >= dec_start) & (series.index.year <= dec_end)
+                dec_vals = series[mask].values
+                if len(dec_vals) > 0:
+                    dec_parts.append(dec_vals)
+                    # Per-model SCVR for this decade
+                    b_vals = baseline_daily[model].values
+                    b_vals = b_vals[~np.isnan(b_vals)]
+                    r = _compute(b_vals, dec_vals)
+                    dec_model_scvrs.append(r["scvr"])
+
+            if not dec_parts or not dec_model_scvrs:
+                continue
+
+            dec_pool = np.concatenate(dec_parts)
+            dec_clean = dec_pool[~np.isnan(dec_pool)]
+
+            # Decade SCVR (pooled across models for this decade)
+            dec_scvr_result = _compute(base_pool_clean, dec_clean)
+            dec_mean_scvr = dec_scvr_result["scvr"]
+
+            # Tail metrics for this decade
+            if VARIABLE == "pr":
+                dec_tail = dec_clean[dec_clean > 0.1] if len(dec_clean[dec_clean > 0.1]) > 100 else dec_clean
+            else:
+                dec_tail = dec_clean
+
+            f_p95_dec = np.percentile(dec_tail, 95)
+            f_p99_dec = np.percentile(dec_tail, 99)
+            f_cvar_dec = compute_cvar(dec_tail, 0.95)
+
+            dec_tail_p95 = (f_p95_dec - b_p95_all) / abs(b_p95_all) if b_p95_all != 0 else 0
+            dec_tail_p99 = (f_p99_dec - b_p99_all) / abs(b_p99_all) if b_p99_all != 0 else 0
+            dec_cvar = (f_cvar_dec - b_cvar_all) / abs(b_cvar_all) if b_cvar_all and b_cvar_all != 0 else 0
+
+            # Per-model IQR for this decade
+            dec_iqr = float(np.percentile(dec_model_scvrs, 75) - np.percentile(dec_model_scvrs, 25))
+
+            decade_report_cards[scen][dec_label] = compute_report_card(
+                mean_scvr=dec_mean_scvr,
+                tail_scvr_p95=dec_tail_p95,
+                cvar95_ratio=dec_cvar,
+                iqr=dec_iqr,
+                extreme_scvr_p99=dec_tail_p99,
+            )
+
     # ── Diagnostic 3: GEV ξ Per Model ────────────────────────────────────────
     gev_per_model = {}
     for scen in SCENARIOS:
@@ -1396,7 +1475,48 @@ def plot_scvr_decomposition(baseline_daily, future_daily, scvr_results):
         print(f"  {label:<11}|  " + "  ".join(f"{v:>10}" for v in vals))
     print(f"  {'─'*55}")
 
+    # ── Report Card: Epoch ────────────────────────────────────────────────────
+    print(f"\n  ── SCVR Report Card — Epoch ({VARIABLE}) ─────────────────────")
+    rc_hdr = f"  {'':11}|  " + "  ".join(f"{s.upper():>10}" for s in SCENARIOS)
+    print(rc_hdr)
+    rc_rows = [
+        ("Mean SCVR", [f"{epoch_report_card[s]['mean_scvr']:+.4f}" for s in SCENARIOS]),
+        ("P95 SCVR", [f"{epoch_report_card[s]['tail_scvr_p95']:+.4f}" for s in SCENARIOS]),
+        ("CVaR 95%", [f"{epoch_report_card[s]['cvar95_ratio']:+.4f}" for s in SCENARIOS]),
+        ("M-T Ratio", [f"{epoch_report_card[s]['mean_tail_ratio']:.2f}" if epoch_report_card[s]['mean_tail_ratio'] is not None else "N/A" for s in SCENARIOS]),
+        ("Model IQR", [f"{epoch_report_card[s]['model_iqr']:.4f}" for s in SCENARIOS]),
+        ("Confidence", [epoch_report_card[s]["tail_confidence"] for s in SCENARIOS]),
+    ]
+    for label, vals in rc_rows:
+        print(f"  {label:<11}|  " + "  ".join(f"{v:>10}" for v in vals))
+    print(f"  {'─'*55}")
+
+    # ── Report Card: Decades ──────────────────────────────────────────────────
+    for scen in SCENARIOS:
+        if not decade_report_cards.get(scen):
+            continue
+        print(f"\n  ── Decade Report Card — {scen.upper()} ({VARIABLE}) ──────────")
+        dec_labels_found = list(decade_report_cards[scen].keys())
+        dec_hdr = f"  {'':11}|  " + "  ".join(f"{d:>12}" for d in dec_labels_found)
+        print(dec_hdr)
+        dec_rows = [
+            ("Mean SCVR", [f"{decade_report_cards[scen][d]['mean_scvr']:+.4f}" for d in dec_labels_found]),
+            ("P95 SCVR", [f"{decade_report_cards[scen][d]['tail_scvr_p95']:+.4f}" for d in dec_labels_found]),
+            ("CVaR 95%", [f"{decade_report_cards[scen][d]['cvar95_ratio']:+.4f}" for d in dec_labels_found]),
+            ("M-T Ratio", [f"{decade_report_cards[scen][d]['mean_tail_ratio']:.2f}" if decade_report_cards[scen][d]['mean_tail_ratio'] is not None else "N/A" for d in dec_labels_found]),
+            ("Model IQR", [f"{decade_report_cards[scen][d]['model_iqr']:.4f}" for d in dec_labels_found]),
+            ("Confidence", [decade_report_cards[scen][d]["tail_confidence"] for d in dec_labels_found]),
+        ]
+        for label, vals in dec_rows:
+            print(f"  {label:<11}|  " + "  ".join(f"{v:>12}" for v in vals))
+        print(f"  {'─'*55}")
+
     # ── Save JSON ────────────────────────────────────────────────────────────
+    def _round_rc(rc):
+        """Round floats in a report card dict for JSON output."""
+        return {k: round(v, 6) if isinstance(v, float) else v
+                for k, v in rc.items()}
+
     decomp = {
         "per_model_scvr": {s: {m: round(v, 6) for m, v in d.items()}
                            for s, d in per_model_scvr.items()},
@@ -1418,6 +1538,10 @@ def plot_scvr_decomposition(baseline_daily, future_daily, scvr_results):
         "loo_sensitivity": {s: {k: round(v, 6) if isinstance(v, float) else v
                                 for k, v in d.items()}
                             for s, d in loo_sensitivity.items()},
+        "epoch_report_card": {s: _round_rc(rc)
+                              for s, rc in epoch_report_card.items()},
+        "decade_report_cards": {s: {d: _round_rc(rc) for d, rc in decades.items()}
+                                for s, decades in decade_report_cards.items()},
     }
 
     out_json = OUT_DIR / f"scvr_decomposition_{VARIABLE}.json"
@@ -1522,6 +1646,8 @@ def save_scvr_summary(scvr_results, n_models, decade_scvr=None,
             "tail_metrics": decomposition.get("tail_metrics"),
             "variance_decomposition": decomposition.get("variance_decomposition"),
             "loo_sensitivity": decomposition.get("loo_sensitivity"),
+            "epoch_report_card": decomposition.get("epoch_report_card"),
+            "decade_report_cards": decomposition.get("decade_report_cards"),
         }
 
     out = OUT_DIR / f"scvr_summary_{VARIABLE}.json"

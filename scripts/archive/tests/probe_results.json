@@ -1,0 +1,247 @@
+{
+  "climate_MRI_ESM2_0_all_vars": {
+    "status": 400,
+    "available": [],
+    "missing": [
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "temperature_2m_mean",
+      "precipitation_sum",
+      "wind_speed_10m_mean",
+      "wind_speed_10m_max",
+      "relative_humidity_2m_mean",
+      "relative_humidity_2m_max",
+      "relative_humidity_2m_min",
+      "shortwave_radiation_sum",
+      "snowfall_sum",
+      "cloud_cover_mean",
+      "pressure_msl_mean",
+      "et0_fao_evapotranspiration_sum",
+      "soil_moisture_0_to_10cm_mean"
+    ],
+    "sample_2000_01_01": {},
+    "error": "{\"error\":true,\"reason\":\"Data corrupted at path ''. Cannot initialize MultiDomains from invalid String value MRI_ESM2_0.\"}"
+  },
+  "climate_MRI_ESM2_0_single_probe": {
+    "available": []
+  },
+  "climate_MPI_ESM1_2_HR_all_vars": {
+    "status": 400,
+    "available": [],
+    "missing": [
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "temperature_2m_mean",
+      "precipitation_sum",
+      "wind_speed_10m_mean",
+      "wind_speed_10m_max",
+      "relative_humidity_2m_mean",
+      "relative_humidity_2m_max",
+      "relative_humidity_2m_min",
+      "shortwave_radiation_sum",
+      "snowfall_sum",
+      "cloud_cover_mean",
+      "pressure_msl_mean",
+      "et0_fao_evapotranspiration_sum",
+      "soil_moisture_0_to_10cm_mean"
+    ],
+    "sample_2000_01_01": {},
+    "error": "{\"error\":true,\"reason\":\"Data corrupted at path ''. Cannot initialize MultiDomains from invalid String value MPI_ESM1_2_HR.\"}"
+  },
+  "climate_MPI_ESM1_2_HR_single_probe": {
+    "available": []
+  },
+  "climate_EC_Earth3P_HR_all_vars": {
+    "status": 200,
+    "available": [
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "temperature_2m_mean",
+      "precipitation_sum",
+      "wind_speed_10m_mean",
+      "wind_speed_10m_max",
+      "relative_humidity_2m_mean",
+      "relative_humidity_2m_max",
+      "relative_humidity_2m_min",
+      "shortwave_radiation_sum",
+      "snowfall_sum",
+      "cloud_cover_mean",
+      "pressure_msl_mean",
+      "et0_fao_evapotranspiration_sum",
+      "soil_moisture_0_to_10cm_mean"
+    ],
+    "missing": [],
+    "sample_2000_01_01": {
+      "temperature_2m_max": 16.9,
+      "temperature_2m_min": 3.3,
+      "temperature_2m_mean": 10.2,
+      "precipitation_sum": 0.0,
+      "wind_speed_10m_mean": 12.3,
+      "wind_speed_10m_max": 25.3,
+      "relative_humidity_2m_mean": 35,
+      "relative_humidity_2m_max": 59,
+      "relative_humidity_2m_min": 21,
+      "shortwave_radiation_sum": 13.48,
+      "snowfall_sum": 0.0,
+      "cloud_cover_mean": 16,
+      "pressure_msl_mean": 1018.0,
+      "et0_fao_evapotranspiration_sum": 3.35,
+      "soil_moisture_0_to_10cm_mean": 0.019
+    },
+    "error": null
+  },
+  "climate_CMCC_CM2_VHR4_all_vars": {
+    "status": 200,
+    "available": [
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "temperature_2m_mean",
+      "precipitation_sum",
+      "wind_speed_10m_mean",
+      "wind_speed_10m_max",
+      "relative_humidity_2m_mean",
+      "relative_humidity_2m_max",
+      "relative_humidity_2m_min",
+      "shortwave_radiation_sum",
+      "snowfall_sum",
+      "cloud_cover_mean",
+      "pressure_msl_mean",
+      "et0_fao_evapotranspiration_sum",
+      "soil_moisture_0_to_10cm_mean"
+    ],
+    "missing": [],
+    "sample_2000_01_01": {
+      "temperature_2m_max": 13.9,
+      "temperature_2m_min": 0.0,
+      "temperature_2m_mean": 6.3,
+      "precipitation_sum": 0.0,
+      "wind_speed_10m_mean": 17.6,
+      "wind_speed_10m_max": 16.3,
+      "relative_humidity_2m_mean": 35,
+      "relative_humidity_2m_max": 53,
+      "relative_humidity_2m_min": 19,
+      "shortwave_radiation_sum": null,
+      "snowfall_sum": null,
+      "cloud_cover_mean": null,
+      "pressure_msl_mean": 1026.9,
+      "et0_fao_evapotranspiration_sum": 2.48,
+      "soil_moisture_0_to_10cm_mean": null
+    },
+    "error": null
+  },
+  "historical_probe": {
+    "model": "EC_Earth3P_HR",
+    "result": {
+      "status": 200,
+      "available": [
+        "temperature_2m_max",
+        "temperature_2m_min",
+        "temperature_2m_mean",
+        "precipitation_sum",
+        "wind_speed_10m_mean",
+        "wind_speed_10m_max",
+        "relative_humidity_2m_mean",
+        "relative_humidity_2m_max",
+        "relative_humidity_2m_min",
+        "shortwave_radiation_sum",
+        "snowfall_sum",
+        "cloud_cover_mean",
+        "pressure_msl_mean",
+        "et0_fao_evapotranspiration_sum",
+        "soil_moisture_0_to_10cm_mean"
+      ],
+      "missing": [],
+      "sample_2000_01_01": {
+        "temperature_2m_max": 16.9,
+        "temperature_2m_min": 3.3,
+        "temperature_2m_mean": 10.2,
+        "precipitation_sum": 0.0,
+        "wind_speed_10m_mean": 12.3,
+        "wind_speed_10m_max": 25.3,
+        "relative_humidity_2m_mean": 35,
+        "relative_humidity_2m_max": 59,
+        "relative_humidity_2m_min": 21,
+        "shortwave_radiation_sum": 13.48,
+        "snowfall_sum": 0.0,
+        "cloud_cover_mean": 16,
+        "pressure_msl_mean": 1018.0,
+        "et0_fao_evapotranspiration_sum": 3.35,
+        "soil_moisture_0_to_10cm_mean": 0.019
+      },
+      "error": null
+    }
+  },
+  "future_probe": {
+    "model": "EC_Earth3P_HR",
+    "result": {
+      "status": 200,
+      "available": [
+        "temperature_2m_max",
+        "temperature_2m_min",
+        "temperature_2m_mean",
+        "precipitation_sum",
+        "wind_speed_10m_mean",
+        "wind_speed_10m_max",
+        "relative_humidity_2m_mean",
+        "relative_humidity_2m_max",
+        "relative_humidity_2m_min",
+        "shortwave_radiation_sum",
+        "snowfall_sum",
+        "cloud_cover_mean",
+        "pressure_msl_mean",
+        "et0_fao_evapotranspiration_sum",
+        "soil_moisture_0_to_10cm_mean"
+      ],
+      "missing": [],
+      "sample_2000_01_01": {
+        "temperature_2m_max": 14.3,
+        "temperature_2m_min": -2.4,
+        "temperature_2m_mean": 4.4,
+        "precipitation_sum": 0.0,
+        "wind_speed_10m_mean": 10.0,
+        "wind_speed_10m_max": 16.9,
+        "relative_humidity_2m_mean": 52,
+        "relative_humidity_2m_max": 73,
+        "relative_humidity_2m_min": 22,
+        "shortwave_radiation_sum": 13.67,
+        "snowfall_sum": 0.0,
+        "cloud_cover_mean": 7,
+        "pressure_msl_mean": 1030.9,
+        "et0_fao_evapotranspiration_sum": 2.88,
+        "soil_moisture_0_to_10cm_mean": 0.068
+      },
+      "error": null
+    }
+  },
+  "era5_archive_probe": {
+    "status": 400,
+    "available": [],
+    "missing": [
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "temperature_2m_mean",
+      "precipitation_sum",
+      "wind_speed_10m_mean",
+      "wind_speed_10m_max",
+      "relative_humidity_2m_mean",
+      "relative_humidity_2m_max",
+      "shortwave_radiation_sum"
+    ],
+    "sample_2000_01_01": {},
+    "error": "{\"error\":true,\"reason\":\"Data corrupted at path ''. Cannot initialize MultiDomains from invalid String value ERA5.\"}"
+  },
+  "era5_archive_no_model": {
+    "status": 200,
+    "available": [
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "temperature_2m_mean",
+      "precipitation_sum",
+      "wind_speed_10m_mean",
+      "wind_speed_10m_max",
+      "relative_humidity_2m_mean",
+      "relative_humidity_2m_max",
+      "shortwave_radiation_sum"
+    ]
+  }
+}
