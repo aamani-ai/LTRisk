@@ -18,7 +18,7 @@
 |---|---|
 | **Get running in 5 minutes** | [Quick Start](#quick-start) below |
 | **Understand what this project does** | [The Framework](#the-framework) |
-| **See ensemble SCVR results (latest)** | [`notebook_analysis/03_integrated_scvr_cmip6.ipynb`](notebook_analysis/03_integrated_scvr_cmip6.ipynb) |
+| **Compute SCVR from cached data** | [`scripts/analysis/scvr/compute_scvr.py`](scripts/analysis/scvr/compute_scvr.py) — [README](scripts/analysis/scvr/README.md) |
 | **Learn the methodology from scratch** | [`docs/learning/00_index.md`](docs/learning/00_index.md) — 11 guides in 4 categories |
 | **Read the annual SCVR methodology discussion** | [`docs/discussion/discussion_annual_scvr_methodology.md`](docs/discussion/discussion_annual_scvr_methodology.md) |
 | **See how SCVR translates to financial impact** | [`docs/learning/C_financial_translation/09_nav_impairment_chain.md`](docs/learning/C_financial_translation/09_nav_impairment_chain.md) |
@@ -31,20 +31,18 @@
 
 ## Current Status
 
-**NB01-03 complete** — ensemble SCVR pipeline working end-to-end with NEX-GDDP-CMIP6. Annual SCVR methodology under discussion before NB04 begins.
+**NB01-03 → production scripts.** SCVR computation is now a CLI pipeline. NB04 in progress.
 
 ```
   ┌──────────────────────────────────────────────────────────────────────────┐
-  │                        NOTEBOOK PIPELINE                                │
+  │                       PRODUCTION PIPELINE                               │
   ├──────────────────────────────────────────────────────────────────────────┤
   │                                                                        │
-  │  NB01  DONE     Single-model SCVR prototype (Open-Meteo, 1 model)     │
-  │  NB02  DONE     NEX-GDDP-CMIP6 THREDDS pipeline (34 models, 2 SSPs)  │
-  │  NB03  DONE     Ensemble SCVR (6 models pooled, 7 vars, 2 scenarios)  │
+  │  fetch_cmip6.py    DONE   Fetch 34 CMIP6 models from THREDDS → cache  │
+  │  compute_scvr.py   DONE   SCVR: ensemble, decade, annual, shape, GEV  │
   │  ─────────────────────────────────────────────────────────────────────  │
-  │  NB04  BLOCKED  HCR + EFR + IUL + NAV impairment                      │
-  │                 Blocked on: annual SCVR methodology decision            │
-  │                 See: docs/discussion/discussion_annual_scvr_methodology │
+  │  NB04  IN PROGRESS  HCR + EFR + IUL + NAV impairment                  │
+  │                     See: notebook_analysis/04_hcr_efr_iul_nav.ipynb    │
   │                                                                        │
   └──────────────────────────────────────────────────────────────────────────┘
 
@@ -80,7 +78,7 @@ rsds        None    0.31      Period average (SCVR ~ 0)
 and noisy. **Wind/radiation** show no meaningful climate change signal at these sites.
 
 Full analysis: [`docs/discussion/discussion_annual_scvr_methodology.md`](docs/discussion/discussion_annual_scvr_methodology.md)
-Experiment script: [`scripts/experiments/annual_scvr_test.py`](scripts/experiments/annual_scvr_test.py)
+Experiment script: [`scripts/archive/experiments/annual_scvr_test.py`](scripts/archive/experiments/annual_scvr_test.py)
 
 ---
 
@@ -95,14 +93,19 @@ source .venv/bin/activate
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Launch notebooks
+# 3. Fetch CMIP6 data (first run only, ~10 min, cached)
+python scripts/data/fetch_cmip6.py --site hayhurst_solar
+
+# 4. Compute SCVR
+python scripts/analysis/scvr/compute_scvr.py --dry-run   # preview
+python scripts/analysis/scvr/compute_scvr.py              # run
+
+# 5. Launch notebooks (for NB04 and exploration)
 jupyter lab
-# → Open notebook_analysis/03_integrated_scvr_cmip6.ipynb  (recommended start)
-# → Or start from 01 if you want the full progression
 ```
 
-**NB03 first run:** fetches CMIP6 data from NASA THREDDS (~10 min, cached to `data/cache/thredds/`).
-**Subsequent runs:** loads from cache, completes in ~30 seconds.
+**First run:** fetches CMIP6 data from NASA THREDDS (~10 min, cached to `data/cache/thredds/`).
+**Subsequent runs:** loads from cache, SCVR computation completes in ~2 minutes.
 
 ---
 
@@ -173,12 +176,12 @@ Full index with reading orders: [`docs/learning/00_index.md`](docs/learning/00_i
 
 ### Implementation Docs (`docs/implementation/`)
 
-| Document | Notebook |
+| Document | Scope |
 |---|---|
-| [`01_scvr_hayhurst_solar.md`](docs/implementation/01_scvr_hayhurst_solar.md) | NB01 — single-model SCVR prototype |
-| [`02_nex_gddp_cmip6_thredds.md`](docs/implementation/02_nex_gddp_cmip6_thredds.md) | NB02 — THREDDS pipeline development |
 | [`03_integrated_scvr_cmip6.md`](docs/implementation/03_integrated_scvr_cmip6.md) | NB03 — ensemble SCVR design decisions |
 | [`04_ensemble_exceedance_script.md`](docs/implementation/04_ensemble_exceedance_script.md) | Presentation script for exceedance plots |
+| `archive/01_scvr_hayhurst_solar.md` | NB01 — archived |
+| `archive/02_nex_gddp_cmip6_thredds.md` | NB02 — archived |
 
 ---
 
@@ -190,19 +193,22 @@ LTRisk/
 ├── README.md                            ← you are here
 ├── requirements.txt
 │
-├── notebook_analysis/                   ← run notebooks in order
+├── notebook_analysis/
 │   ├── README.md                        ← notebook index
-│   ├── 01_hayhurst_solar_scvr.ipynb    ← Phase 1: single-model prototype
-│   ├── 02_NEX_GDDP_CMIP6_THREDDS.ipynb ← THREDDS pipeline development
-│   └── 03_integrated_scvr_cmip6.ipynb  ← Ensemble SCVR (start here)
+│   ├── 04_hcr_efr_iul_nav.ipynb        ← ONLY active notebook (HCR → NAV)
+│   └── archive/                         ← NB01-03 (superseded by scripts)
 │
 ├── scripts/
-│   ├── experiments/                     ← standalone analysis scripts
-│   │   ├── annual_scvr_test.py         ← per-year vs anchor SCVR comparison
-│   │   └── output/                     ← experiment plots (7 PNG files)
-│   ├── presentation/                    ← publication-ready visualisations
-│   │   └── ensemble_exceedance.py      ← exceedance curve + SCVR plots
-│   └── tests/                           ← smoke tests
+│   ├── README.md                        ← pipeline overview
+│   ├── data/
+│   │   ├── fetch_cmip6.py              ← fetch CMIP6 data from THREDDS
+│   │   └── README.md
+│   ├── analysis/
+│   │   └── scvr/
+│   │       ├── compute_scvr.py         ← compute SCVR (self-contained)
+│   │       ├── README.md               ← detailed methodology + output docs
+│   │       └── extra/                   ← plots + PDF report
+│   └── archive/                         ← superseded scripts (reference only)
 │
 ├── data/
 │   ├── schema/                          ← variable/site/output definitions
@@ -221,8 +227,8 @@ LTRisk/
 │   │   ├── C_financial_translation/    ← 07-09
 │   │   └── D_technical_reference/      ← 10-11
 │   ├── discussion/                      ← methodology decision docs
-│   ├── implementation/                  ← notebook-specific design notes
-│   ├── background/                      ← team framework and reference PDFs
+│   ├── implementation/ + archive/       ← design notes (active + archived)
+│   ├── archive/                         ← background/, data_sources/
 │   └── todo.md                          ← project roadmap and task tracking
 │
 └── extra/old_setup_by_others/          ← earlier prototype (reference only)

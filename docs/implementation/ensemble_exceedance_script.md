@@ -1,6 +1,7 @@
 # Ensemble Exceedance — Presentation Script Implementation
 
-*Implementation notes for `scripts/presentation/ensemble_exceedance.py`*
+*Implementation notes for `scripts/analysis/scvr/extra/visualize_ensemble.py`*
+*(Moved from `scripts/presentation/ensemble_exceedance.py` during March 2026 reorganisation)*
 
 **Sites:** Hayhurst Texas Solar (default) — configurable via `SITE_ID` at top of script
 **Variables:** All 7 (tasmax, tasmin, tas, pr, sfcWind, hurs, rsds) — configurable via `VARIABLES`
@@ -49,7 +50,7 @@
 
 | Feature | Notebook 03 | This Script |
 |---|---|---|
-| Runs from CLI | No (Jupyter) | Yes — `python scripts/presentation/ensemble_exceedance.py` |
+| Runs from CLI | No (Jupyter) | Yes — `python scripts/analysis/scvr/extra/visualize_ensemble.py` |
 | Variables per run | 1 at a time | All 7 automatically (loop) |
 | Time series plot | Yes | Yes — with corrected aggregation labels |
 | Exceedance curve plot | Yes | Yes — traditional view (x=value, y=prob) |
@@ -640,7 +641,7 @@ Key observations:
 
 ```bash
 # From project root:
-python scripts/presentation/ensemble_exceedance.py
+python scripts/analysis/scvr/extra/visualize_ensemble.py
 
 # To run a single variable only, edit the CONFIG block:
 # VARIABLES = ["tasmax"]
@@ -661,6 +662,6 @@ unless the cache is cleared. Probe results in `model_probe_cache.json` are also 
 - [docs/discussion/discussion_annual_scvr_methodology.md](../discussion/discussion_annual_scvr_methodology.md) — Annual SCVR options, anchor fit evidence
 - [docs/learning/04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) — SCVR formula detail
 - [docs/learning/11_distribution_shift_methods.md](../learning/D_technical_reference/11_distribution_shift_methods.md) — how SCVR relates to Wasserstein W1 / AAL / CVaR
-- [scripts/shared/scvr_utils.py](../../scripts/shared/scvr_utils.py) — Shared utility module (THREDDS, SCVR, anchors, GEV, `compute_report_card`)
+- [scripts/archive/shared/scvr_utils.py](../../scripts/archive/shared/scvr_utils.py) — Archived utility module (math now in compute_scvr.py)
 - [docs/discussion/discussion_scvr_method_equivalence.md §13](../discussion/discussion_scvr_method_equivalence.md) — Companion metrics rationale and Tail Confidence design
 - [docs/discussion/discussion_hcr_pathway_a_vs_b.md](../discussion/discussion_hcr_pathway_a_vs_b.md) — HCR Pathway A vs B: when SCVR-based HCR fails
