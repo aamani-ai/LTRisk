@@ -9,7 +9,7 @@ Runnable Python scripts for the LTRisk project.
 ```
 scripts/data/fetch_cmip6.py  →  scripts/analysis/scvr/compute_scvr.py  →  (later: compute_hcr.py → ...)
          ↓                                ↓
-   data/cache/thredds/              data/processed/scvr/
+   data/cache/thredds/              data/output/scvr/
    (cached NetCDF files)            (Parquet + JSON outputs)
 ```
 

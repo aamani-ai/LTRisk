@@ -11,7 +11,7 @@ and distribution shape metrics. Outputs Parquet files and a JSON report.
 Pipeline position:
   fetch_cmip6.py  →  compute_scvr.py  →  (later: compute_hcr.py → ...)
        ↓                    ↓
-  data/cache/          data/processed/
+  data/cache/          data/output/
   thredds/*.nc         scvr/<site>/*.parquet
 
 Usage:
@@ -53,7 +53,7 @@ except ImportError:
 ROOT       = Path(__file__).resolve().parents[3]
 SCHEMA_DIR = ROOT / "data" / "schema"
 CACHE_DIR  = ROOT / "data" / "cache" / "thredds"
-OUTPUT_DIR = ROOT / "data" / "processed" / "scvr"
+OUTPUT_DIR = ROOT / "data" / "output" / "scvr"
 
 # ── Import config loaders from fetch_cmip6 ───────────────────────────────────
 sys.path.insert(0, str(ROOT))

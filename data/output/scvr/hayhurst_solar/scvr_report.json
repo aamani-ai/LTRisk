@@ -1,0 +1,322 @@
+{
+  "timestamp": "2026-03-19T19:58:17.759906",
+  "site_id": "hayhurst_solar",
+  "lat": 31.815992,
+  "lon": -104.0853,
+  "summary": {
+    "ensemble_scvr_rows": 12,
+    "decade_scvr_rows": 36,
+    "shape_metrics_rows": 48,
+    "annual_scvr_rows": 198
+  },
+  "ensemble_scvr": [
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "center_year": 2040,
+      "scvr": 0.06889570702572412,
+      "area_baseline": 26.54782800669737,
+      "area_future": 28.376859387216104,
+      "n_baseline_days": 306144,
+      "n_future_days": 306114,
+      "n_models": 28,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "center_year": 2040,
+      "scvr": 0.07987901921490267,
+      "area_baseline": 26.54782800669737,
+      "area_future": 28.66844247015828,
+      "n_baseline_days": 306144,
+      "n_future_days": 306114,
+      "n_models": 28,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "center_year": 2040,
+      "scvr": 0.14413682502992672,
+      "area_baseline": 10.585959264925286,
+      "area_future": 12.111785823267754,
+      "n_baseline_days": 305904,
+      "n_future_days": 305904,
+      "n_models": 28,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "center_year": 2040,
+      "scvr": 0.17356216985689224,
+      "area_baseline": 10.585959264925286,
+      "area_future": 12.42328132496239,
+      "n_baseline_days": 305904,
+      "n_future_days": 305904,
+      "n_models": 28,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "center_year": 2040,
+      "scvr": 0.08796325966652008,
+      "area_baseline": 18.545981561891043,
+      "area_future": 20.17734655379016,
+      "n_baseline_days": 262511,
+      "n_future_days": 262511,
+      "n_models": 24,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "center_year": 2040,
+      "scvr": 0.10422227848311096,
+      "area_baseline": 18.545981561891043,
+      "area_future": 20.478886016977093,
+      "n_baseline_days": 262511,
+      "n_future_days": 262511,
+      "n_models": 24,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "pr",
+      "center_year": 2040,
+      "scvr": -0.0010013030086290372,
+      "area_baseline": 0.8866535178497515,
+      "area_future": 0.8857657090147171,
+      "n_baseline_days": 338755,
+      "n_future_days": 338755,
+      "n_models": 31,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "pr",
+      "center_year": 2040,
+      "scvr": -0.006769917593451695,
+      "area_baseline": 0.8866535178497515,
+      "area_future": 0.8806509465999647,
+      "n_baseline_days": 338755,
+      "n_future_days": 338755,
+      "n_models": 31,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "center_year": 2040,
+      "scvr": -0.022011109304031235,
+      "area_baseline": 3.346233602736191,
+      "area_future": 3.2725792891495424,
+      "n_baseline_days": 338785,
+      "n_future_days": 338785,
+      "n_models": 31,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "center_year": 2040,
+      "scvr": -0.02583433185769692,
+      "area_baseline": 3.346233602736191,
+      "area_future": 3.2597858933697275,
+      "n_baseline_days": 338785,
+      "n_future_days": 338785,
+      "n_models": 31,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "center_year": 2040,
+      "scvr": -0.031207042664403693,
+      "area_baseline": 47.90182118467045,
+      "area_future": 46.406947007257806,
+      "n_baseline_days": 316848,
+      "n_future_days": 316848,
+      "n_models": 29,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "center_year": 2040,
+      "scvr": -0.03585188099260278,
+      "area_baseline": 47.90182118467045,
+      "area_future": 46.18445079222871,
+      "n_baseline_days": 316848,
+      "n_future_days": 316848,
+      "n_models": 29,
+      "window_start_year": 2026,
+      "window_end_year": 2055
+    }
+  ],
+  "gev_fits": {
+    "baseline_tasmax": {
+      "shape": 0.2792351650809438,
+      "loc": 41.24632605969486,
+      "scale": 1.540724521066626,
+      "n_blocks": 90,
+      "ks_statistic": 0.04733668898276072,
+      "ks_pvalue": 0.982025473251377
+    },
+    "ssp245_tasmax": {
+      "shape": 0.3084763998059723,
+      "loc": 42.75413735026669,
+      "scale": 1.4432451831267405,
+      "n_blocks": 90,
+      "ks_statistic": 0.03463659836558952,
+      "ks_pvalue": 0.9997830843637997
+    },
+    "ssp585_tasmax": {
+      "shape": 0.15411201969258542,
+      "loc": 42.92699298766247,
+      "scale": 1.4076680162216506,
+      "n_blocks": 90,
+      "ks_statistic": 0.043841104243272366,
+      "ks_pvalue": 0.9922321177427037
+    },
+    "baseline_tasmin": {
+      "shape": 0.10200895337700482,
+      "loc": 24.917542366288274,
+      "scale": 1.340143234083142,
+      "n_blocks": 90,
+      "ks_statistic": 0.07860163867300796,
+      "ks_pvalue": 0.6062123394672011
+    },
+    "ssp245_tasmin": {
+      "shape": 0.10156822944204066,
+      "loc": 26.366537517537466,
+      "scale": 1.3087004168291128,
+      "n_blocks": 90,
+      "ks_statistic": 0.055505899927895896,
+      "ks_pvalue": 0.9298235344494737
+    },
+    "ssp585_tasmin": {
+      "shape": 0.2471209708338164,
+      "loc": 26.634525840939972,
+      "scale": 1.3882276248327532,
+      "n_blocks": 90,
+      "ks_statistic": 0.04448018363063591,
+      "ks_pvalue": 0.9908049876624558
+    },
+    "baseline_tas": {
+      "shape": 0.058047764732392274,
+      "loc": 32.23019037835462,
+      "scale": 1.1387110082491123,
+      "n_blocks": 90,
+      "ks_statistic": 0.06602514401274862,
+      "ks_pvalue": 0.8029324221807562
+    },
+    "ssp245_tas": {
+      "shape": 0.14430263048116088,
+      "loc": 33.82277284161671,
+      "scale": 1.2781908424301143,
+      "n_blocks": 90,
+      "ks_statistic": 0.059211256446105365,
+      "ks_pvalue": 0.8918975030957084
+    },
+    "ssp585_tas": {
+      "shape": 0.15826565485925498,
+      "loc": 34.099836244623816,
+      "scale": 1.0701742349690342,
+      "n_blocks": 90,
+      "ks_statistic": 0.049753826641445675,
+      "ks_pvalue": 0.971046126653756
+    },
+    "baseline_pr": {
+      "shape": -0.009581723839502607,
+      "loc": 24.427975554581444,
+      "scale": 8.183903974800707,
+      "n_blocks": 90,
+      "ks_statistic": 0.0728339990248621,
+      "ks_pvalue": 0.6984900867755028
+    },
+    "ssp245_pr": {
+      "shape": -0.18299164184140515,
+      "loc": 24.601861521974847,
+      "scale": 8.726607541331237,
+      "n_blocks": 90,
+      "ks_statistic": 0.04965287466418572,
+      "ks_pvalue": 0.9715761962473163
+    },
+    "ssp585_pr": {
+      "shape": -0.05580843418439675,
+      "loc": 25.951032548238956,
+      "scale": 9.352326057043793,
+      "n_blocks": 90,
+      "ks_statistic": 0.08907305993527229,
+      "ks_pvalue": 0.44721204927019986
+    },
+    "baseline_sfcWind": {
+      "shape": 0.2248502139386973,
+      "loc": 7.922467404065536,
+      "scale": 0.7988088757901456,
+      "n_blocks": 90,
+      "ks_statistic": 0.07315993549677502,
+      "ks_pvalue": 0.6932995394762129
+    },
+    "ssp245_sfcWind": {
+      "shape": 0.20194653448682398,
+      "loc": 7.900638538720111,
+      "scale": 0.8614651686339831,
+      "n_blocks": 90,
+      "ks_statistic": 0.08407892535835104,
+      "ks_pvalue": 0.5206560004488043
+    },
+    "ssp585_sfcWind": {
+      "shape": 0.34984949247067726,
+      "loc": 7.996768407660946,
+      "scale": 0.862011706290946,
+      "n_blocks": 90,
+      "ks_statistic": 0.060115773773058184,
+      "ks_pvalue": 0.881396991509201
+    },
+    "baseline_hurs": {
+      "shape": 0.7339132985622219,
+      "loc": 96.53273051991383,
+      "scale": 3.048870196705023,
+      "n_blocks": 90,
+      "ks_statistic": 0.08053069303001475,
+      "ks_pvalue": 0.5756467414757719
+    },
+    "ssp245_hurs": {
+      "shape": 0.7796152219420724,
+      "loc": 95.7156440803034,
+      "scale": 3.4091507588490373,
+      "n_blocks": 90,
+      "ks_statistic": 0.0776266864405033,
+      "ks_pvalue": 0.6217751215453577
+    },
+    "ssp585_hurs": {
+      "shape": 0.7866466206278026,
+      "loc": 94.99946359236239,
+      "scale": 4.117598631070271,
+      "n_blocks": 90,
+      "ks_statistic": 0.03920534836744061,
+      "ks_pvalue": 0.9982420238625273
+    }
+  },
+  "files_saved": [
+    "/Users/divy/code/work/infrasure_git_codes/LTRisk/data/output/scvr/hayhurst_solar/cmip6_ensemble_scvr.parquet",
+    "/Users/divy/code/work/infrasure_git_codes/LTRisk/data/output/scvr/hayhurst_solar/cmip6_scvr_decade.parquet",
+    "/Users/divy/code/work/infrasure_git_codes/LTRisk/data/output/scvr/hayhurst_solar/cmip6_shape_metrics.parquet",
+    "/Users/divy/code/work/infrasure_git_codes/LTRisk/data/output/scvr/hayhurst_solar/cmip6_scvr_annual.parquet"
+  ]
+}

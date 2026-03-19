@@ -215,9 +215,9 @@ LTRisk/
 │   │   ├── sites.json                  ← pilot site coordinates + metadata
 │   │   ├── variables.json              ← variable definitions and priorities
 │   │   └── scvr_schema.json            ← output Parquet column spec
+│   ├── output/scvr/                     ← SCVR output Parquet (committed)
 │   ├── cache/thredds/                   ← cached NetCDF files (not committed)
-│   ├── raw/cmip6/                       ← raw daily Parquet (not committed)
-│   └── processed/scvr/                  ← SCVR output Parquet (not committed)
+│   └── processed/                       ← notebook output (not committed)
 │
 ├── docs/
 │   ├── learning/                        ← 11 methodology guides in 4 sections

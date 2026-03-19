@@ -144,5 +144,5 @@ Future:                  2026 ──────────────── 2
 | `data/schema/sites.json` | Site coordinates and metadata |
 | `data/schema/variables.json` | Variable definitions and scvr_direction |
 | `data/schema/scvr_schema.json` | Output Parquet column specification |
-| `data/processed/scvr/<site>/cmip6_ensemble_scvr.parquet` | SCVR output |
+| `data/output/scvr/<site>/cmip6_ensemble_scvr.parquet` | SCVR output |
 | `data/cache/thredds/` | Cached NetCDF files and probe results |

@@ -1,5 +1,5 @@
 {
-  "description": "Column specification and methodology documentation for SCVR output Parquet files stored in data/processed/scvr/<site_id>/.",
+  "description": "Column specification and methodology documentation for SCVR output Parquet files stored in data/output/scvr/<site_id>/.",
   "format": "Apache Parquet, long format (one row = one variable × one center_year combination)",
   "file_naming_convention": "{scenario}_{model}_scvr.parquet",
   "file_naming_examples": [

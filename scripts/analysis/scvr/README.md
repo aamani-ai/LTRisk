@@ -11,7 +11,7 @@ ensemble SCVR across all available models, and outputs Parquet files + a JSON re
 ```
 fetch_cmip6.py  →  compute_scvr.py  →  (later: compute_hcr.py → compute_efr.py → compute_nav.py)
      ↓                    ↓
-data/cache/          data/processed/
+data/cache/          data/output/
 thredds/*.nc         scvr/<site>/*.parquet
 ```
 
@@ -196,7 +196,7 @@ The script auto-discovers which models have complete data — no manual model li
 
 ## Output Files
 
-All outputs saved to `data/processed/scvr/<site_id>/`:
+All outputs saved to `data/output/scvr/<site_id>/`:
 
 ### `cmip6_ensemble_scvr.parquet`
 

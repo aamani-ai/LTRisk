@@ -35,7 +35,7 @@
 - [x] Ensemble pooling (concatenate daily values across models)
 - [x] Parallel model probing with disk cache (`model_probe_cache.json`)
 - [x] SCVR computation — ensemble + per-model
-- [x] Output to Parquet (`data/processed/scvr/<site>/cmip6_ensemble_scvr.parquet`)
+- [x] Output to Parquet (`data/output/scvr/<site>/cmip6_ensemble_scvr.parquet`)
 - [x] Plots: exceedance curves, bar chart, spaghetti, strip plot
 - [ ] **Run notebook end-to-end** — verify all cells execute without error
 - [ ] Verify SCVR signs make physical sense (tasmax +, sfcWind ~0, SSP585 > SSP245)
@@ -184,4 +184,4 @@ Future runs:  all_daily.parquet --> DATA dict  (instant, skip THREDDS)
 | `scripts/presentation/ensemble_exceedance.py` | Presentation-quality plots and JSON summaries |
 | `data/schema/scvr_schema.json` | Output Parquet column spec (incl. decade schema) |
 | `data/cache/thredds/` | Cached NetCDF files from THREDDS |
-| `data/processed/scvr/` | SCVR output Parquet files |
+| `data/output/scvr/` | SCVR output Parquet files |

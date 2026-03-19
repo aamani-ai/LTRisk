@@ -347,7 +347,7 @@ Ground-station observations for cross-validating CMIP6 historical data.
 
 ### E. `scvr_schema.json` — SCVR Output Specification
 
-Long-format Parquet files in `data/processed/scvr/<site_id>/`.
+Long-format Parquet files in `data/output/scvr/<site_id>/`.
 
 **File naming:** `{scenario}_{model}_scvr.parquet`
 
