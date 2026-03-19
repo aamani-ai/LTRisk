@@ -787,7 +787,8 @@ Fire = f(high T, low RH, wind, dry fuel)
  
 | Hazard | Scaling Factor | Input Variable(s) | Status | Basis |
 |--------|---------------|-------------------|--------|-------|
-| Heat stress | 2.5 | tasmax SCVR | Working estimate | Tail amplification at P90; Peck's calibration |
+| Heat stress (compound HW: 3+ consec. days, tasmax+tasmin > P90) | 2.0–3.0 (base: 2.5) | tasmax SCVR | Working estimate | Tail amplification; NB01 cross-check gives ~2.9 |
+| Heat stress (P90 per-DOY single-day exceedance, tasmax only) | ~26 | tasmax SCVR | NB04 empirical | Per-DOY P90 counting on pooled daily data — see §4 NB04 check |
 | Flood (extreme precip) | 1.5–2.0 | pr SCVR (high tail) | Preliminary range | Clausius-Clapeyron ~7%/°C |
 | Hail | ~~1.0~~ **NOT COMPUTABLE** | ~~pr SCVR + sfcWind SCVR~~ | ~~Placeholder~~ **Superseded — merged into SCS bucket; pr+sfcWind has no physical basis for hail (requires CAPE, S06, freezing level — not in NEX-GDDP)** | See Section 2B SCS |
 | Soiling/dust | 0.8 | pr SCVR (dry days) | Preliminary | Indirect: fewer rain days → more dust |
@@ -894,9 +895,44 @@ If baseline heat-related BI = $35K/yr:
   Over asset life (NPV at 8%): feeds into total NAV impairment
   See doc 09 for the complete financial chain.
 ```
- 
+
+### NB04 Empirical Check — Threshold Sensitivity (2026-03-19)
+
+NB04 implemented Pathway B with **simple P90 per-DOY exceedance** (tasmax only, single day, no consecutiveness or tasmin requirement). This is a weaker filter than the compound heat wave definition used above.
+
+```
+NB04 Pathway B result (P90 per-DOY, tasmax only):
+  Baseline P90-exceedance days:  ~36.5/year  (10% of days, by definition)
+  Future P90-exceedance days:    ~101/year   (SSP2-4.5)
+
+  HCR_heat = (101 - 36.5) / 36.5 ≈ +177%   (SSP2-4.5)
+  HCR_heat ≈ +209%                           (SSP5-8.5)
+
+  Implied scaling = HCR / SCVR = 1.77 / 0.069 ≈ 26×
+
+Compare to compound heat wave (3+ consecutive, tasmax+tasmin > P90):
+  Baseline: ~15 HW days/year
+  Future:   ~18 HW days/year
+  HCR ≈ +20%  →  implied scaling ≈ 2.9×
+
+Why the 10× difference?
+  - Simple P90: 10% of baseline days exceed → small shift pushes many over
+  - Compound HW: ~4% of days qualify → rarer events, smaller relative change
+  - Both are correct for their respective definitions
+  - The threshold choice determines which BI model the HCR feeds:
+      Simple P90 → hot-day derating (many days, small per-day impact)
+      Compound HW → multi-day shutdown events (few events, large per-event impact)
+
+KEY INSIGHT: Scaling factors are NOT universal — they must be
+calibrated per threshold definition. The 2.5× applies to compound
+heat waves; ~26× applies to simple P90 exceedance.
+
+TODO: NB04 should implement the compound heat wave counter
+to complete the cross-validation against the 2.5× estimate.
+```
+
 ---
- 
+
 ## 5. Worked Example: Precipitation → Flood Risk
  
 ### The Precipitation Puzzle
@@ -1138,6 +1174,12 @@ HAYHURST SOLAR NAV IMPAIRMENT vs HEAT SCALING FACTOR
  
   A ±0.5 change in scaling factor moves NAV impairment by ~±$1.5-2M.
   This is a significant source of uncertainty.
+
+  THRESHOLD SENSITIVITY (NB04 finding):
+    For P90 per-DOY exceedance, NB04 finds scaling ~26×, but this feeds
+    a different BI model (simple hot-day derating rather than multi-day
+    heat wave shutdown). The financial impact routing depends on which
+    threshold definition the BI model uses — see §4 NB04 check.
 ```
  
 ### Why This Matters for NB04
@@ -1184,6 +1226,10 @@ Where they agree, confidence is high.
 Where they disagree, investigate the scaling factor.
 ```
 
+**Deep dives:**
+- [Pathway A vs B from basics](../../discussion/discussion_hcr_pathway_a_vs_b.md) — worked examples, decision matrix per variable, naming clarification (HCR-level vs framework-level pathways)
+- [Jensen's inequality: why HCR ≠ f(SCVR)](../../discussion/discussion_jensen_inequality_hcr_scvr.md) — why Pathway A fails for precipitation and when the linear scaling approximation breaks down
+
 ### Calibrating Scaling Factors Using NB01 Data
 
 ```
@@ -1198,8 +1244,16 @@ Example — calibrating heat stress scaling:
 
 3. Implied scaling = HCR / SCVR = 0.20 / 0.074 = 2.7
 
-   Close to our working estimate of 2.5 — validates the assumption.
-   If it came out at 4.0, we'd need to revise.
+   Close to our working estimate of 2.5 — validates the assumption
+   for the compound heat wave definition.
+
+NB04 cross-validation (simple P90 per-DOY exceedance):
+   Implied scaling = 1.77 / 0.069 ≈ 26×
+   This is for a DIFFERENT threshold definition (see §4 NB04 check).
+   Both scalings are correct within their respective definitions.
+
+   The choice of threshold definition is itself a modeling decision —
+   it determines which BI model channel the HCR feeds.
 ```
 
 ---
@@ -1218,13 +1272,15 @@ Example — calibrating heat stress scaling:
 
 ### Implementation Decisions for NB04
 
-1. **Annual SCVR prerequisite:** NB04 needs annual SCVR values from NB03. NB03 currently computes SCVR at 5 discrete target years with 20-year rolling windows. This needs refactoring to annual computation before NB04 can proceed (see `docs/todo.md`).
+1. **HCR Pathway B — DONE (Part A, 2026-03-19):** NB04 computed HCR via Pathway B (direct counting) for tasmax (P90 per-DOY) and precipitation (rx5day, frost days). Results saved to `data/processed/hcr/hayhurst_solar/`. NB04 used decade SCVR decomposition directly (not annual SCVR).
 
-2. **Which scaling factors to use:** Start with the working estimates in the table above. Cross-validate against NB01 climate indices. Report results with low/mid/high scaling scenarios.
+2. **Which threshold definition feeds the BI model?** NB04's P90 per-DOY exceedance gives ~26× scaling; compound heat waves give ~2.5-3×. The choice determines the financial routing. **This is the key open question for NB05.**
 
-3. **Negative HCR handling:** Allow negative HCR values (hazard decreasing). These create NAV upsides that partially offset other impairments.
+3. **Compound heat wave counter:** NB04 should implement the compound definition (3+ consecutive days, tasmax+tasmin > P90) to complete the cross-validation against the 2.5× estimate.
 
-4. **Per-hazard vs aggregate HCR:** Compute HCR per hazard separately, then combine at the EFR/NAV stage. Do not aggregate HCR values across hazards — they feed into different EFR models.
+4. **Negative HCR handling:** Allow negative HCR values (hazard decreasing). These create NAV upsides that partially offset other impairments.
+
+5. **Per-hazard vs aggregate HCR:** Compute HCR per hazard separately, then combine at the CFADS/NAV stage. Do not aggregate HCR values across hazards — they feed into different BI loss models. HCR feeds Channel 1 (BI); EFR feeds Channel 2 (degradation) independently.
 
 ---
 
@@ -1238,7 +1294,7 @@ Example — calibrating heat stress scaling:
 | All hazards increase with warming | No — frost days, icing events, and cold waves decrease. HCR can be negative (a financial benefit) |
 | HCR is constant over time | No — HCR(t) varies each year as SCVR(t) evolves. It maps directly to annual CFADS adjustments |
 | Compound events are simply additive | No — interacting hazards can amplify each other non-linearly. Phase 1 treats them as additive (conservative simplification) |
-| HCR tells you the dollar impact | No — HCR tells you hazard change. The dollar impact comes from combining HCR with equipment models (EFR, doc 08) and financial models (NAV, doc 09) |
+| HCR tells you the dollar impact | No — HCR tells you hazard change. The dollar impact comes from HCR feeding Channel 1 (BI loss, doc 09) alongside the parallel Channel 2 (EFR from physics models, doc 08) |
 | sfcWind SCVR ≈ 0 means wind farms have no climate risk | Not exactly — wind farms still face heat stress, icing changes, and flood risk through other variables. But the dominant structural fatigue pathway is unaffected |
 | Heat wave SCVR is a valid concept | No — SCVR is computed on raw variable distributions (tasmax, tasmin), not on hazard event counts. "SCVR for heatwave" conflates the variable level with the hazard level |
 | Hail can be computed as pr + sfcWind proxy | No — hail requires CAPE, wind shear (S06), and freezing level height. These are not available in NEX-GDDP. Hail is merged into the SCS bucket |
@@ -1247,7 +1303,7 @@ Example — calibrating heat stress scaling:
 
 ## Next
 
-- [08 - EFR: Equipment Failure & Degradation](08_efr_equipment_degradation.md) — The engineering models that translate HCR into physical equipment degradation
+- [08 - EFR: Equipment Failure & Degradation](08_efr_equipment_degradation.md) — The engineering models that translate climate stress (SCVR) into physical equipment degradation (parallel to HCR)
 - [09 - NAV Impairment Chain](09_nav_impairment_chain.md) — The complete annual pipeline from SCVR to dollar impairment
 - [04 - SCVR Methodology](04_scvr_methodology.md) — How SCVR is computed (the input to this doc)
 

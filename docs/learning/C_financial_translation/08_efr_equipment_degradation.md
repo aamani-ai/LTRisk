@@ -1,6 +1,8 @@
 # EFR — Equipment Failure & Degradation Models
 
-**EFR (Equipment Failure Ratio) translates hazard exposure into physical equipment degradation.** It answers: *"If heat hazard increases 21%, how much faster do solar panels age?"*
+**EFR (Equipment Failure Ratio) translates climate stress into physical equipment degradation using physics-based engineering models.** It answers: *"If mean temperature increases 7.4% (SCVR), how much faster do solar panels age?"*
+
+EFR is computed **directly from SCVR** — it does NOT depend on HCR. EFR and HCR are parallel channels: SCVR branches into HCR (→ Channel 1: business interruption) and EFR (→ Channel 2: equipment degradation) independently.
 
 EFR uses three well-established engineering models — Peck's (thermal aging), Coffin-Manson (thermal cycling fatigue), and Palmgren-Miner (structural fatigue) — to quantify how climate change accelerates the physical wear-out of renewable energy assets.
 
@@ -728,17 +730,17 @@ SOLAR ASSET (Hayhurst):
 
   EFR_peck(t)    = Peck's thermal aging acceleration    (dominant)
   EFR_coffin(t)  = Coffin-Manson thermal cycling fatigue (small)
-  EFR_hcr_bi(t)  = HCR-driven hazard damage             (from doc 07)
-                    (flood, hail, fire — event-based)
 
   EFR_combined(t) = w₁ × EFR_peck(t)
                    + w₂ × EFR_coffin(t)
-                   + w₃ × EFR_hcr_bi(t)
 
   Weights (working estimates):
-    w₁ = 0.70  (Peck's dominates — temperature is the primary driver)
+    w₁ = 0.80  (Peck's dominates — temperature is the primary driver)
     w₂ = 0.20  (thermal cycling contributes, less at Hayhurst)
-    w₃ = 0.10  (event-based hazards are smaller contributors)
+
+  Note: Event-based hazard damage (flood, hail, fire) is modeled
+  separately in Channel 1 (HCR → BI_loss), not in EFR. The two
+  channels are independent — see doc 09 §3.
 ```
 
 ```
@@ -747,28 +749,29 @@ WIND ASSET (Maverick):
   EFR_palmgren(t) = Palmgren-Miner structural fatigue    (≈ 0)
   EFR_thermal(t)  = Minor thermal effects on electronics (small)
   EFR_icing(t)    = Icing reduction benefit               (NEGATIVE)
-  EFR_hcr_bi(t)   = HCR-driven hazard damage              (small)
 
-  EFR_combined(t) = EFR_palmgren(t) + EFR_thermal(t)
-                    + EFR_icing(t) + EFR_hcr_bi(t)
+  EFR_combined(t) = EFR_palmgren(t) + EFR_thermal(t) + EFR_icing(t)
 
   Net: EFR_combined ≈ 0.04 (small — most terms ≈ 0, icing is negative)
+
+  Note: Wind-related hazard damage (e.g., extreme gust events) is
+  modeled in Channel 1 (HCR → BI_loss), not in EFR.
 ```
 
 ### Annual EFR Timeline (Hayhurst SSP5-8.5)
 
 ```
-Year    EFR_peck   EFR_coffin   EFR_hcr_bi   EFR_combined
-────    ────────   ──────────   ──────────   ────────────
-2030    0.05       0.01         0.01         0.05
-2035    0.07       0.02         0.01         0.07
-2040    0.11       0.03         0.02         0.10
-2045    0.13       0.03         0.02         0.12
-2050    0.14       0.03         0.02         0.13
+Year    EFR_peck   EFR_coffin   EFR_combined
+────    ────────   ──────────   ────────────
+2030    0.05       0.01         0.04
+2035    0.07       0.02         0.06
+2040    0.11       0.03         0.09
+2045    0.13       0.03         0.11
+2050    0.14       0.03         0.12
 
-(After applying weights: w₁=0.7, w₂=0.2, w₃=0.1)
+(After applying weights: w₁=0.80, w₂=0.20)
 
-EFR_combined(t) grows from ~5% at 2030 to ~13% by 2050.
+EFR_combined(t) grows from ~4% at 2030 to ~12% by 2050.
 Each year, the panel degrades slightly faster than the year before.
 ```
 
@@ -913,7 +916,9 @@ Generation (% of rated)
 
 ## 11. The Revised Generation Formula
 
-The complete annual generation formula for NB04 combines all effects:
+The complete annual generation formula for NB04 combines all effects.
+
+> **Channel independence:** EFR feeds `climate_degrad(t)` and HCR feeds `hazard_BI(t)` independently. They are parallel channels from SCVR — EFR does not depend on HCR.
 
 ```
 Gen(t) = Gen_bootstrap(t) × (1 − std_degrad)^t × (1 − climate_degrad(t)) × (1 − hazard_BI(t))
@@ -1000,7 +1005,7 @@ CMIP6 projections onto the observed resource distribution.
 | Ea (activation energy) | 0.7 eV | IEC 61215 | Validate for specific panel tech |
 | n (humidity exponent) | 2.66 | Peck (1986) | Check against newer literature |
 | β (Coffin-Manson exponent) | 2.0 | Generic solder | Check for modern lead-free solder |
-| EFR weights (w₁, w₂, w₃) | 0.7, 0.2, 0.1 | Judgment | Calibrate against field data |
+| EFR weights (w₁, w₂) | 0.80, 0.20 | Judgment | Calibrate against field data |
 | S-N slope for wind (m) | 3-5 (steel) | IEC 61400 | Use OEM data if available |
 
 ### Linearised vs Full Exponential
@@ -1037,14 +1042,14 @@ rates from operational PV systems in West Texas.
 | sfcWind SCVR ≈ 0 means wind farms have zero EFR | Nearly zero from Palmgren-Miner, but minor EFR from heat effects on electronics and icing changes. Net EFR ≈ 0.04 |
 | Standard 0.5%/yr degradation already accounts for climate | No — Jordan & Kurtz derived 0.5%/yr from historical data under PAST climates. Future climate adds ON TOP of this baseline rate |
 | Higher humidity always accelerates degradation | For Peck's model yes, but Hayhurst is DRYING (hurs SCVR negative). This partially offsets the temperature-driven acceleration |
-| EFR weights are precisely known | No — the 0.7/0.2/0.1 split is a judgment call. NB04 should explore sensitivity to these weights |
+| EFR weights are precisely known | No — the 0.80/0.20 split (Peck's/Coffin-Manson) is a judgment call. NB04 should explore sensitivity to these weights |
 
 ---
 
 ## Next
 
 - [09 - NAV Impairment Chain](09_nav_impairment_chain.md) — How EFR feeds into the complete annual financial pipeline
-- [07 - HCR: Hazard Change Ratio](07_hcr_hazard_change.md) — Where HCR values come from (the input to EFR)
+- [07 - HCR: Hazard Change Ratio](07_hcr_hazard_change.md) — Where HCR values come from (feeds Channel 1 BI, parallel to EFR)
 - [04 - SCVR Methodology](04_scvr_methodology.md) — How SCVR is computed (the foundation)
 
 Return to [Index](00_index.md) for the full learning guide table of contents.

@@ -368,9 +368,112 @@ Results saved in JSON under `scvr_method_comparison`.
 
 ---
 
+### Section 6f — SCVR Decomposition & Report Card (NEW — March 2026)
+
+`plot_scvr_decomposition()` (line ~1104) runs 5 diagnostic analyses on the pooled ensemble
+data, then summarizes them into a **report card** with a Tail Confidence flag.
+
+```
+  plot_scvr_decomposition(baseline_daily, future_daily, scvr_results)
+         │
+         ├── Diagnostic 1: Per-Model SCVR ──→ IQR, spread stats
+         ├── Diagnostic 2: Tail Metrics ────→ P95/P99/CVaR SCVR ratios
+         ├── Diagnostic 3: GEV ξ per model ─→ tail shape evolution
+         ├── Diagnostic 4: Variance decomp ─→ within vs between-model
+         ├── Diagnostic 5: Leave-one-out ───→ model sensitivity
+         │
+         ├──→ Epoch Report Card (per scenario)
+         │      Uses: mean_scvr, tail_scvr_p95, cvar95_ratio, model_iqr
+         │      Produces: tail_confidence flag (HIGH/MODERATE/LOW/DIVERGENT)
+         │
+         ├──→ Decade Report Cards (per scenario × 3 decades)
+         │      Same metrics computed for each 10-year window
+         │      Baseline is always full 1985-2014 (fixed reference)
+         │      Only future pool changes per decade
+         │
+         ├──→ 4-panel PNG figure
+         ├──→ Console summary tables (decomposition + report card)
+         └──→ scvr_decomposition_<var>.json (all metrics + report cards)
+```
+
+#### Tail Confidence algorithm
+
+```
+  Signs differ (mean vs P95)?  ──yes──→  DIVERGENT
+         │ no                             (mean says one thing, tail says another)
+         ▼
+  Mean-Tail Ratio < 0.3?  ──yes──→  LOW
+         │ no                       (tail barely moves despite mean shift)
+         ▼
+  Model IQR > 2 × |mean|? ──yes──→  LOW
+         │ no                       (models disagree too much)
+         ▼
+  Mean-Tail Ratio > 0.6?  ──yes──→  HIGH
+         │ no                       (tail tracks mean closely, models agree)
+         ▼
+       MODERATE
+```
+
+A guard threshold (|signal| > 0.005) on both mean and P95 prevents false DIVERGENT flags
+when both signals are near the noise floor (e.g., rsds where mean = +0.005 and P95 = -0.0001).
+
+#### Console output
+
+The function prints three tables per variable:
+
+1. **Decomposition table** — existing (pooled SCVR, model median/IQR, tail P95/P99, CVaR, between%, LOO range)
+2. **Epoch Report Card** — mean SCVR, P95, CVaR, M-T ratio, model IQR, Tail Confidence per scenario
+3. **Decade Report Cards** — same metrics for each 10-year window per scenario
+
+Example (tasmax — HIGH confidence):
+
+```
+  ── SCVR Report Card — Epoch (tasmax) ─────────────────────
+             |      SSP245      SSP585
+  Mean SCVR  |     +0.0689     +0.0799
+  P95 SCVR   |     +0.0490     +0.0577
+  CVaR 95%   |     +0.0477     +0.0559
+  M-T Ratio  |        0.71        0.72
+  Model IQR  |      0.0255      0.0244
+  Confidence |        HIGH        HIGH
+```
+
+Example (pr — DIVERGENT):
+
+```
+  ── SCVR Report Card — Epoch (pr) ─────────────────────
+             |      SSP245      SSP585
+  Mean SCVR  |     -0.0010     -0.0068
+  P95 SCVR   |     +0.0192     +0.0204
+  CVaR 95%   |     +0.0235     +0.0287
+  M-T Ratio  |         N/A         N/A
+  Model IQR  |      0.0777      0.1371
+  Confidence |   DIVERGENT   DIVERGENT
+```
+
+#### Decade progression
+
+Decade report cards show confidence evolving over time. For precipitation, the divergence
+between mean and tail *emerges* as years progress:
+
+```
+  ── Decade Report Card — SSP245 (pr) ──────────
+             |     2026-2035     2036-2045     2046-2055
+  Mean SCVR  |       +0.0304       -0.0156       -0.0184
+  P95 SCVR   |       +0.0102       +0.0212       +0.0243
+  Confidence |           LOW     DIVERGENT     DIVERGENT
+```
+
+The function (`compute_report_card()`) lives in `scripts/shared/scvr_utils.py` and is
+imported alongside the other shared utilities.
+
+Output: `scvr_decomposition_<var>.json` and `scvr_decomposition_<var>.png`.
+
+---
+
 ### Section 7 — Save SCVR Summary JSON (expanded)
 
-The JSON now includes 8 sections:
+The JSON now includes 10 sections:
 
 ```json
 {
@@ -394,6 +497,26 @@ The JSON now includes 8 sections:
   },
   "anchor_fits": {
     "ssp245": {"mids": [2030.5, 2040.5, 2050.5], "scvrs": [...], "fit_slope": 0.00168, "r2": 0.994}
+  },
+  "scvr_decomposition": {
+    "per_model_stats": { ... },
+    "tail_metrics": { ... },
+    "variance_decomposition": { ... },
+    "loo_sensitivity": { ... },
+    "epoch_report_card": {
+      "ssp245": {
+        "mean_scvr": 0.068896, "tail_scvr_p95": 0.049005, "cvar95_ratio": 0.047719,
+        "extreme_scvr_p99": 0.047286, "mean_tail_ratio": 0.7112,
+        "model_iqr": 0.025497, "tail_confidence": "HIGH"
+      }
+    },
+    "decade_report_cards": {
+      "ssp245": {
+        "2026-2035": { "mean_scvr": 0.053112, "tail_confidence": "HIGH", "..." : "..." },
+        "2036-2045": { "mean_scvr": 0.070511, "tail_confidence": "HIGH", "..." : "..." },
+        "2046-2055": { "mean_scvr": 0.083068, "tail_confidence": "HIGH", "..." : "..." }
+      }
+    }
   }
 }
 ```
@@ -438,7 +561,10 @@ All outputs saved to `data/processed/presentation/<SITE_ID>/<variable>/`:
 | `exceedance_decades_<var>.png` | Decade-resolved exceedance (3 decades × 2 scenarios) + GEV overlay | Shape change analysis — addresses Prashant's concern |
 | `scvr_progression_<var>.png` | SCVR trajectory: anchor fit (temp) or decade bars (others) | Temporal progression — shows acceleration |
 | `ensemble_stats_<var>.csv` | Annual P10/P50/P90 per scenario (numerical) | Financial modeling, external review |
-| `scvr_summary_<var>.json` | SCVR + decade_scvr + shape_metrics + gev_params + anchor_fits | Downstream pipeline, Notebook 04 |
+| `scvr_proof_<var>.png` | SCVR area visualisation (empirical exceedance, shaded area) | Visual proof that SCVR = area ratio |
+| `scvr_decomposition_<var>.png` | 4-panel decomposition (per-model strip, mean vs tail, GEV xi, variance) | Deep diagnostic — model agreement and tail behavior |
+| `scvr_decomposition_<var>.json` | All decomposition metrics + epoch/decade report cards | Downstream audit trail — Tail Confidence flags |
+| `scvr_summary_<var>.json` | SCVR + decade_scvr + shape_metrics + gev_params + anchor_fits + report cards | Downstream pipeline, Notebook 04 |
 
 ---
 
@@ -450,28 +576,49 @@ Run with all available models (13 for temperature), 1985–2014 baseline, 2026�
 
 | Variable | Models | SSP245 | SSP585 | Delta | Signal |
 |---|---|---|---|---|---|
-| tasmax | 13 | +0.0687 | +0.0807 | +0.012 | Daytime heat stress |
-| tasmin | 13 | (pending) | (pending) | — | Nights warming fastest |
-| tas | 13 | (pending) | (pending) | — | Mean warming |
-| pr | ~13 | (pending) | (pending) | — | Near-term wetter signal |
-| hurs | varies | (pending) | (pending) | — | Drying |
-| sfcWind | ~13 | (pending) | (pending) | — | Negligible |
-| rsds | ~13 | (pending) | (pending) | — | Flat |
+| tasmax | 28 | +0.0689 | +0.0799 | +0.011 | Daytime heat stress |
+| tasmin | 28 | +0.1441 | +0.1736 | +0.030 | Nights warming fastest |
+| tas | 28 | +0.0880 | +0.1042 | +0.016 | Mean warming |
+| pr | 31 | -0.0010 | -0.0068 | -0.006 | Mean near zero; tail signal positive |
+| sfcWind | 28 | -0.0220 | -0.0258 | -0.004 | Slight calming |
+| hurs | 24 | -0.0312 | -0.0359 | -0.005 | Drying |
+| rsds | 27 | +0.0049 | +0.0031 | -0.002 | Near-zero (SSP585 < SSP245, unusual) |
 
-*(Results will be updated when full 7-variable run completes)*
+### SCVR Report Card Summary — Hayhurst Solar (Epoch)
 
-### Decade-Resolved SCVR — tasmax (13 models)
+| Variable | SSP245 SCVR | SSP245 Confidence | SSP585 SCVR | SSP585 Confidence | M-T Ratio |
+|----------|:-----------:|:-----------------:|:-----------:|:-----------------:|:---------:|
+| tasmax   | +0.069      | HIGH              | +0.080      | HIGH              | 0.71      |
+| tasmin   | +0.144      | MODERATE          | +0.174      | MODERATE          | 0.56      |
+| tas      | +0.088      | HIGH              | +0.104      | HIGH              | 0.68      |
+| pr       | -0.001      | DIVERGENT         | -0.007      | DIVERGENT         | N/A       |
+| sfcWind  | -0.022      | MODERATE          | -0.026      | HIGH              | 0.59/0.67 |
+| hurs     | -0.031      | MODERATE          | -0.036      | MODERATE          | 0.56      |
+| rsds     | +0.005      | MODERATE          | +0.003      | MODERATE          | N/A       |
+
+Key observations:
+- **tasmin MODERATE** (not HIGH) — nighttime tail amplification (M-T 0.56) is weaker than
+  daytime (tasmax M-T 0.71). The tail doesn't track the mean as uniformly for minimum
+  temperatures, likely because nighttime cooling has different physical dynamics.
+- **pr DIVERGENT** — mean SCVR near zero but P95 and CVaR are positive. Extreme precipitation
+  is increasing while total precipitation is flat. Pathway B mandatory for flood HCR.
+- **rsds MODERATE** — both mean and tail signals are near the noise floor (< 0.005). Not
+  flagged DIVERGENT because the guard threshold correctly prevents false alarms.
+- **sfcWind SSP585 flips to HIGH** — the stronger forcing pathway produces a clearer,
+  more consistent signal across models.
+
+### Decade-Resolved SCVR — tasmax (28 models)
 
 | Decade | SSP245 | SSP585 | Gap |
 |---|---|---|---|
-| 2026-2035 | +0.051 | +0.060 | 0.009 |
-| 2036-2045 | +0.070 | +0.075 | 0.005 |
-| 2046-2055 | +0.085 | +0.107 | 0.022 |
+| 2026-2035 | +0.053 | +0.058 | 0.005 |
+| 2036-2045 | +0.071 | +0.076 | 0.005 |
+| 2046-2055 | +0.083 | +0.106 | 0.023 |
 
-The scenario gap **widens over time** — from 0.009 in the first decade to 0.022 in the last.
-SSP5-8.5 slope (0.0023/yr) is 38% steeper than SSP2-4.5 (0.0017/yr).
+The scenario gap **widens over time** — from 0.005 in the first decade to 0.023 in the last.
+SSP5-8.5 slope (0.0024/yr) is 59% steeper than SSP2-4.5 (0.0015/yr).
 
-### Shape Metrics — tasmax (from JSON)
+### Shape Metrics — tasmax (28 models, from JSON)
 
 | Period | Mean (°C) | Variance | P95 | P99 | GEV ξ |
 |---|---|---|---|---|---|
@@ -514,4 +661,6 @@ unless the cache is cleared. Probe results in `model_probe_cache.json` are also 
 - [docs/discussion/discussion_annual_scvr_methodology.md](../discussion/discussion_annual_scvr_methodology.md) — Annual SCVR options, anchor fit evidence
 - [docs/learning/04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) — SCVR formula detail
 - [docs/learning/11_distribution_shift_methods.md](../learning/D_technical_reference/11_distribution_shift_methods.md) — how SCVR relates to Wasserstein W1 / AAL / CVaR
-- [scripts/shared/scvr_utils.py](../../scripts/shared/scvr_utils.py) — Shared utility module (THREDDS, SCVR, anchors, GEV)
+- [scripts/shared/scvr_utils.py](../../scripts/shared/scvr_utils.py) — Shared utility module (THREDDS, SCVR, anchors, GEV, `compute_report_card`)
+- [docs/discussion/discussion_scvr_method_equivalence.md §13](../discussion/discussion_scvr_method_equivalence.md) — Companion metrics rationale and Tail Confidence design
+- [docs/discussion/discussion_hcr_pathway_a_vs_b.md](../discussion/discussion_hcr_pathway_a_vs_b.md) — HCR Pathway A vs B: when SCVR-based HCR fails

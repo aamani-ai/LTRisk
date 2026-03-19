@@ -287,6 +287,103 @@ Shared functions: `fit_gpd()`, `exceedance_curve_gpd()` in `scripts/shared/scvr_
 presentation script also prints a 3-method comparison (empirical, normal, direct mean)
 proving they agree to 6 decimal places at n > 10,000.
 
+#### F. SCVR Report Card — Tail Confidence Diagnostic (NEW — March 2026)
+
+SCVR (the headline number) captures the **mean** of the distribution shift. But hazards and
+financial impacts depend on **tail** behavior — which SCVR can miss entirely for some variables
+(see [discussion_scvr_method_equivalence.md §13](../discussion/discussion_scvr_method_equivalence.md)).
+
+The report card answers: **"How much should I trust this SCVR number?"**
+
+```
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                SCVR Decomposition (existing)                    │
+  │  5 diagnostics: per-model spread, P95/P99 tail, GEV ξ,        │
+  │  variance decomposition, leave-one-out sensitivity             │
+  └──────────────────────────┬──────────────────────────────────────┘
+                             │
+                             ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │              SCVR Report Card (NEW)                             │
+  │                                                                 │
+  │  Inputs from decomposition:                                     │
+  │    mean_scvr ─────────────────┐                                 │
+  │    tail_scvr_p95 ─────────────┤                                 │
+  │    cvar95_ratio ──────────────┤─→ compute_report_card()         │
+  │    extreme_scvr_p99 ──────────┤   (scvr_utils.py)              │
+  │    per_model_iqr ─────────────┘                                 │
+  │                                                                 │
+  │  Outputs:                                                       │
+  │    mean_tail_ratio ── P95/Mean (how much tail tracks the mean)  │
+  │    tail_confidence ── HIGH | MODERATE | LOW | DIVERGENT         │
+  │                                                                 │
+  │  Computed at TWO levels:                                        │
+  │    Epoch   (full 30yr: 2026-2055)  ── one card per scenario     │
+  │    Decade  (3 × 10yr windows)      ── shows if trust changes    │
+  └─────────────────────────────────────────────────────────────────┘
+```
+
+**Tail Confidence algorithm:**
+
+```
+  Signs differ (mean vs P95)?  ──yes──→  DIVERGENT
+         │ no                             (mean says one thing, tail says another)
+         ▼
+  Mean-Tail Ratio < 0.3?  ──yes──→  LOW
+         │ no                       (tail barely moves despite mean shift)
+         ▼
+  Model IQR > 2 × |mean|? ──yes──→  LOW
+         │ no                       (models disagree too much)
+         ▼
+  Mean-Tail Ratio > 0.6?  ──yes──→  HIGH
+         │ no                       (tail tracks mean closely, models agree)
+         ▼
+       MODERATE
+```
+
+**What each flag means for downstream use:**
+
+| Flag | Meaning | Pipeline action |
+|------|---------|-----------------|
+| HIGH | Mean and tail agree, models converge. SCVR is a reliable proxy. | Use SCVR directly in Channel 2 (EFR/IUL). HCR Pathway A cross-validates with B. |
+| MODERATE | Partial agreement or moderate model spread. SCVR is usable with caveats. | Use SCVR but flag uncertainty range. Prefer Pathway B for HCR. |
+| LOW | Weak mean-tail link or large model disagreement. SCVR underestimates tail risk. | Do not use SCVR alone. Pathway B mandatory for HCR. Report P95 alongside. |
+| DIVERGENT | Mean and tail have opposite signs. SCVR gives wrong direction. | SCVR is misleading — Pathway B only. Flag in stakeholder reports. |
+
+**Actual results — Hayhurst Solar (Epoch):**
+
+| Variable | SSP245 SCVR | Confidence | SSP585 SCVR | Confidence | M-T Ratio |
+|----------|:-----------:|:----------:|:-----------:|:----------:|:---------:|
+| tasmax   | +0.069      | HIGH       | +0.080      | HIGH       | 0.71      |
+| tasmin   | +0.144      | MODERATE   | +0.174      | MODERATE   | 0.56      |
+| tas      | +0.088      | HIGH       | +0.104      | HIGH       | 0.68      |
+| pr       | -0.001      | DIVERGENT  | -0.007      | DIVERGENT  | N/A       |
+| sfcWind  | -0.022      | MODERATE   | -0.026      | HIGH       | 0.59/0.67 |
+| hurs     | -0.031      | MODERATE   | -0.036      | MODERATE   | 0.56      |
+| rsds     | +0.005      | MODERATE   | +0.003      | MODERATE   | N/A       |
+
+Key observations:
+- **tasmin is MODERATE** (not HIGH) — nighttime temperatures have a less uniform tail response
+  (M-T ratio 0.56, just below the 0.6 threshold). The tail amplification is weaker at night.
+- **pr is DIVERGENT** — mean SCVR is near zero but tail metrics are positive. Pathway B mandatory.
+- **rsds is MODERATE** — both mean and tail signals are very small (< 0.005). Not DIVERGENT
+  because the guard threshold correctly prevents false alarms when both signals are near noise.
+
+**Decade progression reveals emerging divergence:**
+
+For precipitation (pr), the decade report cards show confidence degrading over time
+as the mean drifts negative while tail extremes grow:
+
+```
+  pr SSP245 decade progression:
+    2026-2035:  Mean=+0.030  P95=+0.010  → LOW (ratio 0.34)
+    2036-2045:  Mean=-0.016  P95=+0.021  → DIVERGENT (signs differ)
+    2046-2055:  Mean=-0.018  P95=+0.024  → DIVERGENT (signs differ)
+```
+
+Function: `compute_report_card()` in `scripts/shared/scvr_utils.py` (Section 4).
+Called from: `plot_scvr_decomposition()` in `scripts/presentation/ensemble_exceedance.py`.
+
 #### New Plots
 
 - **Plot E: Decade-Resolved Exceedance** — 2×2 for temperature (top: full empirical, bottom:
@@ -310,6 +407,9 @@ Existing `cmip6_ensemble_scvr.parquet` unchanged. Schema in `data/schema/scvr_sc
 | File | Contents |
 |---|---|
 | `data/processed/scvr/<site>/cmip6_ensemble_scvr.parquet` | Ensemble SCVR, one row per (variable, scenario) |
+| `data/processed/presentation/<site>/<var>/scvr_decomposition_<var>.json` | Per-model SCVR, tail metrics, GEV, variance, LOO, **epoch + decade report cards** |
+| `data/processed/presentation/<site>/<var>/scvr_decomposition_<var>.png` | 4-panel decomposition figure (per-model strip, mean vs tail, GEV xi, variance) |
+| `data/processed/presentation/<site>/<var>/scvr_summary_<var>.json` | SCVR + decade breakdown + shape metrics + GEV/GPD + anchor fits + report cards |
 | `data/cache/thredds/*.nc` | Cached daily NetCDF point extractions |
 | `data/cache/thredds/model_probe_cache.json` | Probe results cache |
 | `docs/exports/03_integrated_scvr_cmip6.html` | Rendered notebook with all outputs |
@@ -457,5 +557,7 @@ Step 2: annual means → P10/P50/P90 across models, per year
 - [docs/learning/10_data_pipeline.md](../learning/D_technical_reference/10_data_pipeline.md) — THREDDS, NetCDF, caching
 - [docs/learning/03_scenarios_and_time_windows.md](../learning/A_climate_foundations/03_scenarios_and_time_windows.md) — why 1985-2014 baseline, why the 2015-2025 gap is intentional
 - [docs/learning/09_nav_impairment_chain.md](../learning/C_financial_translation/09_nav_impairment_chain.md) — full SCVR → HCR → EFR → NAV chain
-- [scripts/shared/scvr_utils.py](../../scripts/shared/scvr_utils.py) — Shared utility module
+- [scripts/shared/scvr_utils.py](../../scripts/shared/scvr_utils.py) — Shared utility module (`compute_scvr`, `compute_report_card`, anchors, GEV/GPD)
+- [docs/discussion/discussion_scvr_method_equivalence.md §13](../discussion/discussion_scvr_method_equivalence.md) — Companion metrics rationale and three design options
+- [docs/discussion/discussion_hcr_pathway_a_vs_b.md](../discussion/discussion_hcr_pathway_a_vs_b.md) — HCR Pathway A vs B: when SCVR-based HCR fails
 - [docs/plan/plan.md](../plan/plan.md) — original build plan for this notebook

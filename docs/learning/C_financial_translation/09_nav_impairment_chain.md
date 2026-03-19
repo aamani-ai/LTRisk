@@ -9,17 +9,19 @@ For the deep dives on individual steps, see [doc 07 (HCR)](07_hcr_hazard_change.
 ## 1. The Chain at a Glance
 
 ```
-SCVR(t)  ───►  HCR(t)  ───►  EFR(t)  ───►  CFADS_adjusted(t)  ───►  NAV impairment
-(climate)      (hazard)      (failure)      (annual cash flow)       (dollar value)
+                ┌──► HCR(t)  → BI_loss(t)    ──┐
+  SCVR(t) ──────┤                               ├──► CFADS_adjusted(t) ──► NAV impairment
+  (climate)     └──► EFR(t)  → IUL / degrad(t) ┘
+                     (physics models)
 
   Phase A: Compute Parameters              Phase B: Apply to Cash Flows
   ──────────────────────────              ──────────────────────────────
-  Sequential: must compute                Simultaneous: EFR + HCR modify
-  SCVR before HCR, HCR before EFR.       every year's cash flow at once.
+  SCVR first, then HCR and EFR           Both channels modify every
+  in PARALLEL from SCVR.                  year's cash flow simultaneously.
   Run once per scenario.                  Run across all years.
 ```
 
-**Critical distinction:** The five steps are NOT five sequential cash flow adjustments. They are a **parameter computation pipeline** (Phase A) whose outputs **modify cash flows simultaneously** at every time step (Phase B).
+**Critical distinction:** HCR and EFR are **parallel channels** — both computed from SCVR independently. EFR does NOT depend on HCR. Their outputs **modify cash flows simultaneously** at every time step (Phase B).
 
 ```
 Year:    2026   2027   ...   2035   ...   2040   ...   2050   ...   2055
@@ -102,7 +104,7 @@ Climate risk can push covenant breach EARLIER than projected.
 
 ## 3. Three Channels of Financial Impact
 
-Climate risk flows to NAV through three distinct channels:
+Climate risk flows to NAV through three distinct channels. **Channel 1 and Channel 2 are parallel** — EFR does not depend on HCR. Both derive from SCVR through different mechanisms (scaling/counting for HCR; physics models for EFR).
 
 ```
 CHANNEL 1: BUSINESS INTERRUPTION (from HCR)
@@ -407,12 +409,12 @@ NOTEBOOK PIPELINE (with annual framing)
 ```
 DATA FLOW:
 
-  THREDDS → daily NetCDF → SCVR(t) → HCR(t) → EFR(t) → CFADS_adj(t) → NAV
-  (NB02)    (cache)        (NB03)    (NB04)    (NB04)    (NB05)         (NB05)
-                             ↑
-                             │
+  THREDDS → daily NetCDF → SCVR(t) ──┬──► HCR(t) ──┐
+  (NB02)    (cache)        (NB03)     │    (NB04)    ├──► CFADS_adj(t) → NAV
+                             ↑        └──► EFR(t) ──┘    (NB05)         (NB05)
+                             │             (NB04)
                     NB01 climate indices
-                    (cross-validation)
+                    (cross-validation for HCR)
 ```
 
 ---
@@ -422,8 +424,8 @@ DATA FLOW:
 | Term | Full Name | What It Is | Computed In |
 |------|-----------|-----------|-------------|
 | **SCVR** | Severe Climate Variability Rating | Fractional shift in exceedance curve area between baseline and future | NB03 |
-| **HCR** | Hazard Change Ratio | Climate-to-hazard translation: SCVR × scaling factor | NB04 |
-| **EFR** | Equipment Failure Ratio | Hazard-to-degradation translation via engineering models (Peck's, C-M, P-M) | NB04 |
+| **HCR** | Hazard Change Ratio | Climate-to-hazard translation: SCVR × scaling factor or direct count → feeds Channel 1 (BI) | NB04 |
+| **EFR** | Equipment Failure Ratio | Climate-to-degradation translation via engineering models (Peck's, C-M, P-M) — computed from SCVR directly | NB04 |
 | **IUL** | Impaired Useful Life | Expected operational lifetime shortened by climate-driven degradation | NB04 |
 | **EUL** | Expected Useful Life | Design lifetime without climate adjustment (25 yrs solar, 25-35 yrs wind) | Input |
 | **NAV** | Net Asset Value | Financial value of the asset, reduced by climate impairment | NB05 |
@@ -446,10 +448,10 @@ WITHOUT SCVR:
   → Investors use qualitative judgments
   → Climate risk is either ignored or overestimated
 
-WITH SCVR → HCR → EFR → NAV:
+WITH SCVR → (HCR + EFR) → NAV:
   "+0.084 tasmax SCVR"               (8.4% distribution shift)
-  → "+0.21 heat HCR"                (21% more heat hazard)
-  → "+0.16 EFR"                     (16% faster aging via Peck's)
+  → Channel 1: "+0.21 heat HCR"    (21% more heat hazard → BI loss)
+  → Channel 2: "+0.16 EFR"         (16% faster aging via Peck's → IUL)
   → "IUL = 20.7 years"              (4.3 years lost)
   → "$5.9M NAV impairment"          (9.8% of $60M asset)
 

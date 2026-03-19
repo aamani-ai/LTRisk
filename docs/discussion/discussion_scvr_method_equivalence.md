@@ -865,5 +865,445 @@ near-zero pooled SCVR is fragile and depends on which models are included.
 
 ---
 
+---
+
+## 13. Beyond Mean SCVR: What Should Travel with the Headline Number?
+
+*Added 2026-03-19 — prompted by the §11 decomposition results. If SCVR = mean ratio,
+and the mean can miss tail signals entirely (precipitation) or overstate them 4× (humidity),
+what do we do about it? This section explores three options honestly.*
+
+### 13a. The Problem, Stated Plainly
+
+§11 proved that SCVR = mean ratio is **mathematically correct but sometimes practically
+misleading**. Here are the four failure modes we found at Hayhurst Solar (SSP2-4.5):
+
+| Failure Mode | Variable | SCVR Says | Tail Says | Gap |
+|---|---|---|---|---|
+| Tail fattening hidden by flat mean | **pr** | −0.1% (no change) | P95 = +1.9%, CVaR = +2.4% | SCVR misses signal entirely — **opposite sign** |
+| Mean overstates tail by 4× | hurs | −3.1% (drying) | P99 = −0.7% (extremes persist) | Extreme humidity barely changes |
+| Tail moves opposite to mean | rsds | +0.5% (slight increase) | P95 = −0.0% (tails decrease) | Direction wrong for tail |
+| Mean overstates tail by 30% | tasmax | +6.9% (warming) | P95 = +4.9%, CVaR = +4.8% | Conservative bias — acceptable |
+
+*(Source: `scvr_decomposition_*.json`, SSP2-4.5 values. See §11a for the full 7-variable table.)*
+
+**The downstream consequence:** When SCVR feeds into HCR via Pathway A
+(`HCR ≈ SCVR × scaling_factor`), a misleading SCVR produces a misleading HCR.
+For precipitation: `HCR ≈ (−0.001) × 2.5 = −0.0025` — suggesting extreme rain
+events decreased. The actual Pathway B count shows they increased. Every downstream
+number (EFR, IUL, CFADS) inherits the error.
+
+**The design question:** *What do we do about this?*
+
+---
+
+### 13b. Wait — Doesn't Pathway B Already Fix This?
+
+**Yes, for the pipeline computation.** HCR Pathway B (direct hazard counting from daily
+data) never touches SCVR. It computes E[h(X)] directly — counting how many days exceed
+each hazard threshold — and avoids Jensen's inequality entirely. This is already
+implemented for heat_wave_days, frost_days, rx5day, fwi_mean (see
+[discussion_jensen_inequality_hcr_scvr.md](discussion_jensen_inequality_hcr_scvr.md) §5).
+
+**But Pathway B does not fix everything:**
+
+1. **Communication layer:** SCVR is the headline number investors, asset managers, and
+   reviewers see first. If it says "0% change in precipitation," they conclude nothing
+   changed — even though Pathway B shows +20% more extreme rain days downstream. The
+   headline misleads before anyone reaches the HCR detail.
+
+2. **Pathway A fallback:** For hazards where Pathway B hasn't been implemented, or for
+   quick screening of new sites/variables, `HCR ≈ SCVR × scaling_factor` is the fallback.
+   If SCVR ≈ 0 (precipitation), Pathway A produces 0 regardless of the scaling factor.
+   No linear correction can fix a zero input.
+
+3. **Cross-validation signal:** The Jensen's inequality doc recommends comparing Pathway A
+   vs Pathway B. But running Pathway B is expensive (needs full daily data). If something
+   flagged SCVR as "unreliable for this variable" upfront, you'd know to skip Pathway A
+   and go straight to B — saving time and preventing silent errors.
+
+**Bottom line:** Pathway B fixes the computation. But SCVR is also a communication and
+screening tool, and in those roles it currently fails silently for some variables.
+
+---
+
+### 13c. Three Options
+
+#### Option A: SCVR + Companion Metrics (Incremental)
+
+Keep SCVR as the scalar headline. Add tail-aware companion metrics alongside it.
+SCVR stays unchanged; the companions flag when it's untrustworthy.
+
+**What it looks like in practice — the "SCVR Report Card":**
+
+```
+HAYHURST SOLAR — tasmax (SSP2-4.5, 2026-2055 vs 1985-2014)
+════════════════════════════════════════════════════════════
+  Headline SCVR (mean):     +6.9%    ← pipeline input
+  ──────────────────────────────────────────────────
+  Tail P95 SCVR:            +4.9%    ← 71% of mean
+  Tail P99 SCVR:            +4.7%    ← 68% of mean
+  CVaR 95% SCVR:            +4.8%    ← 69% of mean
+  ──────────────────────────────────────────────────
+  Mean-Tail Ratio:          0.71     ← mean overstates tail
+  Model Agreement (IQR):    2.5%     ← 28 models agree
+  ──────────────────────────────────────────────────
+  Tail Confidence:          HIGH
+  Interpretation:  Mean is conservative for tail risk.
+                   SCVR safe for pipeline use.
+```
+
+```
+HAYHURST SOLAR — pr (SSP2-4.5, 2026-2055 vs 1985-2014)
+════════════════════════════════════════════════════════════
+  Headline SCVR (mean):     −0.1%    ← pipeline input
+  ──────────────────────────────────────────────────
+  Tail P95 SCVR:            +1.9%    ← OPPOSITE SIGN
+  Tail P99 SCVR:            +2.1%    ← OPPOSITE SIGN
+  CVaR 95% SCVR:            +2.4%    ← OPPOSITE SIGN
+  ──────────────────────────────────────────────────
+  Mean-Tail Ratio:          N/A      ← signs differ
+  Model Agreement (IQR):    7.8%     ← models disagree strongly
+  ──────────────────────────────────────────────────
+  Tail Confidence:          DIVERGENT
+  ⚠ WARNING: Mean and tail diverge. Use Pathway B for
+    precipitation-dependent hazards. Do not use Pathway A.
+```
+
+**All 7 variables (SSP2-4.5):**
+
+| Variable | Mean SCVR | P95 SCVR | CVaR 95% | Mean-Tail Ratio | IQR | Confidence |
+|----------|:---------:|:--------:|:--------:|:---------------:|:---:|:----------:|
+| tasmax   | +6.9% | +4.9% | +4.8% | 0.71 | 2.5% | HIGH |
+| tasmin   | +14.4% | +8.0% | +7.6% | 0.56 | 5.5% | HIGH |
+| tas      | +8.8% | +6.0% | +5.8% | 0.68 | 3.6% | HIGH |
+| **pr**   | **−0.1%** | **+1.9%** | **+2.4%** | **N/A** | **7.8%** | **DIVERGENT** |
+| sfcWind  | −2.2% | −1.3% | −1.1% | 0.59 | 2.2% | MODERATE |
+| hurs     | −3.1% | −1.8% | −1.1% | 0.58 | 4.2% | MODERATE |
+| **rsds** | **+0.5%** | **−0.0%** | **−0.0%** | **N/A** | 0.6% | **OPPOSITE** |
+
+Three behavioral classes emerge:
+
+```
+Class A — Temperature family (tasmax, tasmin, tas):
+  Mean overstates tail. Conservative bias. SCVR sufficient for pipeline.
+  Companions useful for communication but not essential.
+
+Class B — Divergent (pr, rsds):
+  Mean and tail disagree in direction or magnitude. SCVR alone is misleading.
+  Companions are ESSENTIAL. Pathway B is mandatory for these variables.
+
+Class C — Moderate gap (hurs, sfcWind):
+  Mean overstates tail significantly. Extremes persist more than mean suggests.
+  Companions add important nuance. Pathway B preferred but Pathway A usable
+  with awareness of the gap.
+```
+
+**Pros:** No whitepaper changes. SCVR scalar feeds cleanly into existing
+SCVR → HCR → EFR → CFADS chain. Companions are additive — adopt incrementally.
+Most companion data already exists in the decomposition JSONs.
+
+**Cons:** Still reporting a single misleading headline number for Class B variables.
+Users have to read the companion table to know SCVR is untrustworthy. If they don't
+look at the companions, they get the wrong answer.
+
+---
+
+#### Option B: Redesign SCVR to Be Tail-Aware (Fundamental Rethink)
+
+Replace or augment the mean-based SCVR with a metric that captures tail behavior
+by design, rather than requiring separate companions to flag when the mean fails.
+
+**Possible redesigns:**
+
+**B1. Tail-Weighted SCVR:**
+
+Instead of equal-weighting all quantiles (which gives the mean), apply a weight
+function that emphasizes the tail:
+
+```
+SCVR_current  = ∫₀¹ Q(p) dp                    (uniform weight → mean)
+
+SCVR_weighted = ∫₀¹ w(p) × Q(p) dp             (tail-emphasizing weight)
+
+Where w(p) could be:
+  • w(p) = 1/(1-p)  for p > 0.90, else 1    (CVaR-style: 10× weight on top decile)
+  • w(p) = exp(2p)                            (exponential: smoothly increasing)
+  • w(p) = 1 for p < 0.95, 5 for p ≥ 0.95   (step: 5× weight on P95+)
+```
+
+This would make precipitation's SCVR non-zero because the fattening upper tail
+would get amplified. Temperature's SCVR would decrease slightly (tail shifts less
+than mean). The number would still be a single scalar.
+
+**Trade-off:** The weighting function is a design choice. Different weights give
+different numbers. "What weight?" becomes a new question with no universal answer.
+For precipitation, you'd want to emphasize the right tail (flooding). For humidity,
+the right tail (extreme moisture → corrosion). For wind, the right tail (structural).
+This is inherently **hazard-specific** — which undermines the idea of a single
+universal climate shift metric.
+
+**B2. Quantile-Band SCVR:**
+
+Compute SCVR separately for bands of the distribution:
+
+```
+SCVR_bulk  = ratio of areas for quantiles 0–75%
+SCVR_upper = ratio of areas for quantiles 75–95%
+SCVR_tail  = ratio of areas for quantiles 95–100%
+
+Report as a profile: [SCVR_bulk, SCVR_upper, SCVR_tail]
+```
+
+For precipitation this would show: `[−0.2%, +0.8%, +2.4%]` — immediately
+revealing that the tail is fattening while the bulk stays flat.
+
+**Trade-off:** SCVR is no longer a single number. The downstream pipeline
+(HCR Pathway A) would need to decide which band to use — or use a weighted
+combination, which circles back to B1.
+
+**B3. Two-Number SCVR:**
+
+The minimum extension: report both mean SCVR and tail SCVR (CVaR 95%) as a pair:
+
+```
+SCVR = (mean_shift, tail_shift) = (−0.1%, +2.4%) for precipitation
+```
+
+When mean and tail agree (temperature), this is redundant but harmless.
+When they disagree (precipitation), the pair immediately communicates the divergence.
+
+**Trade-off:** Every formula downstream that uses SCVR now receives two numbers.
+Simpler than a full vector but still requires pipeline changes.
+
+**Pros of Option B:** The metric itself tells the truth — no need for a separate
+"companion" warning system. A reader who sees only the headline gets the right picture.
+
+**Cons of Option B:** Breaks the existing pipeline. Requires redefining SCVR in the
+whitepaper. Weight function choice (B1) or band boundaries (B2) introduce new design
+decisions. May be variable-specific, losing the "one universal climate shift metric"
+property.
+
+---
+
+#### Option C: Variable-Specific Metric Selection (Pragmatic)
+
+Accept that no single metric works for all variables. Use SCVR for variables where
+mean ≈ tail (temperature family), and use a different metric for variables where
+they diverge (precipitation, solar).
+
+```
+Temperature (Class A):  → SCVR (mean-based)   — proven adequate
+Precipitation (Class B): → CVaR 95% ratio      — directly measures tail shift
+Solar (Class B):         → SCVR (mean-based)   — signal is tiny either way
+Humidity (Class C):      → SCVR + P99 flag     — mean with tail caveat
+Wind (Class C):          → SCVR                — signal is small, adequate
+```
+
+**Pros:** Uses the best tool for each job. No false universality. Precipitation
+gets a metric that actually captures its signal.
+
+**Cons:** Loses the elegance of "one metric, all variables." Reporting becomes more
+complex. The whitepaper would need to explain why different variables use different
+metrics. Comparisons across variables become harder ("tasmax shifted 6.9% but pr
+shifted 2.4% on a different metric" — apples vs oranges).
+
+---
+
+### 13d. Methods from the Landscape That Could Help
+
+Evaluating methods from the
+[distribution shift landscape](../learning/D_technical_reference/11_distribution_shift_methods.md)
+against four criteria for our use case:
+
+1. Captures tail divergence (the precipitation problem)
+2. Detects shape change vs pure shift
+3. Interpretable to non-quant stakeholders (investors, asset managers)
+4. Computationally cheap (we already have the ~300K pooled daily values)
+
+**Already computed — no code changes needed:**
+
+| Method | From Landscape | In Our Code? | What It Adds |
+|--------|---------------|:------------:|--------------|
+| P95/P99 SCVR | Finance (VaR analog) | Yes — `tail_scvr_p95` | Is P95 shifting at the same rate as the mean? |
+| CVaR 95% ratio | Finance (Expected Shortfall) | Yes — `cvar95_ratio` | Best single tail summary: average above P95 |
+| Per-model IQR | Model uncertainty | Yes — `iqr` in `per_model_stats` | How much do models disagree? |
+
+**Worth adding (cheap, high value):**
+
+| Method | From Landscape | Computation | What It Adds |
+|--------|---------------|-------------|--------------|
+| KS 2-sample test | ML (§6) | `scipy.stats.ks_2samp(base, fut)` — one line | Flags shape change vs pure shift. If KS is large but SCVR is small → distribution reshaped, not shifted. Exactly the pr pattern. |
+| Delta skewness | Statistics | `skew(fut) - skew(base)` — one line | Confirms asymmetric reshaping. Positive Δskew for pr = right tail fattening. |
+| Return-period shift | Insurance (§4) | `np.mean(fut > np.percentile(base, 95))` | "Baseline 1-in-20 event becomes 1-in-X." Extremely interpretable for investors. No fitting needed at n=300K. |
+
+**Not worth adding:**
+
+| Method | Why Not |
+|--------|---------|
+| KL / Jensen-Shannon / MMD | No physical-unit interpretability. Binning or kernel sensitivity. Abstract numbers that don't answer "by how much?" |
+| PSI | Binned KL divergence — same problems, no advantage over KS test |
+| Full GEV/GPD as companions | Noisy at 30 block maxima per model (§11d showed this). Keep as diagnostic, not companion. |
+| Raw Wasserstein W1 | SCVR already is this (normalized, signed). Redundant. |
+
+---
+
+### 13e. If We Go With Option A: The Proposed Companion Set
+
+**Tier 1 — always report alongside SCVR:**
+
+| Companion | What It Answers | Already in Code? |
+|-----------|----------------|:----------------:|
+| P95 SCVR | Is the 95th percentile shifting at the same rate as the mean? | Yes |
+| CVaR 95% SCVR | What happens to the average of the extreme tail? | Yes |
+| Mean-Tail Ratio | How much does the mean over/understate the tail? | Trivially derived: `p95_scvr / mean_scvr` |
+| Model IQR | Do models agree on the direction and magnitude? | Yes |
+| Tail Confidence flag | Single-word summary: should I trust mean SCVR for this variable? | New — algorithmic, ~10 lines |
+
+**Tier 2 — report when Tier 1 flags a concern:**
+
+| Companion | When to Report | Already in Code? |
+|-----------|---------------|:----------------:|
+| P99 SCVR | When P95 and mean diverge | Yes |
+| KS D-statistic + p-value | When Tail Confidence is LOW/DIVERGENT | New — one `scipy` call |
+| Delta skewness | When shape change suspected | Partial — exists per-decade, need pooled |
+| Return-period shift | For investor-facing communication | New — a few lines |
+
+**Tail Confidence flag algorithm (proposed):**
+
+```
+if sign(mean_scvr) != sign(tail_scvr_p95):  → DIVERGENT
+elif abs(mean_tail_ratio) < 0.3:            → LOW
+elif iqr > 2 × abs(mean_scvr):             → LOW (models disagree more than signal)
+elif mean_tail_ratio > 0.6:                 → HIGH
+else:                                       → MODERATE
+```
+
+**Pipeline impact:**
+- Already computed: P95, P99, CVaR ratios, per-model IQR (in every `scvr_decomposition_*.json`)
+- New code: ~20 lines total for Tail Confidence flag, KS test, delta skewness, return-period shift
+- No changes to `compute_scvr()` itself. No changes downstream (HCR/EFR/CFADS)
+
+---
+
+### 13f. Recommendation: Option A — But as Audit Trail, Not Fix
+
+After tracing how SCVR actually flows through the full financial pipeline
+(SCVR → HCR → EFR → CFADS → NAV; see
+[08_efr_equipment_degradation.md](../learning/C_financial_translation/08_efr_equipment_degradation.md),
+[09_nav_impairment_chain.md](../learning/C_financial_translation/09_nav_impairment_chain.md)),
+**the pipeline is already doing the right thing.** Here is why:
+
+**The two financial impact channels have different SCVR exposure:**
+
+```
+Channel 2 — IUL Shortening via EFR (86% of NAV impact, DOMINANT)
+──────────────────────────────────────────────────────────────────
+  Uses: SCVR_temperature directly in Peck's equation
+        AF = exp(Ea/kB × (1/T_ref - 1/T_stress))
+
+  SCVR problem:   Mean overstates tail by 30% (§11c)
+  Financial effect: Peck's is exponential in temperature.
+                    Overstatement → HIGHER degradation estimate
+                    → CONSERVATIVE safety margin.
+
+  The "flaw" in mean-based SCVR produces a financial safety margin
+  in the dominant channel. Fixing SCVR would make the model LESS
+  conservative — the wrong direction for risk assessment.
+
+Channel 1 — Business Interruption via HCR (20% of NAV impact)
+──────────────────────────────────────────────────────────────────
+  Uses: HCR Pathway B for 5 key hazards
+        (heat_wave_days, frost_days, rx5day, fwi_mean, tropical_nights)
+
+  SCVR problem:   Pathway A (HCR ≈ SCVR × scaling) fails for pr
+  Financial effect: Doesn't matter — Pathway B bypasses SCVR entirely.
+                    Counts threshold crossings from daily data.
+                    Precipitation's tail fattening IS captured.
+
+  The variable where SCVR fails most (pr) feeds through
+  Pathway B, not Pathway A. The failure has no financial impact.
+```
+
+**Conclusion:** No channel in the current pipeline produces wrong financial
+numbers because of SCVR's mean-based limitation.
+
+- Channel 2 (86%): Mean overstatement is conservative. No fix needed.
+- Channel 1 (20%): Pathway B already handles the tail correctly. No fix needed.
+- Investors never see raw SCVR — they see NAV impairment ($M), DSCR, IUL shortening.
+
+**So why Option A at all?** Because the pipeline works *today* but is not
+*self-documenting*. A reviewer who sees `SCVR_pr = -0.1%` has to trust that
+Pathway B handles it downstream. The companion metrics make this explicit:
+
+```
+Without companions:
+  SCVR_pr = -0.1%
+  → Reviewer asks: "Does precipitation really not change?"
+  → Must trace through Pathway B code to verify tail is captured
+  → Audit cost: hours
+
+With companions:
+  SCVR_pr = -0.1%  |  P95 = +1.9%  |  Tail Confidence: DIVERGENT
+  → Reviewer sees the gap immediately
+  → Sees that Pathway B is mandatory (and confirms it's used)
+  → Audit cost: seconds
+```
+
+**Why NOT Option B (redesign SCVR):**
+The dominant financial channel (EFR, 86%) uses Peck's exponential model with
+temperature SCVR. Mean overstatement produces a conservative degradation estimate.
+A tail-weighted SCVR would *reduce* the Peck's degradation factor — making the
+model less conservative. For risk assessment, that's the wrong direction.
+
+**Why NOT Option C (variable-specific metrics):**
+The only variable where SCVR accuracy matters financially is temperature — and
+temperature SCVR is Class A (trustworthy, conservative). Precipitation SCVR
+doesn't matter because Pathway B handles it. The added complexity of per-variable
+metrics buys no financial accuracy improvement.
+
+**When to revisit this recommendation:**
+- If a new site shows temperature tails behaving unlike Class A (mean doesn't overstate)
+- If new EFR models are added that consume precipitation or humidity SCVR directly
+- If Pathway B coverage expands and Pathway A is retired entirely (companions
+  become unnecessary for the cross-validation role)
+
+The Tail Confidence flag (§13e) will automatically surface these triggers.
+
+---
+
+### 13g. Open Questions
+
+This section is a discussion, not a decision. Before committing to any option:
+
+1. **Does the variable-class pattern generalize?** We've only tested Hayhurst Solar.
+   If precipitation shows the same mean-tail divergence at a second site, the pattern
+   is robust. If it doesn't, the companion design may need to be site-specific too.
+
+2. **Who is the primary consumer?** If the audience is the financial model (pipeline),
+   Pathway B already handles tails correctly — Option A companions are sufficient for
+   early-warning. If the audience is an investor reading a report, Options B or C may
+   better serve clarity.
+
+3. **Is "one metric, all variables" worth preserving?** SCVR's power is its
+   universality: same formula, same interpretation, any climate variable. Options B
+   and C trade universality for accuracy. The whitepaper currently leans on universality
+   as a selling point. Is that worth defending?
+
+4. **Can the Tail Confidence flag be validated?** The proposed algorithm is ad hoc.
+   It should be tested against Pathway B results: when the flag says DIVERGENT, does
+   Pathway A actually produce a wrong HCR? When it says HIGH, does Pathway A agree
+   with B? This calibration requires running both pathways on multiple variables
+   at multiple sites.
+
+---
+
+*This section is exploratory. No implementation decisions have been made. The
+decomposition data in `data/processed/presentation/hayhurst_solar/*/scvr_decomposition_*.json`
+provides the empirical foundation. Next step: validate patterns at a second site, then
+choose between Options A, B, C — or a hybrid.*
+
+---
+
 *End of discussion. Code changes: `compute_cvar()` and `fit_gev_single_model()` added
 to `scvr_utils.py`; `plot_scvr_decomposition()` added to `ensemble_exceedance.py`.*
