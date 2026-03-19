@@ -82,6 +82,51 @@
       "description": "Number of valid (non-null) future days used in computation"
     }
   },
+  "decade_output": {
+    "description": "Decade-resolved SCVR and shape metrics, added to address temporal progression analysis.",
+    "files": {
+      "cmip6_scvr_decade.parquet": {
+        "description": "SCVR computed for each 10-year window within the future period, using all ensemble models pooled.",
+        "columns": {
+          "site_id": {"dtype": "str", "description": "Site identifier matching sites.json"},
+          "scenario": {"dtype": "str", "description": "Climate scenario (ssp245, ssp585)"},
+          "variable": {"dtype": "str", "description": "Climate variable identifier"},
+          "decade": {"dtype": "str", "description": "Decade label (e.g. 2026-2035, 2036-2045, 2046-2055)"},
+          "scvr": {"dtype": "float32", "description": "SCVR for this decade vs full baseline"},
+          "area_baseline": {"dtype": "float32", "description": "Baseline exceedance area"},
+          "area_future": {"dtype": "float32", "description": "Future exceedance area for this decade"},
+          "n_future_days": {"dtype": "int32", "description": "Number of pooled daily values in this decade"}
+        }
+      },
+      "cmip6_shape_metrics.parquet": {
+        "description": "Distribution shape metrics per decade and baseline — variance, skewness, percentiles, and GEV parameters.",
+        "columns": {
+          "site_id": {"dtype": "str", "description": "Site identifier"},
+          "scenario": {"dtype": "str", "description": "Climate scenario (or 'baseline')"},
+          "variable": {"dtype": "str", "description": "Climate variable identifier"},
+          "period": {"dtype": "str", "description": "Time period label (baseline, 2026-2035, etc.)"},
+          "mean": {"dtype": "float32", "description": "Mean of daily values in the period"},
+          "variance": {"dtype": "float32", "description": "Variance of daily values"},
+          "skewness": {"dtype": "float32", "description": "Skewness (Fisher) of daily values"},
+          "p95": {"dtype": "float32", "description": "95th percentile"},
+          "p99": {"dtype": "float32", "description": "99th percentile"},
+          "gev_shape": {"dtype": "float32", "description": "GEV shape parameter ξ (temperature vars only, null otherwise)"},
+          "gev_loc": {"dtype": "float32", "description": "GEV location parameter μ"},
+          "gev_scale": {"dtype": "float32", "description": "GEV scale parameter σ"}
+        }
+      }
+    },
+    "variable_strategy": {
+      "anchor_3_linear": {
+        "applies_to": ["tasmax", "tasmin", "tas"],
+        "description": "Split future into 3 non-overlapping decades, compute SCVR per decade as anchors, fit linear trend, interpolate to annual values."
+      },
+      "period_average": {
+        "applies_to": ["pr", "hurs", "sfcWind", "rsds"],
+        "description": "Use decade-level SCVR directly (no interpolation). These variables are too noisy for linear anchor fitting."
+      }
+    }
+  },
   "downstream_use": {
     "hcr_computation": "SCVR feeds into HCR (Hazard Change Ratio) via hazard-specific scaling factors derived from published literature (notebook 02).",
     "efr_computation": "SCVR feeds into EFR (Equipment Failure Ratio) via Peck's Model, Coffin-Manson, and Palmgren-Miner engineering models (notebook 02).",

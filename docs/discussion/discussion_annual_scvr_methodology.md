@@ -757,6 +757,14 @@ The only thing that changes is the **windowing strategy** for the future pool.
    But the annual HCR-driven BI losses DO care about year-by-year values.
    Which use case drives the resolution requirement?
 
+6. **Empirical vs parametric exceedance at anchor pool sizes?**
+   Doc 04 argues empirical exceedance is sufficient at n=65,700 (full window).
+   With anchors, n drops to ~21,900 (10-year) or ~10,950 (5-year).
+   The body of the distribution is still well-covered, but tail percentiles
+   (99th+) get rougher. Does this matter for SCVR (an area/mean metric)?
+   Should we test empirical vs GEV-fitted SCVR at different pool sizes?
+   See Section 14.6 for analysis.
+
 ---
 
 ## 14. Experimental Evidence (2026-03-10)
@@ -764,6 +772,11 @@ The only thing that changes is the **windowing strategy** for the future pool.
 > **Script:** `scripts/experiments/annual_scvr_test.py`
 > **Data:** Hayhurst Solar, SSP5-8.5, 6 models, cached NEX-GDDP-CMIP6 data
 > **Plots:** `scripts/experiments/output/annual_scvr_comparison_<var>_ssp585.png`
+>
+> **Follow-up:** The variable-specific strategy, decade analysis, and shape metrics were
+> implemented in NB03 and the presentation script based on these results.
+> See [discussion_decade_shape_analysis.md](discussion_decade_shape_analysis.md) for
+> the full decade-resolved analysis, team feedback response, and first results with 13 models.
 
 We ran the experiment described in Section 4 for all 7 climate variables,
 computing SCVR four ways (per-year, 3-anchor, 6-anchor, full-window) using
@@ -908,6 +921,72 @@ VARIABLE-SPECIFIC STRATEGY (UPDATED RECOMMENDATION)
 
 5. **3 anchors ≈ 6 anchors for temperature.** No benefit to 5-year windows
    over 10-year windows when the underlying trend is strongly linear.
+
+### 14.6 Empirical vs Parametric Exceedance at Anchor Pool Sizes
+
+The SCVR methodology (doc 04, §3e) argues that empirical exceedance curves are
+sufficient because n = 65,700. With the anchor method, the pool size per anchor
+drops. Does this change the conclusion?
+
+```
+POOL SIZE BY METHOD
+
+  Full window (NB03 now):    6 models × 30 yrs × 365 = ~65,700
+  10-year anchor (Option C): 6 models × 10 yrs × 365 = ~21,900
+  5-year anchor (variant):   6 models ×  5 yrs × 365 = ~10,950
+  Per-year (Option A):       6 models ×  1 yr  × 365 =  ~2,190
+
+  With 34 models:
+  10-year anchor:           34 models × 10 yrs × 365 = ~124,100
+  5-year anchor:            34 models ×  5 yrs × 365 =  ~62,050
+```
+
+**Why empirical still works for anchors:**
+
+SCVR is an **area metric** (trapezoid integral = mean of the distribution), not a
+tail statistic. The trapezoid error scales as O(1/n²):
+
+```
+  n = 65,700  →  error ≈ 2.3 × 10⁻¹⁰   (full window)
+  n = 21,900  →  error ≈ 2.1 × 10⁻⁹    (10-year anchor)
+  n = 10,950  →  error ≈ 8.3 × 10⁻⁹    (5-year anchor)
+  n =  2,190  →  error ≈ 2.1 × 10⁻⁷    (per-year)
+
+  All negligible. Trapezoid error is not the issue at any pool size.
+```
+
+The real question is **sampling variability** — whether the empirical exceedance
+curve at lower N faithfully represents the underlying distribution. For the body
+of the distribution (p = 0.1 to 0.9, where ~80% of the SCVR area sits), even
+n = 2,190 is adequate. The tails (p < 0.01) get rough at low N — the 99th
+percentile is estimated from ~22 points at n = 2,190.
+
+But SCVR doesn't weight the tails specially. A GEV or gamma fit would smooth
+the tails, but the integrated area (which is what SCVR measures) would barely
+change because the tails contribute so little to the total area.
+
+```
+WHERE A PARAMETRIC FIT WOULD MATTER VS WHERE IT WOULDN'T
+
+  Metric          Tail-sensitive?   Parametric needed at low N?
+  ─────────────────────────────────────────────────────────────
+  SCVR (area)     No (= mean)       No — empirical is sufficient
+  CVaR (5%)       Yes               Yes — would benefit from GEV fit
+  Return period   Yes (extreme)     Yes — EVT is the standard tool
+  KS statistic    No (max gap)      No — empirical is standard
+```
+
+**Conclusion:** Empirical exceedance remains the right choice for SCVR at all
+anchor pool sizes we'd realistically use (n ≥ 10,000). The argument in doc 04
+holds — the only number that changes is n, and SCVR's area-based nature makes
+it insensitive to tail roughness. If we later add tail-focused metrics (CVaR,
+return periods) alongside SCVR, those would benefit from parametric fitting —
+but that's a different metric, not a different SCVR.
+
+**Potential validation experiment:** Compute SCVR two ways for the same anchor —
+(a) empirical as now, (b) GEV-fitted exceedance curve — and compare. If the
+values are within 1%, the empirical choice is confirmed. This has not been run
+yet but would be straightforward to add to `scripts/experiments/annual_scvr_test.py`.
 
 ---
 

@@ -1,6 +1,6 @@
 # LTRisk — Project TODO
 
-> Last updated: 2026-03-09
+> Last updated: 2026-03-13
 
 ---
 
@@ -39,11 +39,25 @@
 - [x] Plots: exceedance curves, bar chart, spaghetti, strip plot
 - [ ] **Run notebook end-to-end** — verify all cells execute without error
 - [ ] Verify SCVR signs make physical sense (tasmax +, sfcWind ~0, SSP585 > SSP245)
+- [x] **Expand ensemble from 6 to all available models** (MAX_MODELS=None, 11 confirmed)
+- [x] **Add decade-resolved SCVR** — compute SCVR per decade (2026-35, 2036-45, 2046-55) to show temporal progression
+- [x] **Add anchor-based annual SCVR** — 3-anchor linear fit for temperature variables, decade bars for others
+- [x] **Add shape/tail metrics** — variance, skewness, P95, P99, GEV fit per decade + baseline
+- [x] **Add decade exceedance plots** — curves per decade showing tail fanning (addresses Prashant's shape concern)
+- [x] **Add SCVR progression plots** — anchor diamonds + linear fit for temperature, decade bars for others
+- [x] **Add shape metrics table/plot** — shows P99 and variance change over decades
+- [x] **Variable-specific SCVR strategy** — anchor_3_linear for temperature, period_average for precip/wind/radiation
+- [x] **Create shared utility module** (`scripts/shared/scvr_utils.py`) — consolidates duplicated functions
+- [x] **Update presentation script** — decade exceedance, SCVR progression plots, expanded JSON summary
+- [x] **Add GPD/GEV fit diagnostics** — KS test, log-likelihood, AIC for all parametric fits; KS annotation on tail-zoom; GPD Peaks-Over-Threshold in same probability space as empirical
+- [x] **Add SCVR method comparison** — empirical vs normal vs direct mean proof of equivalence (all agree to 6dp)
+- [x] **Fix "None models" bug** — title showed "up to None models" when MAX_MODELS=None
+- [x] **Document decade parquet schema** (`data/schema/scvr_schema.json`)
 - [ ] **CORRECTION: Refactor SCVR from 5 target years to annual computation**
   - Current: 20-year rolling windows at 5 discrete years (2030, 2035, 2040, 2045, 2050)
   - Target: Annual SCVR(t) for each year 2026–2055, per team framework annual tables
   - Annual SCVR maps directly to CFADS cash flow adjustments at each time step
-  - Consider: use all 34 available models instead of 6 for per-year statistical robustness
+  - Partially addressed by anchor-based annual SCVR (3-anchor linear fit interpolates to 30 annual values)
   - Reference: `docs/learning/C_financial_translation/07_hcr_hazard_change.md` §3, `docs/learning/C_financial_translation/09_nav_impairment_chain.md` §1
 
 ### Notebook 04: HCR + EFR -> IUL -> NAV Impairment
@@ -133,9 +147,7 @@ Future runs:  all_daily.parquet --> DATA dict  (instant, skip THREDDS)
 - [ ] **Add dual-convention subplot** (optional, educational): second panel showing SCVR convention
   (x = exceedance probability, y = value, sorted descending) — the SCVR area is the actual shaded gap
   between the baseline and future curves in this view. Helps explain why traditional view arrow ≠ SCVR.
-- [ ] **CORRECTION: Support annual SCVR visualisation** — add mode to show SCVR progression over time
-  (annual SCVR(t) line plot). Currently computes one SCVR per entire period; needs to support the
-  annual framing from the team framework.
+- [x] ~~**Support annual SCVR visualisation**~~ — done via `plot_scvr_progression()` (anchor fit + decade bars)
 
 ### Notebook 03 — Plot Improvements
 
@@ -150,10 +162,12 @@ Future runs:  all_daily.parquet --> DATA dict  (instant, skip THREDDS)
 
 - [ ] Add more sites beyond Hayhurst and Maverick
 - [ ] Support additional SSP scenarios (SSP1-2.6, SSP3-7.0)
-- [ ] Expand beyond 6 models per combo (currently capped by MAX_MODELS)
+- [x] ~~Expand beyond 6 models per combo~~ (done — MAX_MODELS=None, uses all available)
 - [ ] Uncertainty quantification — confidence intervals on SCVR
 - [ ] Automated report generation (PDF/HTML from notebook outputs)
 - [ ] API wrapper for SCVR computation (standalone from notebooks)
+- [ ] **ERA5 validation** — validate ensemble behavior against ERA5 reanalysis (drift check)
+- [ ] **Cloud cover investigation** — check CLR cloud cover linkage (precip → cloud → irradiance)
 
 ---
 
@@ -166,6 +180,8 @@ Future runs:  all_daily.parquet --> DATA dict  (instant, skip THREDDS)
 | `notebook_analysis/03_integrated_scvr_cmip6.ipynb` | Main SCVR computation (ensemble) |
 | `data/schema/sites.json` | Site coordinates and metadata |
 | `data/schema/variables.json` | Variable definitions and priorities |
-| `data/schema/scvr_schema.json` | Output Parquet column spec |
+| `scripts/shared/scvr_utils.py` | Shared SCVR utilities (THREDDS, SCVR, anchors, GEV) |
+| `scripts/presentation/ensemble_exceedance.py` | Presentation-quality plots and JSON summaries |
+| `data/schema/scvr_schema.json` | Output Parquet column spec (incl. decade schema) |
 | `data/cache/thredds/` | Cached NetCDF files from THREDDS |
 | `data/processed/scvr/` | SCVR output Parquet files |

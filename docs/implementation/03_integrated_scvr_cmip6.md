@@ -41,7 +41,7 @@
 | Feature | Notebook 01 | Notebook 02 | Notebook 03 |
 |---|---|---|---|
 | Data source | Open-Meteo API | NASA THREDDS | NASA THREDDS |
-| Models | 1 (EC-Earth3P-HR) | up to 6 (probed) | up to 6 (probed + cached) |
+| Models | 1 (EC-Earth3P-HR) | up to 6 (probed) | All available (typically 13, was 6) |
 | Scenarios | Effectively SSP5-8.5 only | SSP2-4.5 or SSP5-8.5 | Both simultaneously |
 | Asset timeline | Rolling 20-yr windows | Configurable | Dynamic from `sites.json` |
 | SCVR computation | Yes | No | Yes (ported from nb01) |
@@ -160,7 +160,7 @@ runs load from the local `.nc` cache in milliseconds.
 ### Section 2 — Model Discovery
 
 Probe all 34 NEX-GDDP models to find which ones have data for each
-(site, variable, scenario) combination. Caps at `MAX_MODELS = 6` for runtime.
+(site, variable, scenario) combination. `MAX_MODELS = None` uses all available.
 
 **Two-step probing:**
 1. Probe SSP availability at `mid_year = 2026 + 15 = 2041` (mid-lifespan)
@@ -172,6 +172,8 @@ Both steps run in parallel (`ThreadPoolExecutor(max_workers=12)`).
 - First run: probes THREDDS HTTP (slow, one request per model)
 - Subsequent runs: reads from JSON cache (instant)
 - Delete the file to force a fresh probe
+
+With `MAX_MODELS = None`, typically 13 models pass for temperature variables.
 
 ### Section 3 — Data Fetch Loop
 
@@ -227,6 +229,79 @@ No threshold parameter, no `exceed_higher` flag.
 Two SCVR computations per (site, variable, scenario):
 1. **Ensemble pooled** — all models concatenated → one robust SCVR
 2. **Per-model** — each model independently → spread/uncertainty
+
+### Section 3b — Decade Analysis, Anchor Fitting, Shape Metrics, GEV (NEW — March 2026)
+
+Added to address senior reviewer feedback that exceedance curves showed only horizontal shift,
+not shape/slope change over time. See `docs/discussion/discussion_decade_shape_analysis.md`.
+
+**Uses shared module** (`scripts/shared/scvr_utils.py`) with inline fallbacks if unavailable.
+
+#### A. Decade-Resolved SCVR
+
+Split the 30-year future into 3 non-overlapping decades. For each (site, variable, scenario, decade),
+pool all models' daily values within that decade and compute SCVR against the full baseline.
+
+```
+Decade windows: 2026-2035 | 2036-2045 | 2046-2055
+Pool size: ~47,000 daily values per decade (13 models × 10 years × 365 days)
+```
+
+#### B. Anchor-Based Annual SCVR (temperature only)
+
+For variables with `SCVR_STRATEGY = "anchor_3_linear"` (tasmax, tasmin, tas):
+- Compute SCVR at each decade midpoint (2030.5, 2040.5, 2050.5) → 3 anchor points
+- Fit linear trend via `np.polyfit(mids, scvrs, 1)`
+- Interpolate to 30 annual values (2026–2055)
+- Report R² on anchor points
+
+For variables with `SCVR_STRATEGY = "period_average"` (pr, hurs, sfcWind, rsds):
+- Use decade-level SCVR directly (no interpolation — signal too noisy)
+
+#### C. Shape Metrics per Decade
+
+For each (site, variable, scenario) × each decade + baseline:
+- Mean, standard deviation, variance, skewness, P95, P99
+
+These reveal whether the distribution is changing shape (variance/kurtosis increase)
+or simply shifting (only mean changes).
+
+#### D. GEV Fit (temperature only)
+
+`scipy.stats.genextreme.fit()` on annual block maxima across all models:
+- Shape parameter ξ: tracks tail evolution (ξ < 0 light tail, ξ ≈ 0 Gumbel, ξ > 0 heavy tail)
+- Location μ: tracks where the annual max sits (analogous to mean shift)
+- Scale σ: tracks annual max variability
+- **Diagnostics:** KS D-statistic, KS p-value, log-likelihood, AIC (added 2026-03-13)
+
+#### E. GPD Fit — Peaks-Over-Threshold (temperature only)
+
+`scipy.stats.genpareto.fit()` on daily values above P95 threshold (Pickands-Balkema-de Haan):
+- Shape ξ, scale σ, threshold, exceedance rate
+- Gives exceedance probabilities in the **same space** as the empirical daily curve
+- **Diagnostics:** KS D-statistic (D < 0.02 = excellent fit), log-likelihood, AIC
+
+Shared functions: `fit_gpd()`, `exceedance_curve_gpd()` in `scripts/shared/scvr_utils.py`.
+
+**Note:** Both GEV and GPD are computed as diagnostics — SCVR uses empirical area. The
+presentation script also prints a 3-method comparison (empirical, normal, direct mean)
+proving they agree to 6 decimal places at n > 10,000.
+
+#### New Plots
+
+- **Plot E: Decade-Resolved Exceedance** — 2×2 for temperature (top: full empirical, bottom:
+  tail zoom with GPD dashed + GEV dotted + P95 marker + KS annotation); 1×2 for others
+- **Plot F: SCVR Progression** — anchor diamonds + linear fit (temperature) or decade bars (others)
+- **Plot G: Shape Metrics Table** — variance, P95, P99 per decade; GEV ξ evolution
+
+#### New Outputs
+
+```
+data/processed/scvr/<site>/cmip6_scvr_decade.parquet
+data/processed/scvr/<site>/cmip6_shape_metrics.parquet
+```
+
+Existing `cmip6_ensemble_scvr.parquet` unchanged. Schema in `data/schema/scvr_schema.json`.
 
 ---
 
@@ -287,11 +362,10 @@ check for probe or data issues with specific models.
 
 ## Known Limitations
 
-### 1. MAX_MODELS = 6 cap
+### 1. ~~MAX_MODELS = 6 cap~~ (RESOLVED)
 
-We probe all 34 NEX-GDDP models but cap at 6 for runtime. The 6 selected are the
-first alphabetically among those that pass the probe — not the "best" 6. For
-production, increase `MAX_MODELS` or specify a preferred model list.
+`MAX_MODELS` is now `None` — all available models are used. Typically 13 for temperature
+variables. The models are sorted alphabetically but all are included.
 
 ### 2. r1i1p1f1 ensemble member only
 
@@ -376,8 +450,12 @@ Step 2: annual means → P10/P50/P90 across models, per year
 ---
 
 *Related documentation:*
+- [docs/implementation/ensemble_exceedance_script.md](ensemble_exceedance_script.md) — Presentation script implementation (same pipeline, CLI-runnable)
+- [docs/discussion/discussion_decade_shape_analysis.md](../discussion/discussion_decade_shape_analysis.md) — Team feedback and decade analysis rationale
+- [docs/discussion/discussion_annual_scvr_methodology.md](../discussion/discussion_annual_scvr_methodology.md) — Annual SCVR computation options, anchor fit evidence
 - [docs/learning/04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) — SCVR formula and intuition
 - [docs/learning/10_data_pipeline.md](../learning/D_technical_reference/10_data_pipeline.md) — THREDDS, NetCDF, caching
 - [docs/learning/03_scenarios_and_time_windows.md](../learning/A_climate_foundations/03_scenarios_and_time_windows.md) — why 1985-2014 baseline, why the 2015-2025 gap is intentional
 - [docs/learning/09_nav_impairment_chain.md](../learning/C_financial_translation/09_nav_impairment_chain.md) — full SCVR → HCR → EFR → NAV chain
+- [scripts/shared/scvr_utils.py](../../scripts/shared/scvr_utils.py) — Shared utility module
 - [docs/plan/plan.md](../plan/plan.md) — original build plan for this notebook

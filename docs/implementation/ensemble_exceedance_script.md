@@ -1,10 +1,11 @@
-# Script 04 — Ensemble Exceedance Curves + SCVR Presentation Output
+# Ensemble Exceedance — Presentation Script Implementation
 
 *Implementation notes for `scripts/presentation/ensemble_exceedance.py`*
 
 **Sites:** Hayhurst Texas Solar (default) — configurable via `SITE_ID` at top of script
 **Variables:** All 7 (tasmax, tasmin, tas, pr, sfcWind, hurs, rsds) — configurable via `VARIABLES`
 **Data source:** NASA NEX-GDDP-CMIP6 via NCCS THREDDS NCSS (same cache as Notebook 03)
+**Models:** All available (MAX_MODELS=None) — typically 13 for temperature, varies by variable
 **Output:** Presentation-grade PNG plots + CSV + JSON per variable
 
 ---
@@ -24,10 +25,13 @@
     THIS SCRIPT (ensemble_exceedance.py)
     ┌──────────────────────────────────────────────┐
     │ Loops over ALL 7 variables automatically     │
-    │ Produces 2 presentation plots per variable   │
+    │ All available models (MAX_MODELS=None)       │
+    │ Produces 4 presentation plots per variable   │
     │  - Annual time series (model spread)         │
     │  - Exceedance curves (traditional view)      │
-    │ Saves SCVR summary JSON per variable         │
+    │  - Decade-resolved exceedance (NEW)          │
+    │  - SCVR progression (anchor fit / bars) (NEW)│
+    │ Saves extended SCVR summary JSON             │
     │ Designed for stakeholder sharing             │
     └──────────────────────────────────────────────┘
                     │
@@ -35,8 +39,10 @@
      data/processed/presentation/<site>/<variable>/
        ensemble_timeseries_<var>.png
        exceedance_curves_<var>.png
+       exceedance_decades_<var>.png       (NEW)
+       scvr_progression_<var>.png         (NEW)
        ensemble_stats_<var>.csv
-       scvr_summary_<var>.json
+       scvr_summary_<var>.json            (expanded)
 ```
 
 **What this script adds over Notebook 03:**
@@ -54,7 +60,7 @@
 
 ---
 
-## Script Structure — 7 Sections
+## Script Structure — 10 Sections
 
 ### Section 1 — CONFIG block (lines 27–35)
 
@@ -62,9 +68,18 @@
 SITE_ID        = "hayhurst_solar"
 VARIABLES      = ["tasmax", "tasmin", "tas", "pr", "sfcWind", "hurs", "rsds"]
 SCENARIOS      = ["ssp245", "ssp585"]
-MAX_MODELS     = 6
+MAX_MODELS     = None                # use all available (was 6)
 BASELINE_YEARS = (1985, 2014)
 FUTURE_YEARS   = (2026, 2055)
+
+# Decade analysis config (added March 2026)
+DECADE_WINDOWS = [("2026-2035", 2026, 2035), ("2036-2045", 2036, 2045), ("2046-2055", 2046, 2055)]
+ANCHOR_3       = [(2026, 2035), (2036, 2045), (2046, 2055)]
+SCVR_STRATEGY  = {
+    "tasmax": "anchor_3_linear", "tasmin": "anchor_3_linear", "tas": "anchor_3_linear",
+    "pr": "period_average", "hurs": "period_average",
+    "sfcWind": "period_average", "rsds": "period_average",
+}
 ```
 
 These are the only lines that need to change to re-run for a different site or variable subset.
@@ -119,22 +134,23 @@ def discover_models():
     # 1. Probe all 34 models at the midpoint year of FUTURE_YEARS
     # 2. Keep only models that pass BOTH SSP245 and SSP585
     # 3. Further filter to models with historical data (probe year 2000)
-    # 4. Take the first MAX_MODELS = 6 from the sorted list
+    # 4. If MAX_MODELS is set, take first N; if None, use all available
 ```
 
 ```
 34 models → probe ssp245 (mid-year) → 13–15 pass
           → probe ssp585 (mid-year) → intersection ~13
-          → probe historical (2000)  → final: 6
+          → probe historical (2000)  → final: 13 (temperature), varies by variable
 ```
 
 Results are cached in `data/cache/thredds/model_probe_cache.json` — on re-runs
 for the same variable, no network calls are needed for models already probed.
 
-The specific 6 models vary by variable because not all models publish all 7 variables:
-- tasmax/tasmin: typically ACCESS-CM2, ACCESS-ESM1-5, BCC-CSM2-MR, CMCC-ESM2, CanESM5, MIROC6
-- tas/hurs: may include IITM-ESM instead of MIROC6
-- pr/sfcWind/rsds: may include CMCC-CM2-SR5
+With `MAX_MODELS = None`, model counts vary by variable:
+- tasmax/tasmin/tas: 13 models (ACCESS-CM2 through TaiESM1)
+- pr/sfcWind: typically 11-13
+- hurs: may be fewer (some models don't publish humidity)
+- rsds: Hayhurst only, typically 11-13
 
 ---
 
@@ -265,7 +281,126 @@ it is not numerically equal to SCVR.
 
 ---
 
-### Section 7 — Multi-Variable Loop (lines 526–615)
+### Section 6b — Inline Fallbacks (shared module)
+
+If `scripts/shared/scvr_utils.py` cannot be imported (e.g. running from a different directory),
+the script provides inline fallback implementations of the 5 functions needed for decade analysis:
+`pool_window`, `compute_anchor_fit`, `compute_shape_metrics`, `fit_gev`, `exceedance_curve_gev`.
+
+The `SHARED_AVAILABLE` flag controls which path is used. The fallbacks are identical to the
+shared module implementations.
+
+---
+
+### Section 6c — Plot 3: Decade-Resolved Exceedance Curves
+
+Addresses Prashant's core concern: **do exceedance curves show shape change, not just shift?**
+
+**Layout:** 2×2 for temperature variables, 1×2 for others.
+
+```
+  Row 1 (all variables):
+    Full empirical exceedance — baseline (gray) + 3 decade curves (light→dark blue)
+    Visual test: if tails fan out in later decades, shape IS changing.
+
+  Row 2 (temperature only — tail zoom):
+    Zoomed to x > P90, P(X>x) < 0.15
+    - Empirical curves (same as row 1, just zoomed)
+    - GPD fit (dashed) — Peaks-Over-Threshold, same probability space as empirical
+    - GEV fit (dotted) — annual block maxima, different probability space (context only)
+    - P95 threshold vertical marker
+    - KS D-statistic annotation (top-left) — quantifies GPD fit quality
+```
+
+GPD is the theoretically correct parametric fit for tail exceedances (Pickands-Balkema-de Haan
+theorem). GEV is retained for annual-max context but lives in a different probability space —
+P(annual_max > x) vs P(any_day > x).
+
+Output: `exceedance_decades_<var>.png`
+
+---
+
+### Section 6d — Plot 4: SCVR Annual Progression (NEW)
+
+Shows SCVR evolution over the 30-year future window. Strategy depends on variable type:
+
+**Temperature variables (anchor_3_linear):**
+- 3 anchor diamonds at decade midpoints (2030.5, 2040.5, 2050.5)
+- Linear fit line through anchors (slope = SCVR change per year)
+- Full 30-year SCVR as horizontal reference (dotted)
+- Both scenarios shown: SSP245 (blue), SSP585 (orange)
+- R² annotated in legend
+
+**Non-temperature variables (period_average):**
+- Grouped bar chart: 3 decades × 2 scenarios
+- SCVR value labeled above each bar
+- No interpolation (signal too noisy for linear fit)
+
+Output: `scvr_progression_<var>.png`
+
+---
+
+### Section 6e — GPD/GEV Fit Diagnostics (NEW)
+
+Both `fit_gpd()` and `fit_gev()` now return goodness-of-fit metrics alongside the fit parameters:
+
+| Metric | What it measures | Use |
+|--------|------------------|-----|
+| `ks_statistic` | Max distance between empirical and fitted CDF (Kolmogorov-Smirnov D) | D < 0.02 = excellent fit, 0.02-0.05 = acceptable |
+| `ks_pvalue` | KS test p-value | Unreliable at large n (GPD n≈7,120 always rejects); meaningful for GEV (n≈390) |
+| `loglikelihood` | Log-likelihood of data under fitted model | Higher = better fit; useful for comparing models |
+| `aic` | Akaike Information Criterion (2k - 2·loglik) | Lower = better; useful for comparing GPD vs alternative distributions |
+
+**Large-sample caveat:** At n=7,120 (GPD), the KS p-value will be near zero even for good fits.
+This is a known property of hypothesis tests at large sample sizes. The D-statistic is the
+informative metric — it gives the actual maximum distance between empirical and fitted curves.
+
+### SCVR Method Comparison (Step 3b)
+
+Before decade analysis, the script computes SCVR three ways and prints a comparison table:
+
+1. **Empirical trapezoid** — current method (`compute_scvr()`)
+2. **Normal parametric** — fit scipy normal, compute μ_future/μ_baseline ratio
+3. **Direct mean ratio** — `(mean_future - mean_baseline) / mean_baseline`
+
+All three agree to 6 decimal places at n > 10,000, proving empirical is sufficient for SCVR.
+Results saved in JSON under `scvr_method_comparison`.
+
+---
+
+### Section 7 — Save SCVR Summary JSON (expanded)
+
+The JSON now includes 8 sections:
+
+```json
+{
+  "scvr": { ... },
+  "scvr_method_comparison": {     // Proof: empirical = parametric
+    "ssp245": {"empirical_trapezoid": 0.068731, "normal_parametric": 0.068731, "direct_mean_ratio": 0.068731}
+  },
+  "decade_scvr": {
+    "ssp245": {"2026-2035": 0.051, "2036-2045": 0.070, "2046-2055": 0.085}
+  },
+  "shape_metrics": {
+    "baseline": {"n_days": 142399, "mean": 26.52, "variance": 70.48, "p95": 38.53, ...}
+  },
+  "gev_params": {                 // Temperature only — includes KS/AIC diagnostics
+    "baseline": {"shape": 0.321, "loc": 41.05, "scale": 1.69, "n_blocks": 390,
+                 "ks_statistic": 0.04, "ks_pvalue": 0.52, "loglikelihood": -620.3, "aic": 1246.6}
+  },
+  "gpd_params": {                 // Temperature only — Peaks-Over-Threshold
+    "baseline": {"shape": -0.18, "scale": 1.65, "threshold": 38.53, "exceedance_rate": 0.05,
+                 "ks_statistic": 0.01, "ks_pvalue": 1.2e-05, "loglikelihood": -8420.1, "aic": 16844.2}
+  },
+  "anchor_fits": {
+    "ssp245": {"mids": [2030.5, 2040.5, 2050.5], "scvrs": [...], "fit_slope": 0.00168, "r2": 0.994}
+  }
+}
+```
+
+---
+
+### Section 8 — Multi-Variable Loop
 
 The core of what makes this a script rather than a notebook:
 
@@ -277,7 +412,7 @@ def run_variable(variable):
     VAR_FULL = VARS[variable]["full_name"]
     OUT_DIR  = ROOT / "data/processed/presentation" / SITE_ID / variable
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    # ... full pipeline: discover → load → compute → plot → save
+    # ... full pipeline: discover → load → SCVR → decade analysis → 4 plots → save
 
 def main():
     for var in VARIABLES:
@@ -300,30 +435,57 @@ All outputs saved to `data/processed/presentation/<SITE_ID>/<variable>/`:
 |---|---|---|
 | `ensemble_timeseries_<var>.png` | Annual mean spaghetti + P10–P90 band, baseline + 2 scenarios | Stakeholder deck — model spread and trend |
 | `exceedance_curves_<var>.png` | Traditional exceedance curves, 3 periods, SCVR annotated | Stakeholder deck — distributional shift |
+| `exceedance_decades_<var>.png` | Decade-resolved exceedance (3 decades × 2 scenarios) + GEV overlay | Shape change analysis — addresses Prashant's concern |
+| `scvr_progression_<var>.png` | SCVR trajectory: anchor fit (temp) or decade bars (others) | Temporal progression — shows acceleration |
 | `ensemble_stats_<var>.csv` | Annual P10/P50/P90 per scenario (numerical) | Financial modeling, external review |
-| `scvr_summary_<var>.json` | SCVR values for SSP245, SSP585, delta | Downstream pipeline, Notebook 04 |
+| `scvr_summary_<var>.json` | SCVR + decade_scvr + shape_metrics + gev_params + anchor_fits | Downstream pipeline, Notebook 04 |
 
 ---
 
-## Actual SCVR Results — Hayhurst Solar (March 2026 run)
+## Actual SCVR Results — Hayhurst Solar (March 2026 runs)
 
-Run with 6 models, 1985–2014 baseline, 2026–2055 future:
+### Full-Window SCVR (13 models, all available)
 
-| Variable | SSP245 | SSP585 | Delta | Signal |
-|---|---|---|---|---|
-| tasmin | +0.1435 | +0.1634 | +0.020 | Dominant — nights warming fastest |
-| tas | +0.0854 | +0.0991 | +0.014 | Strong mean warming |
-| tasmax | +0.0734 | +0.0832 | +0.010 | Daytime heat stress |
-| pr | +0.0478 | +0.0233 | −0.025 | SSP245 > SSP585 — near-term wetter signal |
-| hurs | −0.0327 | −0.0424 | −0.010 | Drying — slight thermal aging relief |
-| sfcWind | −0.0149 | −0.0110 | +0.004 | Mild wind decline — negligible for solar |
-| rsds | +0.0022 | +0.0005 | −0.002 | Flat — irradiance barely changes |
+Run with all available models (13 for temperature), 1985–2014 baseline, 2026–2055 future:
 
-The `pr` inversion (SSP245 SCVR > SSP585 SCVR) is physically plausible: under SSP245,
-the near-term warming drives more convective rainfall events in West Texas (~2026–2055),
-while the stronger warming in SSP585 eventually dries the region more in the long run.
-The 2026–2055 window captures the wetter-near-term phase for SSP245 but already shows
-drying for SSP585's more aggressive trajectory.
+| Variable | Models | SSP245 | SSP585 | Delta | Signal |
+|---|---|---|---|---|---|
+| tasmax | 13 | +0.0687 | +0.0807 | +0.012 | Daytime heat stress |
+| tasmin | 13 | (pending) | (pending) | — | Nights warming fastest |
+| tas | 13 | (pending) | (pending) | — | Mean warming |
+| pr | ~13 | (pending) | (pending) | — | Near-term wetter signal |
+| hurs | varies | (pending) | (pending) | — | Drying |
+| sfcWind | ~13 | (pending) | (pending) | — | Negligible |
+| rsds | ~13 | (pending) | (pending) | — | Flat |
+
+*(Results will be updated when full 7-variable run completes)*
+
+### Decade-Resolved SCVR — tasmax (13 models)
+
+| Decade | SSP245 | SSP585 | Gap |
+|---|---|---|---|
+| 2026-2035 | +0.051 | +0.060 | 0.009 |
+| 2036-2045 | +0.070 | +0.075 | 0.005 |
+| 2046-2055 | +0.085 | +0.107 | 0.022 |
+
+The scenario gap **widens over time** — from 0.009 in the first decade to 0.022 in the last.
+SSP5-8.5 slope (0.0023/yr) is 38% steeper than SSP2-4.5 (0.0017/yr).
+
+### Shape Metrics — tasmax (from JSON)
+
+| Period | Mean (°C) | Variance | P95 | P99 | GEV ξ |
+|---|---|---|---|---|---|
+| Baseline | 26.52 | 70.48 | 38.53 | 40.83 | +0.321 |
+| SSP585 2026-35 | 28.12 | 71.75 | 40.30 | 42.50 | +0.234 |
+| SSP585 2036-45 | 28.51 | 71.66 | 40.60 | 42.89 | +0.365 |
+| SSP585 2046-55 | 29.35 | 72.00 | 41.46 | 43.70 | +0.240 |
+
+Key observations:
+- **Mean shifts +2.8°C** (baseline→SSP585 2046-55) — the dominant signal
+- **Variance barely changes** (70.5 → 72.0, +2%) — mostly a shift, not shape change
+- **P99 tracks mean shift** (+2.9°C) — proportional, not disproportionate tail fattening
+- **GEV shape ξ > 0** (Fréchet-like, heavy-tailed) but doesn't show monotonic trend — noisy
+- This is **physically expected** for temperature: warming primarily shifts the mean
 
 ---
 
@@ -348,5 +510,8 @@ unless the cache is cleared. Probe results in `model_probe_cache.json` are also 
 ## Cross-References
 
 - [03_integrated_scvr_cmip6.md](03_integrated_scvr_cmip6.md) — Notebook 03 implementation doc (same THREDDS pipeline)
+- [docs/discussion/discussion_decade_shape_analysis.md](../discussion/discussion_decade_shape_analysis.md) — Team feedback and methodology decisions for decade analysis
+- [docs/discussion/discussion_annual_scvr_methodology.md](../discussion/discussion_annual_scvr_methodology.md) — Annual SCVR options, anchor fit evidence
 - [docs/learning/04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) — SCVR formula detail
 - [docs/learning/11_distribution_shift_methods.md](../learning/D_technical_reference/11_distribution_shift_methods.md) — how SCVR relates to Wasserstein W1 / AAL / CVaR
+- [scripts/shared/scvr_utils.py](../../scripts/shared/scvr_utils.py) — Shared utility module (THREDDS, SCVR, anchors, GEV)
