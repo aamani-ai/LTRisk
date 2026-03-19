@@ -41,3 +41,9 @@ scripts/tests/probe_results.json
 # Exports and archives
 docs/exports/
 docs/learning.zip
+
+# Archive folders — reference material, not part of production pipeline
+notebook_analysis/archive/
+scripts/archive/
+docs/archive/
+docs/implementation/archive/
