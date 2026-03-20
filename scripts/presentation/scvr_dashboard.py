@@ -58,10 +58,9 @@ PLOTLY_TEMPLATE = "plotly_white"
 # scripts/analysis/scvr/README.md, and docs/discussion/ so the dashboard
 # works standalone without requiring the docs folder.
 
-METHODOLOGY_WHAT = """
+METHODOLOGY_WHAT = r"""
 **SCVR (Severe Climate Variability Rating)** is a single number that measures how much
-the shape of a climate variable's distribution shifts between a historical baseline
-and a future period.
+a climate variable's distribution shifts between a historical baseline and a future period.
 
 It answers: *"By what fraction did the climate distribution shift between the
 historical baseline and the asset's future?"*
@@ -76,6 +75,20 @@ Where **area** is the area under the empirical exceedance curve — a descending
 of all daily values plotted against exceedance probability [0, 1], integrated with
 the trapezoidal rule.
 
+### Key Insight: SCVR = Mean Ratio
+
+At large sample sizes (~300,000 daily values from 28+ models × 30 years), the area
+under the exceedance curve converges to the expected value E[X]. This means:
+
+```
+SCVR  =  (mean_future - mean_baseline) / mean_baseline
+```
+
+Three independent methods — empirical trapezoid, normal parametric (MLE), and direct
+mean ratio — agree to **6+ decimal places** across all 7 variables × 2 scenarios.
+The exceedance curve formulation is retained as a **communication framework** (it
+visualises the shift intuitively), but the computation is a mean ratio.
+
 ### What the Values Mean
 
 | SCVR | Meaning |
@@ -87,7 +100,25 @@ the trapezoidal rule.
 | **> 0.20** | High change — review for tail sensitivity |
 | **< 0** | Fewer extremes (e.g., fewer frost days under warming) |
 
-A positive SCVR means extreme events are more frequent or more severe than baseline.
+A positive SCVR means the distribution shifted toward higher values.
+
+### SCVR's Blind Spot
+
+Because SCVR is a **mean-based** metric, it can miss **tail fattening** — situations
+where extreme events intensify even though the average barely changes.
+
+**Real example — Precipitation (Hayhurst Solar):**
+
+| Metric | Value | What it says |
+|--------|-------|-------------|
+| Mean SCVR | -0.1% | "Almost no change" |
+| P95 SCVR | +1.9% | 95th percentile shifted up |
+| CVaR 95% | +2.4% | Average severity of tail events increased |
+| **Tail Confidence** | **LOW** | Mean and tail decouple — SCVR alone is misleading |
+
+The mean barely moved, but the tails ARE fattening. This is why we compute
+**companion metrics** (see the Report Card tab) alongside SCVR — they tell you
+when SCVR is trustworthy vs when it understates tail risk.
 
 ### Exceedance Curves
 
@@ -147,6 +178,13 @@ def compute_scvr(baseline_values, future_values):
     return {"scvr": scvr, "area_baseline": area_b, "area_future": area_f}
 ```
 
+### Mathematical Note
+
+This computation is mathematically equivalent to `(mean(future) - mean(baseline)) / mean(baseline)`.
+The area under the exceedance curve equals E[X] when n is large (error ~10^-11 at n=300k).
+The exceedance formulation is retained for its visual interpretability — seeing the curves
+shift makes the concept tangible for non-technical stakeholders.
+
 ### Why Daily Data — Not Annual Means
 
 Annual aggregation destroys tail information. A 45°C extreme day gets averaged with
@@ -159,6 +197,44 @@ All available CMIP6 models are **pooled** — daily values from all models are c
 into one array before computing exceedance. A 28-model ensemble with 30 years each
 produces ~306,600 daily values. This captures both inter-model spread and inter-annual
 variability in a single robust estimate.
+"""
+
+METHODOLOGY_EQUIVALENCE = r"""
+### The Equivalence Proof
+
+Three independent methods of computing SCVR produce **identical results** (to 6+ decimal places):
+
+| Method | Formula | Approach |
+|--------|---------|----------|
+| **Empirical Trapezoid** | `trapezoid(sorted_desc, linspace(0,1,n))` | Area under exceedance curve |
+| **Normal Parametric (MLE)** | Fit N(mu, sigma), compute `integral of x * (1-CDF)` | Parametric area |
+| **Direct Mean Ratio** | `(mean_future - mean_baseline) / mean_baseline` | Simple arithmetic |
+
+**Why they agree:** At large n, sorting n values and integrating against uniform spacing
+on [0, 1] is equivalent to computing the sample mean. Formally:
+
+```
+area = integral_0^1 Q(p) dp  =  E[X]     (as n -> infinity)
+```
+
+where Q(p) is the quantile function. The convergence error is ~10^-11 at n=300,000.
+
+### Verified Across All Variables
+
+| Variable | Empirical | Mean Ratio | Max Divergence |
+|----------|-----------|------------|----------------|
+| tasmax | +0.068896 | +0.068896 | 0.000000 |
+| tasmin | +0.144137 | +0.144137 | 0.000000 |
+| pr | -0.001001 | -0.001001 | 0.000000 |
+| sfcWind | -0.022011 | -0.022011 | 0.000000 |
+| hurs | -0.031207 | -0.031207 | 0.000022 |
+
+### Practical Implication
+
+The exceedance curve is a **communication tool**, not a computational necessity.
+We keep the curve because it makes the concept visual and intuitive. But the number
+itself is just the fractional change in the mean — and that's exactly why it has a
+blind spot for tail fattening (see companion metrics in the Report Card tab).
 """
 
 METHODOLOGY_STRATEGY = """
@@ -199,31 +275,58 @@ Precipitation R² ≈ 0.59, wind R² ≈ 0.13 — fitting a line through 3 noisy
 would produce misleading annual values.
 """
 
-METHODOLOGY_INTERPRET = """
+METHODOLOGY_INTERPRET = r"""
 ### SCVR Severity Scale
 
 | SCVR Range | Severity | Colour | Example |
 |------------|----------|--------|---------|
-| 0.00 – 0.05 | LOW | Green | sfcWind at inland sites |
-| 0.05 – 0.10 | MODERATE | Amber | tasmax under SSP2-4.5 |
-| 0.10 – 0.20 | ELEVATED | Orange | tasmin under SSP5-8.5 |
-| > 0.20 | HIGH | Red | Review — may indicate tail sensitivity |
-| < 0 | Reduction | — | Frost days under warming |
+| 0.00 - 0.05 | LOW | Green | sfcWind at inland sites |
+| 0.05 - 0.10 | MODERATE | Amber | tasmax under SSP2-4.5 |
+| 0.10 - 0.20 | ELEVATED | Orange | tasmin under SSP5-8.5 |
+| > 0.20 | HIGH | Red | Review for tail sensitivity |
+| < 0 | Reduction | - | Frost days under warming |
 
-### Companion Metrics
+### Tier 1: Companion Metrics (Audit Trail)
 
-SCVR captures the **mean shift** of the distribution but not tail fattening or
-skewness changes. That's why we compute additional diagnostics:
+Because SCVR is a mean-based metric, it can miss tail fattening. These **Tier 1 companions**
+are always reported alongside SCVR to flag when the mean is misleading:
+
+| Metric | Formula | What It Tells You |
+|--------|---------|-------------------|
+| **P95 SCVR** | `(P95_future - P95_baseline) / |P95_baseline|` | How much the 95th percentile shifted — catches tail fattening |
+| **P99 SCVR** | `(P99_future - P99_baseline) / |P99_baseline|` | Extreme tail (rarest 1%) — confirms if extremes intensify |
+| **CVaR 95%** | `(E[X|X>=P95]_f - E[X|X>=P95]_b) / |E[X|X>=P95]_b|` | Average severity of tail events (Expected Shortfall) |
+| **Mean-Tail Ratio** | `P95_SCVR / Mean_SCVR` | How well the mean tracks the tail (>0.6 = good, <0.3 = poor) |
+| **Model IQR** | `P75 - P25 of per-model SCVR` | How much individual climate models disagree |
+| **Tail Confidence** | Algorithmic (see below) | Final verdict: is SCVR reliable for this variable? |
+
+### Tail Confidence Classification
+
+| Flag | Rule | Meaning |
+|------|------|---------|
+| **HIGH** | Mean-Tail Ratio > 0.6 | Mean and tail agree — SCVR is trustworthy |
+| **MODERATE** | Default | Partial agreement — check tail metrics |
+| **LOW** | Mean-Tail Ratio < 0.3 OR Model IQR > 2x|Mean| | Weak signal or high model disagreement |
+| **DIVERGENT** | sign(Mean) != sign(P95) | Mean and tail oppose — SCVR is misleading |
+
+### Variable Classes
+
+| Class | Variables | Confidence | Implication |
+|-------|-----------|-----------|-------------|
+| **A** | tasmax, tas | HIGH | SCVR sufficient — mean captures the signal |
+| **B** | pr, rsds | LOW / DIVERGENT | SCVR misleading — Pathway B required for hazard counting |
+| **C** | tasmin, hurs, sfcWind | MODERATE | SCVR adequate with caveats — check companions |
+
+### Tier 2: Distribution Diagnostics
+
+These deeper diagnostics are available when Tier 1 flags a concern:
 
 | Metric | What It Tells You |
 |--------|-------------------|
-| **Shape metrics** (P95, P99, skewness, kurtosis) | Whether extremes are growing faster than the mean |
-| **GEV** (Generalised Extreme Value) | Parametric model of annual block maxima — shape parameter indicates tail heaviness |
-| **GPD** (Generalised Pareto) | Peaks-over-threshold — how the tail above P95 behaves |
-| **CV** (Coefficient of Variation) | Whether relative spread is changing |
-
-A variable with SCVR = 0.08 but rapidly increasing P99 and positive GEV shape
-parameter may be more dangerous than one with SCVR = 0.12 but stable tails.
+| **Shape metrics** (skewness, kurtosis) | Whether the distribution shape is changing beyond a simple shift |
+| **GEV** (Generalised Extreme Value) | Parametric model of annual block maxima — shape parameter (xi) indicates tail heaviness |
+| **GPD** (Generalised Pareto) | Peaks-over-threshold — how the tail above P95 behaves parametrically |
+| **KS test** | Kolmogorov-Smirnov goodness-of-fit — does the fitted model match the data? |
 """
 
 METHODOLOGY_PIPELINE = """
@@ -235,7 +338,7 @@ SCVR is the **central hub** connecting climate projections to financial impact:
 SCVR(t)                           Annual climate shift per variable
   │
   ├──► HCR(t)                     Hazard Change Ratio
-  │      │                        (heat ×2.5, flood ×1.5-2.0, etc.)
+  │      │                        (heat x2.5, flood x1.5-2.0, etc.)
   │      │
   │      ├──► BI losses           Revenue lost to hazard events
   │      │
@@ -262,6 +365,76 @@ SCVR(t)                           Annual climate shift per variable
 | pr | Flood/drought | Business interruption, erosion, water availability |
 | sfcWind | Wind loading | Turbine fatigue (Palmgren-Miner), generation variability |
 | hurs | Humidity/corrosion | Accelerated corrosion (Peck's), PV soiling |
+
+### Pathway A vs Pathway B (HCR Computation)
+
+The pipeline uses **two pathways** to compute Hazard Change Ratios:
+
+| Pathway | Method | Used For | How |
+|---------|--------|----------|-----|
+| **A** | SCVR-based | IUL shortening (86% of NAV impact) | Applies SCVR to Peck's/Coffin-Manson degradation models |
+| **B** | Direct daily counting | Business interruption (5 key hazards) | Counts threshold crossings from raw daily data — bypasses SCVR |
+
+**Why Pathway B matters:** For precipitation and other Class B variables, SCVR misses
+tail fattening (see "SCVR's Blind Spot" above). But the pipeline is **already financially
+correct** because Pathway B counts extreme events directly from daily data — it doesn't
+rely on SCVR at all. Precipitation's tail fattening IS captured in the financial output.
+
+**Why companion metrics still matter:** Pathway B is not self-documenting. A reviewer
+looking at `SCVR_pr = -0.1%` cannot tell that the pipeline handles tails correctly
+without tracing through Pathway B code. Companion metrics (P95 SCVR, Tail Confidence)
+make this visible instantly — turning an hours-long audit into a seconds-long check.
+"""
+
+METHODOLOGY_PROCESSING = r"""
+### Units & Preprocessing
+
+All data comes from **NEX-GDDP CMIP6** daily climate projections. The pipeline applies
+these conversions before any computation:
+
+| Variable | Raw Unit (CMIP6) | Output Unit | Conversion |
+|----------|-----------------|-------------|------------|
+| tasmax, tasmin, tas | Kelvin (K) | Celsius (°C) | -273.15 (auto-detected if mean > 200) |
+| pr | kg/m²/s | mm/day | ×86400 |
+| sfcWind | m/s | m/s | No conversion needed |
+| hurs | % | % | No conversion needed |
+
+### Precipitation: Wet-Day Filtering for Tail Metrics
+
+At arid sites (e.g., Hayhurst, West Texas), **~78% of days are dry** (< 0.1 mm/day).
+This means:
+
+- The **all-day P95** sits in the dry/wet transition zone (~5.9 mm) — it tells you nothing
+  about extreme rainfall intensity
+- The **wet-day P95** (filtering to > 0.1 mm) captures actual rainfall events (~15 mm) —
+  this is where tail fattening is visible
+
+**What uses which:**
+
+| Metric | Days Used | Why |
+|--------|-----------|-----|
+| Mean SCVR | All days | Correct for the overall distribution mean |
+| P95 / P99 SCVR (Report Card) | **Wet days only** (> 0.1 mm) | Meaningful tail comparison |
+| CVaR 95% (Report Card) | **Wet days only** (> 0.1 mm) | Average severity of actual rain events |
+| Shape metrics percentiles (Distribution Shape tab) | All days | Full distribution characterisation |
+| GEV annual maxima | All days | Annual max is always a wet day |
+| GPD exceedances | All days | Threshold set on full distribution |
+
+**Important:** The P95 shown in the **Distribution Shape** tab (all days, ~5.9 mm) is
+different from the P95 used in the **Report Card's** P95 SCVR (wet days, ~15 mm).
+Both are correct for their purpose — the shape tab characterises the full distribution
+(including the dry-day mass), while the Report Card focuses on hazard-relevant tail shifts.
+
+### Variable Specification
+
+| Variable | SCVR Strategy | Typical R² | Tail Confidence | Notes |
+|----------|--------------|-----------|----------------|-------|
+| tasmax | anchor_3_linear | > 0.97 | HIGH | Clean monotonic warming signal |
+| tasmin | anchor_3_linear | > 0.99 | MODERATE | Mean overstates tail somewhat |
+| tas | anchor_3_linear | > 0.99 | HIGH | Average of daily min/max |
+| pr | period_average | ~ 0.59 | LOW / DIVERGENT | Wet-day filtering for tail metrics; Pathway B for hazards |
+| sfcWind | period_average | ~ 0.13 | MODERATE | Very noisy; decade-level SCVR only, no annual interpolation |
+| hurs | period_average | ~ 0.50 | MODERATE | Moderate noise; corrosion/soiling pathway |
 """
 
 
@@ -311,6 +484,7 @@ def load_site_data(site_id):
         "gev_fits": report.get("gev_fits", {}),
         "gpd_fits": report.get("gpd_fits", {}),
         "anchor_fits": report.get("anchor_fits", {}),
+        "companions": report.get("companion_metrics", []),
         "config": report.get("config", {}),
         "models": report.get("models", {}),
     }
@@ -399,8 +573,8 @@ def filt(df, scenarios=True, variables=True):
 
 
 # ── Tabs ─────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "Summary", "Decade Progression", "Annual Trajectory",
+tab1, tab_rc, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "Summary", "Report Card", "Decade Progression", "Annual Trajectory",
     "Distribution Shape", "Extreme Value Fits",
     "Methodology", "Raw Report",
 ])
@@ -502,6 +676,302 @@ with tab1:
                     "Names": ", ".join(m.get("names", [])),
                 })
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Report Card: Companion Metrics (Tail Confidence Audit Trail)
+# ══════════════════════════════════════════════════════════════════════════════
+
+TAIL_CONFIDENCE_COLORS = {
+    "HIGH": "#27ae60",
+    "MODERATE": "#f39c12",
+    "LOW": "#e67e22",
+    "DIVERGENT": "#c0392b",
+    "INSUFFICIENT_DATA": "#95a5a6",
+}
+
+with tab_rc:
+    companions = data.get("companions", [])
+    if not companions:
+        st.info(
+            "No companion metrics found. Re-run `compute_scvr.py` to generate "
+            "the SCVR audit trail (per-model SCVR, tail confidence, etc.)."
+        )
+    else:
+        st.subheader("SCVR Tail Confidence Report Card")
+        st.caption(
+            "Companion metrics that contextualise when SCVR is trustworthy vs misleading. "
+            "Hover any column header for its definition and formula."
+        )
+
+        # ── Section 1: Tail Confidence Overview Table ────────────────────────
+        table_rows = []
+        for c in companions:
+            table_rows.append({
+                "Variable": var_label(c["variable"]),
+                "Scenario": scen_label(c["scenario"]),
+                "Mean SCVR": c.get("mean_scvr"),
+                "P95 SCVR": c.get("tail_scvr_p95"),
+                "P99 SCVR": c.get("extreme_scvr_p99"),
+                "CVaR 95%": c.get("cvar95_ratio"),
+                "Mean-Tail Ratio": c.get("mean_tail_ratio"),
+                "Model IQR": c.get("model_iqr"),
+                "Tail Confidence": c.get("tail_confidence", "N/A"),
+            })
+        df_rc = pd.DataFrame(table_rows)
+
+        # Column config with help tooltips explaining each metric
+        col_config = {
+            "Variable": st.column_config.TextColumn(
+                "Variable",
+                help=(
+                    "Climate variable being assessed. Variable-specific notes: "
+                    "For precipitation (pr), P95/P99/CVaR use wet-day filtering "
+                    "(>0.1 mm/day) — different from the all-day percentiles in the "
+                    "Distribution Shape tab. Temperature values are in Celsius "
+                    "(converted from Kelvin). For wind (sfcWind), SCVR is noisier "
+                    "(R²~0.13) — decade-level values only, no annual interpolation."
+                ),
+            ),
+            "Scenario": st.column_config.TextColumn(
+                "Scenario",
+                help="SSP emissions pathway. SSP2-4.5 = moderate mitigation; SSP5-8.5 = high emissions.",
+            ),
+            "Mean SCVR": st.column_config.NumberColumn(
+                "Mean SCVR",
+                format="%.6f",
+                help=(
+                    "Pooled SCVR across all models. Equivalent to the fractional change in the mean: "
+                    "(mean_future - mean_baseline) / mean_baseline. "
+                    "Proven equivalent to the area-under-exceedance-curve ratio at large n. "
+                    "Positive = distribution shifted toward higher values."
+                ),
+            ),
+            "P95 SCVR": st.column_config.NumberColumn(
+                "P95 SCVR",
+                format="%.6f",
+                help=(
+                    "Fractional change in the 95th percentile: "
+                    "(P95_future - P95_baseline) / |P95_baseline|. "
+                    "Captures tail behaviour that the mean-based SCVR misses. "
+                    "If P95 SCVR >> Mean SCVR, tails are fattening even when the mean barely moves."
+                ),
+            ),
+            "P99 SCVR": st.column_config.NumberColumn(
+                "P99 SCVR",
+                format="%.6f",
+                help=(
+                    "Fractional change in the 99th percentile: "
+                    "(P99_future - P99_baseline) / |P99_baseline|. "
+                    "Extreme tail metric — tracks the rarest 1% of daily values. "
+                    "Useful when P95 and mean diverge; confirms whether extreme events are intensifying."
+                ),
+            ),
+            "CVaR 95%": st.column_config.NumberColumn(
+                "CVaR 95%",
+                format="%.6f",
+                help=(
+                    "Conditional Value at Risk at 95%: fractional change in the mean of values "
+                    "above the 95th percentile. Formula: (CVaR_future - CVaR_baseline) / |CVaR_baseline|, "
+                    "where CVaR = E[X | X >= P95]. Also called Expected Shortfall. "
+                    "Captures the average severity of tail events, not just a single quantile."
+                ),
+            ),
+            "Mean-Tail Ratio": st.column_config.NumberColumn(
+                "Mean-Tail Ratio",
+                format="%.4f",
+                help=(
+                    "Ratio of P95 SCVR to Mean SCVR: P95_SCVR / Mean_SCVR. "
+                    "Measures how well the mean represents the tail. "
+                    "> 0.6 = strong agreement (tail moves with mean). "
+                    "< 0.3 = weak linkage (mean and tail decouple). "
+                    "Negative = mean and tail move in opposite directions (DIVERGENT)."
+                ),
+            ),
+            "Model IQR": st.column_config.NumberColumn(
+                "Model IQR",
+                format="%.6f",
+                help=(
+                    "Interquartile range (P75 - P25) of per-model SCVR values. "
+                    "Measures how much individual climate models disagree on the SCVR signal. "
+                    "If IQR > 2x |Mean SCVR|, model disagreement exceeds the signal itself — "
+                    "confidence is LOW regardless of mean-tail agreement."
+                ),
+            ),
+            "Tail Confidence": st.column_config.TextColumn(
+                "Tail Confidence",
+                help=(
+                    "Algorithmic classification of SCVR reliability for this variable:\n"
+                    "- HIGH: Mean-Tail Ratio > 0.6 — mean and tail agree, SCVR is trustworthy.\n"
+                    "- MODERATE: Partial agreement — SCVR adequate but check companions.\n"
+                    "- LOW: Mean-Tail Ratio < 0.3 OR Model IQR > 2x|Mean| — weak signal.\n"
+                    "- DIVERGENT: Mean and tail have opposite signs — SCVR is misleading, "
+                    "Pathway B (direct hazard counting) required."
+                ),
+            ),
+        }
+
+        def _highlight_confidence(val):
+            color = TAIL_CONFIDENCE_COLORS.get(val, "#95a5a6")
+            return f"background-color: {color}; color: white; font-weight: bold"
+
+        styled = df_rc.style.map(
+            _highlight_confidence, subset=["Tail Confidence"]
+        )
+        st.dataframe(
+            styled, use_container_width=True, hide_index=True,
+            column_config=col_config,
+        )
+
+        # ── Metric Definitions (expandable reference) ─────────────────────────
+        with st.expander("Metric Definitions & Formulas"):
+            st.markdown(r"""
+| Metric | Formula | What it tells you |
+|--------|---------|-------------------|
+| **Mean SCVR** | `(mean_future - mean_baseline) / mean_baseline` | Fractional shift in the distribution centre. Mathematically equivalent to the area-under-exceedance-curve ratio (proven to ~10^-11 at n=300k daily values). |
+| **P95 SCVR** | `(P95_future - P95_baseline) / |P95_baseline|` | How much the 95th percentile shifted. Catches tail fattening that the mean misses entirely. |
+| **P99 SCVR** | `(P99_future - P99_baseline) / |P99_baseline|` | Same as P95 but for the extreme 1% tail. Confirms whether the rarest events are intensifying. |
+| **CVaR 95%** | `(E[X|X>=P95]_future - E[X|X>=P95]_baseline) / |E[X|X>=P95]_baseline|` | Also called *Expected Shortfall*. Average severity of tail events above the 95th percentile, not just a point quantile. |
+| **Mean-Tail Ratio** | `P95_SCVR / Mean_SCVR` | How well the mean tracks the tail. >0.6 = strong linkage, <0.3 = weak, negative = opposing directions. |
+| **Model IQR** | `P75 - P25 of per-model SCVR values` | Spread of SCVR across individual climate models. High IQR relative to Mean SCVR = models disagree on the signal. |
+| **Tail Confidence** | Algorithmic (see below) | Final classification: is SCVR trustworthy for this variable? |
+
+**Tail Confidence Algorithm:**
+1. If `sign(Mean) != sign(P95)` and both > 0.5% magnitude: **DIVERGENT**
+2. If `|Mean-Tail Ratio| < 0.3`: **LOW** (weak linkage)
+3. If `Model IQR > 2 * |Mean SCVR|`: **LOW** (model disagreement exceeds signal)
+4. If `Mean-Tail Ratio > 0.6`: **HIGH** (mean and tail agree)
+5. Otherwise: **MODERATE**
+
+**Why this matters:** Mean-based SCVR is mathematically correct but can be *financially misleading*.
+Example: precipitation SCVR ~ -0.1% says "no change" but P95 SCVR = +1.9% and CVaR = +2.4%
+— tails ARE fattening. The pipeline handles this via Pathway B (direct hazard counting from daily data),
+but without companion metrics, a reviewer cannot see this from the report alone.
+""")
+
+        # ── Section 2: Per-Model SCVR Distribution (Box Plot) ────────────────
+        st.subheader("Per-Model SCVR Distribution",
+                     help="Each box shows the spread of SCVR values across individual "
+                          "climate models. Diamond markers = pooled ensemble SCVR. "
+                          "Wide boxes = models disagree on the climate signal.")
+        box_rows = []
+        ensemble_markers = []
+        for c in companions:
+            per_model = c.get("per_model_scvr", {})
+            for model, scvr_val in per_model.items():
+                box_rows.append({
+                    "Variable": var_label(c["variable"]),
+                    "Scenario": scen_label(c["scenario"]),
+                    "var_scen": f"{var_label(c['variable'])} ({scen_label(c['scenario'])})",
+                    "Model": model,
+                    "SCVR": scvr_val,
+                })
+            ensemble_markers.append({
+                "var_scen": f"{var_label(c['variable'])} ({scen_label(c['scenario'])})",
+                "SCVR": c["mean_scvr"],
+            })
+
+        if box_rows:
+            df_box = pd.DataFrame(box_rows)
+            fig_box = px.box(
+                df_box, x="var_scen", y="SCVR", color="Scenario",
+                color_discrete_map={
+                    scen_label(k): v for k, v in SCENARIO_COLORS.items()
+                },
+                template=PLOTLY_TEMPLATE,
+                labels={"var_scen": "", "SCVR": "SCVR"},
+            )
+            # Overlay ensemble (pooled) SCVR as diamond markers
+            df_ens = pd.DataFrame(ensemble_markers)
+            fig_box.add_trace(go.Scatter(
+                x=df_ens["var_scen"], y=df_ens["SCVR"],
+                mode="markers", name="Pooled SCVR",
+                marker=dict(symbol="diamond", size=12, color="black",
+                            line=dict(width=2, color="white")),
+            ))
+            fig_box.update_layout(
+                height=450,
+                xaxis_tickangle=-30,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            )
+            st.plotly_chart(fig_box, use_container_width=True)
+
+        # ── Section 3: Mean vs Tail Scatter ──────────────────────────────────
+        st.subheader("Mean SCVR vs P95 SCVR",
+                     help="Scatter plot comparing mean-based SCVR (x-axis) against "
+                          "tail-based P95 SCVR (y-axis). Points on the dashed diagonal = "
+                          "perfect agreement. Points above = tail shifting more than mean "
+                          "(SCVR understates risk). Points in different quadrants = DIVERGENT.")
+        scatter_rows = []
+        for c in companions:
+            if c.get("mean_scvr") is not None and c.get("tail_scvr_p95") is not None:
+                scatter_rows.append({
+                    "Variable": var_label(c["variable"]),
+                    "Scenario": scen_label(c["scenario"]),
+                    "Mean SCVR": c["mean_scvr"],
+                    "P95 SCVR": c["tail_scvr_p95"],
+                    "Tail Confidence": c.get("tail_confidence", "N/A"),
+                })
+        if scatter_rows:
+            df_scatter = pd.DataFrame(scatter_rows)
+            fig_scatter = px.scatter(
+                df_scatter, x="Mean SCVR", y="P95 SCVR",
+                color="Variable", symbol="Scenario",
+                hover_data=["Tail Confidence"],
+                template=PLOTLY_TEMPLATE,
+            )
+            # Add y=x reference line
+            all_vals = list(df_scatter["Mean SCVR"]) + list(df_scatter["P95 SCVR"])
+            lo, hi = min(all_vals), max(all_vals)
+            pad = (hi - lo) * 0.1 or 0.01
+            fig_scatter.add_shape(
+                type="line", x0=lo - pad, y0=lo - pad, x1=hi + pad, y1=hi + pad,
+                line=dict(dash="dash", color="grey", width=1),
+            )
+            fig_scatter.update_layout(height=450)
+            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.caption(
+                "Points on the dashed line: mean and tail agree. "
+                "Points above the line: tail shifting more than mean (SCVR understates risk). "
+                "Points below: mean overstates tail shift."
+            )
+
+        # ── Section 4: Variable Classification Cards ─────────────────────────
+        st.subheader("Variable Classification",
+                     help="Per-variable verdict based on Tail Confidence. "
+                          "GREEN/HIGH = SCVR alone is reliable. "
+                          "AMBER/MODERATE = check tail metrics. "
+                          "RED/DIVERGENT = SCVR misleading, Pathway B handles this.")
+        # Variable-specific processing notes
+        _VAR_NOTES = {
+            "pr": "P95/CVaR computed on wet days only (> 0.1 mm). Shape tab shows all-day P95.",
+            "sfcWind": "R² ~ 0.13 — decade-level SCVR only, no annual interpolation.",
+        }
+        for c in companions:
+            label = f"**{var_label(c['variable'])}** ({scen_label(c['scenario'])})"
+            tc = c.get("tail_confidence", "N/A")
+            mean_s = c.get("mean_scvr")
+            p95_s = c.get("tail_scvr_p95")
+            mean_fmt = f"{mean_s:.6f}" if mean_s is not None else "—"
+            p95_fmt = f"{p95_s:.6f}" if p95_s is not None else "—"
+            msg = f"{label} — Mean SCVR: {mean_fmt}, P95 SCVR: {p95_fmt}"
+            note = _VAR_NOTES.get(c["variable"], "")
+            if note:
+                msg += f" | *{note}*"
+
+            if tc == "HIGH":
+                st.success(f"{msg} | **{tc}**: SCVR is reliable for this variable.")
+            elif tc == "MODERATE":
+                st.warning(f"{msg} | **{tc}**: SCVR adequate, but check tail metrics.")
+            elif tc == "LOW":
+                st.warning(f"{msg} | **{tc}**: Weak mean-tail linkage or high model disagreement.")
+            elif tc == "DIVERGENT":
+                st.error(
+                    f"{msg} | **{tc}**: Mean and tail point opposite directions. "
+                    "SCVR misleading — Pathway B required for hazard counting."
+                )
+            else:
+                st.info(f"{msg} | **{tc}**")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -801,6 +1271,15 @@ with tab4:
             if delta_rows:
                 st.dataframe(pd.DataFrame(delta_rows), use_container_width=True, hide_index=True)
 
+        # Precipitation caveat
+        if "pr" in selected_variables:
+            st.info(
+                "**Precipitation note:** Percentiles shown here include **all days** "
+                "(~78% dry at arid sites). The Report Card tab's P95 SCVR uses "
+                "**wet-day filtering** (> 0.1 mm) for meaningful tail comparison. "
+                "See Methodology > Data Processing for details."
+            )
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Tab 5: Extreme Value Fits
@@ -945,14 +1424,20 @@ with tab6:
     with st.expander("How is it Computed?"):
         st.markdown(METHODOLOGY_HOW)
 
+    with st.expander("SCVR = Mean Ratio (Equivalence Proof)"):
+        st.markdown(METHODOLOGY_EQUIVALENCE)
+
     with st.expander("Variable-Specific Strategy"):
         st.markdown(METHODOLOGY_STRATEGY)
 
-    with st.expander("Interpretation Guide"):
+    with st.expander("Interpretation Guide & Companion Metrics"):
         st.markdown(METHODOLOGY_INTERPRET)
 
     with st.expander("Downstream Pipeline (SCVR → HCR → EFR → NAV)"):
         st.markdown(METHODOLOGY_PIPELINE)
+
+    with st.expander("Data Processing & Variable Notes"):
+        st.markdown(METHODOLOGY_PROCESSING)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

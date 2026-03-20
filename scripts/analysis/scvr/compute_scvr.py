@@ -380,6 +380,134 @@ def compute_decade_shape(daily_dict, decades):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Companion Metrics (Audit Trail)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def compute_cvar(values, alpha=0.95):
+    """Conditional Value at Risk: mean of values above alpha-quantile."""
+    v = np.asarray(values, dtype=float)
+    v = v[~np.isnan(v)]
+    if len(v) == 0:
+        return None
+    threshold = np.percentile(v, alpha * 100)
+    tail = v[v >= threshold]
+    return float(np.mean(tail)) if len(tail) > 0 else None
+
+
+def _classify_tail_confidence(mean_scvr, tail_scvr_p95, mean_tail_ratio, iqr):
+    """Classify SCVR tail confidence: HIGH / MODERATE / LOW / DIVERGENT."""
+    if tail_scvr_p95 is None or mean_scvr is None:
+        return "INSUFFICIENT_DATA"
+    # Signs differ → divergent
+    if (abs(mean_scvr) > 0.005 and abs(tail_scvr_p95) > 0.005
+            and np.sign(mean_scvr) != np.sign(tail_scvr_p95)):
+        return "DIVERGENT"
+    # Weak mean-tail linkage or high model disagreement
+    if mean_tail_ratio is not None and abs(mean_tail_ratio) < 0.3:
+        return "LOW"
+    if abs(mean_scvr) > 1e-10 and iqr > 2 * abs(mean_scvr):
+        return "LOW"
+    # Strong agreement
+    if mean_tail_ratio is not None and mean_tail_ratio > 0.6:
+        return "HIGH"
+    return "MODERATE"
+
+
+def compute_companion_metrics(base_pool, fut_dict, scenario, variable):
+    """Compute Tier 1 companion metrics for SCVR audit trail.
+
+    Returns dict with: mean_scvr, tail_scvr_p95, extreme_scvr_p99, cvar95_ratio,
+    mean_tail_ratio, model_iqr, tail_confidence, per_model_scvr, per_model_stats.
+    """
+    # 1. Per-model SCVR
+    per_model = {}
+    for model, series in fut_dict.items():
+        fut_vals = series.dropna().values
+        if len(fut_vals) == 0:
+            continue
+        result = compute_scvr(base_pool, fut_vals)
+        per_model[model] = result["scvr"]
+
+    if len(per_model) < 2:
+        return None
+
+    model_scvrs = np.array(list(per_model.values()))
+    p25, p75 = np.percentile(model_scvrs, [25, 75])
+    iqr = float(p75 - p25)
+
+    # 2. Pooled future values
+    fut_pool = np.concatenate([s.dropna().values for s in fut_dict.values()])
+
+    # For precipitation, filter to wet days (> 0.1 mm/day) before computing tail
+    # metrics. ~78% of days are dry at arid sites — the all-days P95 sits in the
+    # dry/wet transition zone and produces meaningless tail SCVR values.
+    # Mean SCVR stays on all days (correct for the mean).
+    if variable == "pr":
+        base_tail_vals = base_pool[base_pool > 0.1]
+        fut_tail_vals = fut_pool[fut_pool > 0.1]
+        # Fallback to all days if insufficient wet days
+        if len(base_tail_vals) < 100 or len(fut_tail_vals) < 100:
+            base_tail_vals = base_pool
+            fut_tail_vals = fut_pool
+    else:
+        base_tail_vals = base_pool
+        fut_tail_vals = fut_pool
+
+    # 3. P95 SCVR (ratio of 95th percentiles)
+    b_p95 = np.percentile(base_tail_vals, 95)
+    f_p95 = np.percentile(fut_tail_vals, 95)
+    tail_scvr_p95 = float((f_p95 - b_p95) / abs(b_p95)) if abs(b_p95) > 1e-10 else None
+
+    # 4. P99 SCVR
+    b_p99 = np.percentile(base_tail_vals, 99)
+    f_p99 = np.percentile(fut_tail_vals, 99)
+    extreme_scvr_p99 = float((f_p99 - b_p99) / abs(b_p99)) if abs(b_p99) > 1e-10 else None
+
+    # 5. CVaR 95% ratio
+    b_cvar = compute_cvar(base_tail_vals, 0.95)
+    f_cvar = compute_cvar(fut_tail_vals, 0.95)
+    cvar95_ratio = None
+    if b_cvar is not None and f_cvar is not None and abs(b_cvar) > 1e-10:
+        cvar95_ratio = float((f_cvar - b_cvar) / abs(b_cvar))
+
+    # 6. Mean SCVR (pooled)
+    pooled_result = compute_scvr(base_pool, fut_pool)
+    mean_scvr = pooled_result["scvr"]
+
+    # 7. Mean-Tail Ratio
+    mean_tail_ratio = None
+    if tail_scvr_p95 is not None and abs(mean_scvr) > 1e-10:
+        mean_tail_ratio = float(tail_scvr_p95 / mean_scvr)
+
+    # 8. Tail Confidence Flag
+    tail_confidence = _classify_tail_confidence(
+        mean_scvr, tail_scvr_p95, mean_tail_ratio, iqr
+    )
+
+    return {
+        "scenario": scenario,
+        "variable": variable,
+        "mean_scvr": mean_scvr,
+        "tail_scvr_p95": tail_scvr_p95,
+        "extreme_scvr_p99": extreme_scvr_p99,
+        "cvar95_ratio": cvar95_ratio,
+        "mean_tail_ratio": mean_tail_ratio,
+        "model_iqr": iqr,
+        "tail_confidence": tail_confidence,
+        "n_models": len(per_model),
+        "per_model_scvr": per_model,
+        "per_model_stats": {
+            "min": float(model_scvrs.min()),
+            "p25": float(p25),
+            "median": float(np.median(model_scvrs)),
+            "p75": float(p75),
+            "max": float(model_scvrs.max()),
+            "std": float(model_scvrs.std()),
+        },
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # GEV / GPD Fitting
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -459,6 +587,7 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
       decade_scvr: list of row dicts
       shape_metrics: list of row dicts
       annual_scvr: list of row dicts (if anchor strategy)
+      companion_metrics: list of dicts (per-model SCVR, tail confidence, etc.)
       gev_fits: dict per scenario
     """
     if decades is None:
@@ -471,6 +600,7 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
     decade_rows = []
     shape_rows = []
     annual_rows = []
+    companion_rows = []
     anchor_fits = {}
 
     for scen in scenarios:
@@ -508,6 +638,11 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
             "window_start_year": future_years[0],
             "window_end_year": future_years[1],
         })
+
+        # 1b. Companion metrics (audit trail)
+        companions = compute_companion_metrics(base_pool, fut_dict, scen, variable)
+        if companions is not None:
+            companion_rows.append(companions)
 
         # 2. Decade SCVR
         dec_results = compute_decade_scvr(base_pool, fut_dict, decades)
@@ -589,6 +724,7 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
         "decade_scvr": decade_rows,
         "shape_metrics": shape_rows,
         "annual_scvr": annual_rows,
+        "companion_metrics": companion_rows,
         "anchor_fits": anchor_fits,
         "gev_fits": gev_fits,
         "gpd_fits": gpd_fits,
@@ -617,6 +753,7 @@ def save_outputs(all_results, site_id, lat, lon, out_dir, config=None):
     decade_rows = []
     shape_rows = []
     annual_rows = []
+    companion_rows = []
     gev_fits = {}
     gpd_fits = {}
     anchor_fits_all = {}
@@ -626,6 +763,7 @@ def save_outputs(all_results, site_id, lat, lon, out_dir, config=None):
         decade_rows.extend(res["decade_scvr"])
         shape_rows.extend(res["shape_metrics"])
         annual_rows.extend(res["annual_scvr"])
+        companion_rows.extend(res.get("companion_metrics", []))
         gev_fits.update(res["gev_fits"])
         gpd_fits.update(res.get("gpd_fits", {}))
         if res.get("anchor_fits"):
@@ -694,6 +832,7 @@ def save_outputs(all_results, site_id, lat, lon, out_dir, config=None):
             "decade_scvr_rows": len(decade_rows),
             "shape_metrics_rows": len(shape_rows),
             "annual_scvr_rows": len(annual_rows),
+            "companion_metrics_rows": len(companion_rows),
         },
 
         # All SCVR data (mirrors Parquet but readable without pandas)
@@ -703,6 +842,9 @@ def save_outputs(all_results, site_id, lat, lon, out_dir, config=None):
 
         # Anchor fit details (temperature variables only)
         "anchor_fits": anchor_fits_all,
+
+        # Companion metrics (audit trail: per-model SCVR, tail confidence, etc.)
+        "companion_metrics": companion_rows,
 
         # Distribution shape metrics
         "shape_metrics": shape_rows,
