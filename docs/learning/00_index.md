@@ -11,6 +11,7 @@ A comprehensive guide to the climate science, data engineering, and financial me
 | [01](A_climate_foundations/01_climate_primer.md) | **Climate Science Primer** | Climate vs weather, greenhouse effect, what warming means for Texas assets, all 7 variables with units and SCVR direction, extreme events, feedback loops |
 | [02](A_climate_foundations/02_cmip6_models.md) | **CMIP6 and Climate Models** | What a climate model simulates, CMIP6 history, the 34 NEX-GDDP models, ensemble approach, bias correction, model naming conventions |
 | [03](A_climate_foundations/03_scenarios_and_time_windows.md) | **Scenarios and Time Windows** | All 5 SSP pathways, why we use SSP2-4.5 + SSP5-8.5, why 1985-2014 baseline, why 2026-2055 future, why the gap is correct, ensemble pooling mechanics |
+| [03b](A_climate_foundations/03b_data_to_scvr_pipeline.md) | **Data to SCVR Pipeline** | Non-technical walkthrough: NASA NEX-GDDP-CMIP6 dataset, what we download, how we compute SCVR, what comes out, key numbers for Hayhurst Solar |
 
 ## Section B: SCVR Methodology
 
