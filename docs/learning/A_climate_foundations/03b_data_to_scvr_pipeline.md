@@ -82,7 +82,67 @@ This means we get daily values that are physically consistent with the model's c
 
 Each model is an independent simulation of Earth's climate. They agree on the big picture (warming) but disagree on details (how much rain in Texas in 2040). Using 34 models captures this **structural uncertainty** — the spread across models tells us how confident the projection is.
 
-**One realization per model**: Each model contributes a single simulation run. Some models (like CanESM5) have 50+ runs in the raw CMIP6 archive, but NASA downscaled just one per model to keep the dataset manageable.
+### One Realization Per Model
+
+Each model contributes a **single simulation run** (called a "realization"). Some models (like CanESM5) have 50+ runs in the raw CMIP6 archive, but NASA downscaled just one per model to keep the dataset manageable.
+
+Each run is identified by a **variant label** like `r1i1p1f1`:
+
+```
+r1 i1 p1 f1
+│  │  │  │
+│  │  │  └─ f = forcing variant (which aerosol/land-use dataset was used)
+│  │  └──── p = physics version (which sub-grid parameterization scheme)
+│  └─────── i = initialization method (how the simulation was started)
+└────────── r = realization number (different initial conditions → different weather)
+```
+
+Most models use `r1i1p1f1` (realization 1, default everything). But some centres chose a different primary run:
+
+| Variant | Models | Why |
+|---------|--------|-----|
+| `r1i1p1f1` | 24 models (most) | Default — first realization, standard forcing |
+| `r1i1p1f2` | CNRM-CM6-1, CNRM-ESM2-1, GISS-E2-1-G, MIROC-ES2L, UKESM1-0-LL | Different forcing dataset (f2) — centre's recommended run |
+| `r1i1p1f3` | HadGEM3-GC31-LL, HadGEM3-GC31-MM | Different forcing (f3) |
+| `r3i1p1f1` | FGOALS-g3, CESM2-WACCM | Third realization (r3) |
+| `r4i1p1f1` | CESM2 | Fourth realization (r4) |
+
+**Key point**: These are NOT multiple runs from the same model. NASA provides **exactly one realization per model** in NEX-GDDP-CMIP6. The different labels just identify which single run each centre chose as its primary submission.
+
+This means the spread across our 34 models captures **structural uncertainty** (different models disagree) but not **internal variability** (different weather trajectories within the same model). For our 30-year windows, this is acceptable — internal variability averages out over decades.
+
+Our download script (`fetch_cmip6.py`) handles variant discovery automatically: it tries `r1i1p1f1` first, then falls back to f2, f3, r3, r4 until it finds the one that exists on the THREDDS server for each model.
+
+### Data Format: NetCDF
+
+Each file NASA provides is in **NetCDF** (Network Common Data Form) — a binary format designed for array-oriented scientific data. After our NCSS point extraction, each cached file contains:
+
+```
+data/cache/thredds/ACCESS-CM2_ssp245_tasmax_2030_31.8160_-104.0853.nc
+│                  │          │      │      │    │
+│                  │          │      │      │    └─ Longitude
+│                  │          │      │      └────── Latitude
+│                  │          │      └───────────── Year
+│                  │          └──────────────────── Variable
+│                  └─────────────────────────────── Scenario
+└────────────────────────────────────────────────── Model name
+
+Contents (~5 KB):
+  ┌──────────────────────────────────┐
+  │ time: [2030-01-01, ..., 2030-12-30]  │  ← 365 daily timestamps
+  │ tasmax: [308.2, 305.1, 311.4, ...]   │  ← daily values (Kelvin)
+  │ lat: 31.8160                         │  ← grid cell latitude
+  │ lon: -104.0853                       │  ← grid cell longitude
+  │ calendar: "noleap"                   │  ← model's calendar type
+  └──────────────────────────────────┘
+```
+
+**Calendar quirk**: Climate models use different calendar systems — some have 365 days (noleap), some 360 days (360_day), some include leap years (proleptic_gregorian). Our pipeline handles all of these using the `cftime` library, converting everything to standard pandas timestamps.
+
+**Unit conversion** happens at load time:
+- Temperature: Kelvin → Celsius (subtract 273.15)
+- Precipitation: kg/m²/s → mm/day (multiply by 86,400)
+- Other variables: used as-is
 
 **9 variables available**:
 
