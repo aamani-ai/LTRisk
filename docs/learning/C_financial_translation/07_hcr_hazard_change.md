@@ -1258,25 +1258,44 @@ NB04 cross-validation (simple P90 per-DOY exceedance):
 
 ---
 
-## 11. Open Questions for NB04 Implementation
+## 11. Resolved Decisions + Remaining Open Questions
 
-### Priority Research Needed
+### Per-Hazard Routing Decision — RESOLVED (2026-03-19)
+
+> **Decision:** Pathway A (SCVR × scaling) is primary for temperature hazards; Pathway B (direct counting) is primary for precipitation hazards. Pathway B remains available as cross-validation for all hazards.
+
+**Why:** NB04 Part B (2026-03-19) revealed that routing temperature hazards through Pathway B with per-DOY P90 compound thresholds produces HCR values of +1,549% (SSP2-4.5) — technically correct but financially misleading. The per-DOY P90 definition creates a tiny baseline denominator (~1 compound HW day/year), so even modest warming produces huge ratios. Meanwhile, Pathway A's 2.5× scaling factor was calibrated against absolute thresholds (~15 HW days/year baseline) and produces a more interpretable +17% HCR. Both are mathematically valid for their threshold definitions, but the absolute-threshold framing is what the BI loss model expects.
+
+For precipitation, Pathway A gives the wrong sign (SCVR ≈ 0 → HCR ≈ 0, but actual extreme rain days increase). Pathway B is mandatory — see [Jensen's inequality discussion](../../discussion/discussion_jensen_inequality_hcr_scvr.md).
+
+| Hazard | Input Var | Primary Pathway | Rationale |
+|--------|-----------|-----------------|-----------|
+| heat_wave | tasmax | **A** (×2.5) | Absolute threshold scaling well-calibrated; per-DOY P90 creates tiny denominator |
+| cold_wave | tasmin | **A** (×-0.3) | Same reasoning as heat |
+| frost_days | tasmin | **A** (×-0.3) | Simple threshold, stable baseline count |
+| freeze_thaw | tasmin | **A** (×1.0) | Linear threshold crossing |
+| extreme_precip | pr | **B** | Mandatory — SCVR ≈ 0, Pathway A gives wrong sign |
+| flood_rx5day | pr | **B** | Mandatory — same Jensen's inequality issue |
+| dry_spell | pr | **B** | Mandatory — same issue |
+| fire_weather | tasmax | **A** (×1.5) | FWI proxy has sign-flip under SSP5-8.5; B unreliable for proxy variables |
+| ice_storm | tasmin | **A** (×-0.3) | Multi-variable proxy, B noisy |
+| wind_extreme | sfcWind | **A** (×1.0) | Small signal, near-linear |
+
+### Remaining Open Questions
 
 | Question | Impact | Approach |
 |----------|--------|----------|
 | Are heat scaling factors region-specific? | HIGH | Compare Hayhurst vs Maverick implied scaling |
-| How to handle pr sign inversion for flood HCR? | MEDIUM | Separate wet-tail from dry-tail analysis |
-| Is FWI computable from NEX-GDDP variables? | MEDIUM | Implement simplified Canadian FWI |
 | Compound event interaction terms? | LOW (Phase 2) | Literature review — start with Zscheischler et al. |
 | Non-linear HCR (power law)? | LOW (Phase 2) | Need more sites for calibration data |
 
 ### Implementation Decisions for NB04
 
-1. **HCR Pathway B — DONE (Part A, 2026-03-19):** NB04 computed HCR via Pathway B (direct counting) for tasmax (P90 per-DOY) and precipitation (rx5day, frost days). Results saved to `data/processed/hcr/hayhurst_solar/`. NB04 used decade SCVR decomposition directly (not annual SCVR).
+1. **HCR Pathway B — DONE (Part A, 2026-03-19):** NB04 computed HCR via Pathway B (direct counting) for all 10 hazards across 31 models. Results saved to `data/processed/hcr/hayhurst_solar/`.
 
-2. **Which threshold definition feeds the BI model?** NB04's P90 per-DOY exceedance gives ~26× scaling; compound heat waves give ~2.5-3×. The choice determines the financial routing. **This is the key open question for NB05.**
+2. **HCR Routing Fix — DONE (Part B, 2026-03-19):** NB04 revised to route temperature hazards through Pathway A (primary) and precipitation hazards through Pathway B (mandatory). Pathway B results retained for cross-validation display. Closes the threshold definition open question above.
 
-3. **Compound heat wave counter:** NB04 should implement the compound definition (3+ consecutive days, tasmax+tasmin > P90) to complete the cross-validation against the 2.5× estimate.
+3. **Compound heat wave counter — DONE:** NB04 implements compound definition (3+ consecutive days, tasmax+tasmin > P90). Cross-validation confirms implied scaling ~15× for per-DOY P90 compound vs ~2.5× for absolute thresholds — validating the routing decision.
 
 4. **Negative HCR handling:** Allow negative HCR values (hazard decreasing). These create NAV upsides that partially offset other impairments.
 
