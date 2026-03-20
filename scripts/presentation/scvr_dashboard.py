@@ -53,6 +53,217 @@ SEVERITY_THRESHOLDS = [
 
 PLOTLY_TEMPLATE = "plotly_white"
 
+# ── Methodology Content ──────────────────────────────────────────────────────
+# Hardcoded from docs/learning/B_scvr_methodology/04_scvr_methodology.md,
+# scripts/analysis/scvr/README.md, and docs/discussion/ so the dashboard
+# works standalone without requiring the docs folder.
+
+METHODOLOGY_WHAT = """
+**SCVR (Severe Climate Variability Rating)** is a single number that measures how much
+the shape of a climate variable's distribution shifts between a historical baseline
+and a future period.
+
+It answers: *"By what fraction did the climate distribution shift between the
+historical baseline and the asset's future?"*
+
+### The Formula
+
+```
+SCVR = (area_future - area_baseline) / area_baseline
+```
+
+Where **area** is the area under the empirical exceedance curve — a descending sort
+of all daily values plotted against exceedance probability [0, 1], integrated with
+the trapezoidal rule.
+
+### What the Values Mean
+
+| SCVR | Meaning |
+|------|---------|
+| **= 0** | No change from baseline |
+| **0.00 – 0.05** | Low change |
+| **0.05 – 0.10** | Moderate change |
+| **0.10 – 0.20** | Elevated change |
+| **> 0.20** | High change — review for tail sensitivity |
+| **< 0** | Fewer extremes (e.g., fewer frost days under warming) |
+
+A positive SCVR means extreme events are more frequent or more severe than baseline.
+
+### Exceedance Curves
+
+Think of the daily temperatures at a site over 30 years. Sort them from hottest to
+coldest and draw a curve — that's an **exceedance curve**. The area under it summarises
+the whole distribution. SCVR measures how much that area grew from baseline to future.
+
+```
+  Baseline (B) vs Future (F):
+
+  Value
+    47 |  F                        F is shifted right/up
+    45 |B F                        = more extreme values
+       |B  F
+    40 |B   FF
+       | B    FF
+    35 | BB     FFF
+       |   BBB     FFFF
+    30 |     BBBBB     FFFFF
+       |         BBBBBBB   FFFFF
+    25 |              BBBBBBBB  FFFFFF
+       └──────────────────────────────────
+       0%            50%            100%
+                Exceedance Probability
+```
+"""
+
+METHODOLOGY_HOW = """
+### Step-by-Step Computation
+
+1. **Collect daily values** — 30 years × ~365 days × N models (pooled) = ~300,000+ values
+   per period (baseline 1985–2014, future 2026–2055)
+
+2. **Sort descending** — highest value first (hottest day at index 0)
+
+3. **Assign exceedance probabilities** — `np.linspace(0, 1, n)` normalises both arrays
+   to [0, 1] regardless of length
+
+4. **Compute area** — `np.trapezoid(sorted_values, exc_probs)` — trapezoidal integration
+
+5. **Compare** — `SCVR = (area_future - area_baseline) / area_baseline`
+
+### The Core Function
+
+```python
+def compute_scvr(baseline_values, future_values):
+    b = np.sort(baseline_values[~np.isnan(baseline_values)])[::-1]
+    f = np.sort(future_values[~np.isnan(future_values)])[::-1]
+
+    exc_b = np.linspace(0, 1, len(b))
+    exc_f = np.linspace(0, 1, len(f))
+
+    area_b = float(np.trapezoid(b, exc_b))
+    area_f = float(np.trapezoid(f, exc_f))
+
+    scvr = (area_f - area_b) / area_b if area_b != 0 else 0.0
+    return {"scvr": scvr, "area_baseline": area_b, "area_future": area_f}
+```
+
+### Why Daily Data — Not Annual Means
+
+Annual aggregation destroys tail information. A 45°C extreme day gets averaged with
+300+ normal days and becomes invisible. SCVR uses **all ~300,000 daily values** to
+preserve the full distribution shape including extremes.
+
+### Ensemble Pooling
+
+All available CMIP6 models are **pooled** — daily values from all models are concatenated
+into one array before computing exceedance. A 28-model ensemble with 30 years each
+produces ~306,600 daily values. This captures both inter-model spread and inter-annual
+variability in a single robust estimate.
+"""
+
+METHODOLOGY_STRATEGY = """
+### Variable-Specific Annual Strategy
+
+Not all variables behave the same under climate change. The annual SCVR strategy
+depends on the variable's signal-to-noise ratio:
+
+| Strategy | Variables | Method | Why |
+|----------|-----------|--------|-----|
+| **anchor_3_linear** | tasmax, tasmin, tas | Split future into 3 decades. Compute SCVR per decade as "anchors". Fit linear trend. Interpolate to annual. | Temperature has a clean, monotonic signal (R² > 0.95) |
+| **period_average** | pr, sfcWind, hurs | Use decade-level SCVR directly. No interpolation. | Too noisy for linear fit (R² < 0.7) |
+
+### Decade Windows
+
+Three non-overlapping 10-year windows within the future period:
+
+| Decade | Years | Role |
+|--------|-------|------|
+| 2026–2035 | Near-term | Already underway |
+| 2036–2045 | Mid-term | Core projection period |
+| 2046–2055 | End of period | End of typical asset life |
+
+### Anchor Fitting (Temperature)
+
+For temperature variables, the 3 decade SCVR values serve as "anchors". A linear
+polyfit through the 3 midpoints (2030.5, 2040.5, 2050.5) produces a slope and
+intercept. Annual values are interpolated from this fit.
+
+**Empirical R² values** (Hayhurst Solar):
+- tasmax SSP2-4.5: R² = 0.991
+- tasmax SSP5-8.5: R² = 0.975
+- tasmin SSP2-4.5: R² = 0.999
+- tas SSP2-4.5: R² = 0.998
+
+**Why precipitation doesn't get this treatment:**
+Precipitation R² ≈ 0.59, wind R² ≈ 0.13 — fitting a line through 3 noisy points
+would produce misleading annual values.
+"""
+
+METHODOLOGY_INTERPRET = """
+### SCVR Severity Scale
+
+| SCVR Range | Severity | Colour | Example |
+|------------|----------|--------|---------|
+| 0.00 – 0.05 | LOW | Green | sfcWind at inland sites |
+| 0.05 – 0.10 | MODERATE | Amber | tasmax under SSP2-4.5 |
+| 0.10 – 0.20 | ELEVATED | Orange | tasmin under SSP5-8.5 |
+| > 0.20 | HIGH | Red | Review — may indicate tail sensitivity |
+| < 0 | Reduction | — | Frost days under warming |
+
+### Companion Metrics
+
+SCVR captures the **mean shift** of the distribution but not tail fattening or
+skewness changes. That's why we compute additional diagnostics:
+
+| Metric | What It Tells You |
+|--------|-------------------|
+| **Shape metrics** (P95, P99, skewness, kurtosis) | Whether extremes are growing faster than the mean |
+| **GEV** (Generalised Extreme Value) | Parametric model of annual block maxima — shape parameter indicates tail heaviness |
+| **GPD** (Generalised Pareto) | Peaks-over-threshold — how the tail above P95 behaves |
+| **CV** (Coefficient of Variation) | Whether relative spread is changing |
+
+A variable with SCVR = 0.08 but rapidly increasing P99 and positive GEV shape
+parameter may be more dangerous than one with SCVR = 0.12 but stable tails.
+"""
+
+METHODOLOGY_PIPELINE = """
+### Downstream Pipeline
+
+SCVR is the **central hub** connecting climate projections to financial impact:
+
+```
+SCVR(t)                           Annual climate shift per variable
+  │
+  ├──► HCR(t)                     Hazard Change Ratio
+  │      │                        (heat ×2.5, flood ×1.5-2.0, etc.)
+  │      │
+  │      ├──► BI losses           Revenue lost to hazard events
+  │      │
+  │      └──► EFR(t)              Equipment Failure Ratio
+  │             │                 (Peck's, Coffin-Manson, Palmgren-Miner)
+  │             │
+  │             └──► IUL          Impaired Useful Life
+  │                               (e.g., 25yr → 21yr)
+  │
+  └──► Gen(t) adjustment          Climate-adjusted annual generation
+         │
+         └──► CFADS(t)           Cash flow available for debt service
+                │
+                └──► NAV         Net Asset Value impairment
+```
+
+### Variable → Hazard Routing
+
+| Variable | Hazard Channel | Downstream Impact |
+|----------|---------------|-------------------|
+| tasmax | Heat stress | Equipment degradation (Peck's model), generation derating |
+| tasmin | Freeze/thaw | Mechanical fatigue (Coffin-Manson), icing damage |
+| tas | Ambient thermal | Overall thermal stress envelope |
+| pr | Flood/drought | Business interruption, erosion, water availability |
+| sfcWind | Wind loading | Turbine fatigue (Palmgren-Miner), generation variability |
+| hurs | Humidity/corrosion | Accelerated corrosion (Peck's), PV soiling |
+"""
+
 
 def scvr_severity(value):
     for threshold, label, _ in SEVERITY_THRESHOLDS:
@@ -188,9 +399,10 @@ def filt(df, scenarios=True, variables=True):
 
 
 # ── Tabs ─────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "Summary", "Decade Progression", "Annual Trajectory",
     "Distribution Shape", "Extreme Value Fits",
+    "Methodology", "Raw Report",
 ])
 
 
@@ -718,6 +930,63 @@ with tab5:
                 margin=dict(t=40),
             )
             st.plotly_chart(fig_shift, use_container_width=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 6: Methodology
+# ══════════════════════════════════════════════════════════════════════════════
+with tab6:
+    st.header("SCVR Methodology Reference")
+    st.caption("Sourced from project documentation — learning guides and discussion papers.")
+
+    with st.expander("What is SCVR?", expanded=True):
+        st.markdown(METHODOLOGY_WHAT)
+
+    with st.expander("How is it Computed?"):
+        st.markdown(METHODOLOGY_HOW)
+
+    with st.expander("Variable-Specific Strategy"):
+        st.markdown(METHODOLOGY_STRATEGY)
+
+    with st.expander("Interpretation Guide"):
+        st.markdown(METHODOLOGY_INTERPRET)
+
+    with st.expander("Downstream Pipeline (SCVR → HCR → EFR → NAV)"):
+        st.markdown(METHODOLOGY_PIPELINE)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 7: Raw Report
+# ══════════════════════════════════════════════════════════════════════════════
+with tab7:
+    st.header("Full SCVR Report")
+    report = data["report"]
+
+    # Summary table
+    summary_rows = [
+        {"Section": "ensemble_scvr", "Count": len(report.get("ensemble_scvr", [])), "Type": "rows"},
+        {"Section": "decade_scvr", "Count": len(report.get("decade_scvr", [])), "Type": "rows"},
+        {"Section": "annual_scvr", "Count": len(report.get("annual_scvr", [])), "Type": "rows"},
+        {"Section": "shape_metrics", "Count": len(report.get("shape_metrics", [])), "Type": "rows"},
+        {"Section": "gev_fits", "Count": len(report.get("gev_fits", {})), "Type": "keys"},
+        {"Section": "gpd_fits", "Count": len(report.get("gpd_fits", {})), "Type": "keys"},
+        {"Section": "anchor_fits", "Count": len(report.get("anchor_fits", {})), "Type": "variables"},
+        {"Section": "models", "Count": len(report.get("models", {})), "Type": "variables"},
+    ]
+    st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
+
+    # Download button
+    report_json = json.dumps(report, indent=2, default=str)
+    st.download_button(
+        label="Download scvr_report.json",
+        data=report_json,
+        file_name=f"scvr_report_{selected_site}.json",
+        mime="application/json",
+    )
+
+    # Interactive JSON tree
+    st.subheader("JSON Contents")
+    st.json(report, expanded=1)
 
 
 # ── Footer ───────────────────────────────────────────────────────────────────
