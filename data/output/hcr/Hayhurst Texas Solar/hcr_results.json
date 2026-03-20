@@ -1,6 +1,6 @@
 {
   "site_id": "Hayhurst Texas Solar",
-  "generated": "2026-03-19T23:40:11.715512",
+  "generated": "2026-03-20T08:54:38.101934",
   "baseline_years": [
     1985,
     2014
@@ -11,6 +11,7 @@
   ],
   "n_models": 31,
   "routing_decision": "temperature/proxy \u2192 Pathway A | precipitation \u2192 Pathway B (doc 07 \u00a711)",
+  "annual_interpolation": "Pathway A: SCVR \u00d7 scaling | Pathway B: 3-anchor linear fit (same as SCVR anchor_3_linear)",
   "hazard_config": {
     "heat_wave": {
       "input_var": "tasmax",
@@ -138,17 +139,17 @@
     },
     "flood_rx5day": {
       "ssp245": {
-        "mean_hcr": 0.012827,
-        "min_hcr": -0.380806,
-        "max_hcr": 0.230329,
+        "mean_hcr": 0.010811,
+        "min_hcr": 0.002313,
+        "max_hcr": 0.01931,
         "pathway": "B",
         "baseline_days_per_year": 1.98,
         "future_days_per_year": 2.0
       },
       "ssp585": {
-        "mean_hcr": 0.024889,
-        "min_hcr": -0.078911,
-        "max_hcr": 0.159162,
+        "mean_hcr": 0.025168,
+        "min_hcr": 0.022431,
+        "max_hcr": 0.027905,
         "pathway": "B",
         "baseline_days_per_year": 1.98,
         "future_days_per_year": 2.03
@@ -156,17 +157,17 @@
     },
     "extreme_precip": {
       "ssp245": {
-        "mean_hcr": 0.034264,
-        "min_hcr": -1.017221,
-        "max_hcr": 0.615262,
+        "mean_hcr": 0.027603,
+        "min_hcr": -0.002942,
+        "max_hcr": 0.058148,
         "pathway": "B",
         "baseline_days_per_year": 2.46,
         "future_days_per_year": 2.53
       },
       "ssp585": {
-        "mean_hcr": 0.053818,
-        "min_hcr": -0.170635,
-        "max_hcr": 0.344168,
+        "mean_hcr": 0.053269,
+        "min_hcr": 0.03431,
+        "max_hcr": 0.072228,
         "pathway": "B",
         "baseline_days_per_year": 2.46,
         "future_days_per_year": 2.59
@@ -174,17 +175,17 @@
     },
     "dry_spell": {
       "ssp245": {
-        "mean_hcr": 0.101661,
-        "min_hcr": -3.018024,
-        "max_hcr": 1.82544,
+        "mean_hcr": 0.099565,
+        "min_hcr": 0.099565,
+        "max_hcr": 0.099565,
         "pathway": "B",
         "baseline_days_per_year": 4.18,
         "future_days_per_year": 4.44
       },
       "ssp585": {
-        "mean_hcr": 0.069928,
-        "min_hcr": -0.221718,
-        "max_hcr": 0.447201,
+        "mean_hcr": 0.069713,
+        "min_hcr": 0.069713,
+        "max_hcr": 0.069713,
         "pathway": "B",
         "baseline_days_per_year": 4.18,
         "future_days_per_year": 4.33
