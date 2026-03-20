@@ -191,7 +191,18 @@ WHAT WE DON'T DOWNLOAD:
 
 **Important distinction**: "Historical" here means the models' **simulation** of past climate — not raw observations. Each model was run with observed greenhouse gas concentrations as input, producing its own version of 1985–2014 weather. This is still model output, just driven by known forcings rather than future scenarios.
 
-ERA5 (the European reanalysis dataset) enters only indirectly: NASA used it as the reference when bias-correcting the models (the BCSD step in Section 2). So the model outputs are *adjusted* to match ERA5's statistical patterns, but the daily values we download are model-generated, not observed. This is why baseline and future data come from the same pipeline — same models, same grid, same download process — just different experiment labels (`historical` vs `ssp245`/`ssp585`).
+Each model's run is one continuous simulation — the split at ~2014 is just where the forcing inputs switch from "what actually happened" to "what we assume will happen":
+
+```
+ACCESS-CM2:  [...1985...2000...2014]  →  [2015...2040...2055]
+              ←── historical ──────→     ←──── ssp245 ──────→
+              (observed GHG forcing)      (projected GHG scenario)
+
+Same model, same physics, same realization — just different inputs.
+All 28 models run both experiments, so baseline and future are an apples-to-apples comparison.
+```
+
+ERA5 (the European reanalysis dataset) enters only indirectly: NASA used it as the reference when bias-correcting the models (the BCSD step in Section 2). So the model outputs are *adjusted* to match ERA5's statistical patterns, but the daily values we download are model-generated, not observed.
 
 ### Caching
 
