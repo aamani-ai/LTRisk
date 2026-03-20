@@ -34,7 +34,7 @@ A comprehensive guide to the climate science, data engineering, and financial me
 | # | Topic | What You'll Learn |
 |---|---|---|
 | [10](D_technical_reference/10_data_pipeline.md) | **Data Pipeline** | THREDDS server, NCSS point extraction, NetCDF format, the calendar problem, two-level caching, unit conversion, model probing, full fetch loop |
-| [11](D_technical_reference/11_distribution_shift_methods.md) | **Distribution Shift Methods** | How SCVR relates to Wasserstein W1, CVaR, AAL, KS statistic, PSI, and non-stationary hydrology — the full cross-industry landscape |
+| [11](D_technical_reference/11_distribution_shift_methods.md) | **Distribution Shift Methods** | SCVR as fractional change in mean (not Wasserstein W1), honest comparison with CVaR, AAL, KS, PSI, non-stationary hydrology — what SCVR captures and what it doesn't |
 
 ---
 

@@ -1,9 +1,9 @@
 # Distribution Shift Quantification — Where SCVR Sits in a Larger Landscape
 
-> SCVR answers one question: "By what fraction did this climate distribution shift?" This is
-> not a novel question. Finance, insurance, hydrology, machine learning, and information theory
-> all ask it. This doc maps the full landscape — every major method, what it measures, and
-> exactly where SCVR fits.
+> SCVR answers one question: "By what fraction did the mean of this climate distribution shift?"
+> This is not a novel question. Finance, insurance, hydrology, machine learning, and information
+> theory all ask it. This doc maps the full landscape — every major method, what it measures,
+> and exactly where SCVR fits — with an honest assessment of what SCVR captures and what it doesn't.
 
 ---
 
@@ -40,7 +40,7 @@ The same question appears in every quantitative field, just with different label
 | Engineering | Load cycles, thermal stress | Design conditions → future operating conditions |
 
 The methods differ in three ways:
-1. **What they integrate** — a point (single quantile), the tail, or the full distribution
+1. **What they summarize** — a point (single quantile), the tail, the mean, or the full shape
 2. **Whether they normalize** — absolute distance or fractional change
 3. **Parametric vs empirical** — fit a model to the data or use the data directly
 
@@ -60,46 +60,65 @@ assumption about what the distributions represent.
 | Total Variation | max\|P(A) − Q(A)\| over all events A | Yes | Yes |
 | Wasserstein W1 | ∫\|F_P(x) − F_Q(x)\| dx | Yes | Yes |
 
-### Wasserstein W1 — the closest relative to SCVR
+### Wasserstein W1 — related to SCVR but not the same
 
 Wasserstein W1 is also called the "Earth Mover's Distance": how much earth (probability mass)
 do you need to move, and how far, to transform distribution P into distribution Q?
 
 ```
-F_baseline(x):                      F_future(x):
-        ┌──────────────────         ┌──────────────────
-1.0─────┘                   1.0─────┘
-                                         (shifted right)
+W1 = ∫₀¹ |Q_future(p) - Q_baseline(p)| dp
 
-        Area between the two CDFs = W1 distance
-
-        ┌──────────────────
-1.0──┐  │  ← F_baseline   ← F_future
-     │  │  ██████████████
-     │  │  ██████████████   ← shaded area = W1
-     │  │  ██████████████
-0.0──┘──┘──────────────────────────
-     x_min                x_max
+    = integral of ABSOLUTE quantile-by-quantile difference
+    = captures both location shift AND shape change
+    = unsigned (always ≥ 0)
 ```
 
-**SCVR is a normalized, signed Wasserstein W1 distance:**
+W1 is a true distance metric — it's sensitive to every difference between two distributions,
+including changes in variance, skewness, and kurtosis.
+
+### How SCVR relates to (but differs from) W1
+
+SCVR uses the same quantile integral representation but computes something different:
 
 ```
-W1 (unsigned) = ∫|F_baseline(x) - F_future(x)| dx
+W1   = ∫₀¹ |Q_future(p) - Q_baseline(p)| dp     ← absolute difference of quantiles
+                                                     (shape-aware, unsigned)
 
-SCVR (signed) = (area_future - area_baseline) / area_baseline
+SCVR = (∫₀¹ Q_future(p) dp  -  ∫₀¹ Q_baseline(p) dp)  /  ∫₀¹ Q_baseline(p) dp
+     = (       E[X_future]   -        E[X_baseline]  )  /        E[X_baseline]
+     = (    mean_future      -      mean_baseline     )  /      mean_baseline
 
-Where area = ∫ value d(exceedance_probability)
-           = ∫₀¹ Q(p) dp      (quantile representation)
-           ≈ E[X]              (at large n)
+     ← difference of integral means (NOT shape-aware, signed)
 ```
 
-The sign matters for SCVR: a positive SCVR means the distribution shifted toward higher values.
-For temperature that's a warming signal; for relative humidity that's a drying signal (negative).
-Wasserstein W1 discards the sign by taking the absolute area — SCVR preserves direction.
+**The key difference:** W1 computes `|difference of quantiles|` — it measures how far apart
+the distributions are at every point. SCVR computes `difference of integrals` — it measures
+how the overall mean shifted. These are NOT equivalent:
 
-See [04_scvr_methodology.md](04_scvr_methodology.md) for the full SCVR formula and
-the empirical vs theoretical exceedance discussion.
+```
+Example where they disagree:
+
+  Distribution A: mean = 30°C, std = 5°C     }  SCVR = 0  (same mean)
+  Distribution B: mean = 30°C, std = 10°C    }  W1   > 0  (shape changed)
+
+  Distribution C: mean = 30°C                }  SCVR = +0.067  (mean shifted)
+  Distribution D: mean = 32°C                }  W1   = 2°C     (also detects it)
+```
+
+SCVR detects location shifts (the mean moved) but is blind to shape changes that preserve the
+mean. W1 detects both. SCVR is a weaker metric than W1 — but for our use case, this is
+acceptable (see Section 9 for why).
+
+The sign matters: SCVR preserves direction (positive = warmer/wetter, negative = cooler/drier).
+W1 discards direction by taking absolute values.
+
+**Previous versions of this doc** described SCVR as a "normalized, signed Wasserstein W1 distance."
+This was imprecise. SCVR is **related** to W1 (both use quantile integrals) but is not W1.
+It is more accurately described as: *fractional change in the distribution mean, computed via the
+exceedance curve area integral*.
+
+See [04_scvr_methodology.md](../B_scvr_methodology/04_scvr_methodology.md) §3c for the full
+derivation of why exceedance area = mean.
 
 ---
 
@@ -127,9 +146,9 @@ Loss distribution:
                       VaR threshold
 ```
 
-VaR is a **point measure** — it tells you one quantile, not the shape of the shift.
-For climate risk this is insufficient: a distribution can shift its mean while its
-99th percentile stays constant, or vice versa. SCVR integrates the full shape.
+VaR is a **point measure** — it tells you one quantile, not the overall shift.
+SCVR is a **mean measure** — it summarizes the net shift across all quantiles into one number.
+Neither captures the full distributional shape on its own.
 
 ### CVaR / Expected Shortfall — tail area integral
 
@@ -146,14 +165,14 @@ CVaR is structurally the same integral as SCVR, but:
 - Not normalized by the baseline distribution
 - Absolute dollars, not fractional shift
 
-**Analogy:** CVaR measures the shifted tail. SCVR measures the shifted full distribution.
+**Analogy:** CVaR measures the mean of the tail. SCVR measures the mean of the full distribution.
+Both are mean-based metrics, just over different ranges.
 
 ### Stress testing — deterministic shift
 
 Regulatory stress tests (Basel III, DFAST) apply a fixed scenario: "What if rates rise 300bp?"
 This is a single-point distribution shift, not a distributional comparison. It is the finance
-equivalent of the "delta method" in hydrology — simple, transparent, but loses the full
-distributional shape.
+equivalent of the "delta method" in hydrology — simple, transparent, but assumes a uniform shift.
 
 ### Extreme Value Theory (EVT)
 
@@ -165,14 +184,15 @@ EVT workflow:
   Data → fit GEV parameters (μ, σ, ξ) → extrapolate return period curve
 ```
 
-EVT is parametric. SCVR is empirical. At n=65,700 daily values the empirical approach
-is already converged — the added complexity of EVT fitting is not needed.
+EVT is parametric and tail-focused. SCVR is empirical and mean-focused. At n ≈ 306,000 daily
+values (28 models × 30 years × ~365 days) the empirical mean is already well-converged. EVT
+adds value when you need tail extrapolation beyond your data — SCVR doesn't attempt that.
 
 ---
 
 ## 4. Insurance and CAT Modeling
 
-The insurance industry built its own equivalent of the Wasserstein integral for pricing
+The insurance industry built its own version of the same mean integral for pricing
 catastrophe risk. They called it the Average Annual Loss.
 
 ### Exceedance Probability (EP) curves
@@ -190,34 +210,35 @@ EP curve (CAT model):         Exceedance curve (SCVR):
   0.0 ┤──────────────────        0.0 ┤──────────────────
          loss ($)                       value (°C, mm, etc)
 
-      Same shape. Different x-axis.
+      Same structure. Different x-axis.
 ```
 
 ### Average Annual Loss (AAL)
 
 AAL = ∫ loss · f(loss) d(loss) = E[annual loss] = area under loss EP curve.
 
-This is the actuarial world's version of our area = E[X] integral. Insurers price policies
-using AAL. A climate-adjusted model computes AAL_future > AAL_baseline and charges a
-higher premium.
+This is the actuarial world's version of our area = E[X] integral. **AAL is a mean.** Insurers
+price policies using AAL. A climate-adjusted model computes AAL_future > AAL_baseline and
+charges a higher premium.
 
 **SCVR = (AAL_future − AAL_baseline) / AAL_baseline** — just applied to physical climate
-variables instead of dollar losses.
+variables instead of dollar losses. Both are fractional changes in means computed via
+exceedance curve areas.
 
-The insurance and information theory communities independently converged on the same integral
-because integrating the full exceedance curve is the right summary statistic for a shifted
-distribution.
+This is SCVR's strongest cross-industry analogy: the insurance industry has used mean-based
+exceedance area integrals for decades. The math is identical.
 
 ### Probable Maximum Loss (PML)
 
 PML is the 250-year or 500-year return period loss — a single tail quantile. Like VaR, it
-is a point measure, not an area measure. Simpler to communicate, but loses distributional shape.
+is a point measure, not an area measure. Simpler to communicate, but loses the distributional
+picture.
 
 ### Return period shift
 
 "The 100-year flood is now a 50-year flood." This expresses the shift as a change in
-exceedance probability at a fixed value. Related to SCVR but local (single point) rather
-than global (full distribution).
+exceedance probability at a fixed value. Related to SCVR but local (single threshold) rather
+than global (distribution mean).
 
 ---
 
@@ -237,7 +258,8 @@ Fit a GEV distribution where the parameters are functions of time (or CO2 concen
 ```
 
 This captures a continuously shifting distribution, not just baseline vs future.
-More flexible than SCVR, but requires fitting and assumes a parametric form.
+More flexible than SCVR — it can detect both location and scale changes. But it requires
+fitting and assumes a parametric form.
 
 ### Mann-Kendall trend test
 
@@ -252,8 +274,10 @@ The simplest approach: shift the future distribution by the difference in means.
 Future value = baseline value + (future mean − baseline mean)
 ```
 
-Used for bias-correcting climate model output. SCVR does not use this — it compares
-pooled empirical distributions directly, preserving changes in variance and shape.
+Used for bias-correcting climate model output. **SCVR is mathematically equivalent to the
+delta method's fractional form** — both measure the change in mean. The difference is
+implementation: SCVR computes the mean via exceedance area integration over pooled empirical
+data, while the delta method typically uses parametric or model-specific means.
 
 ### Design standard recalibration
 
@@ -295,7 +319,7 @@ ML distribution shift taxonomy:
 
 **Climate risk framing:** Climate change is covariate shift — the input distribution P(X)
 (temperature, rainfall, wind) shifts, but the engineering failure physics P(Y|X)
-(degradation given climate) is constant. SCVR measures exactly the covariate shift.
+(degradation given climate) is constant. SCVR measures the mean of the covariate shift.
 
 ### Population Stability Index (PSI)
 
@@ -314,7 +338,8 @@ Rule of thumb:
 ```
 
 PSI is a discretized, asymmetric version of KL divergence. Widely used because it's simple
-to compute from binned data and easy to explain to non-quants.
+to compute from binned data and easy to explain to non-quants. Unlike SCVR, PSI is sensitive
+to shape changes (it compares bin-by-bin proportions, not just means).
 
 ### Kolmogorov-Smirnov (KS) statistic
 
@@ -330,11 +355,11 @@ CDF comparison:
 
   KS focuses on the single worst point of divergence.
   Wasserstein sums the entire area between the curves.
-  SCVR is a signed, normalized Wasserstein.
+  SCVR compares the means (total areas under each curve).
 ```
 
 KS is used for hypothesis testing (are these two distributions the same?). SCVR is not a
-hypothesis test — it quantifies the magnitude and direction of shift unconditionally.
+hypothesis test — it quantifies the magnitude and direction of mean shift.
 
 ### Maximum Mean Discrepancy (MMD)
 
@@ -357,38 +382,42 @@ LTRisk's HCR → EFR → IUL chain.
 | Palmgren-Miner (wind fatigue) | Wind speed distribution | Cumulative structural damage fraction |
 | Weibull / ALT | Stress level distribution | Time-to-failure distribution |
 
-The connection: SCVR quantifies how much the climate variable distribution shifted.
-Engineering models translate that shift into physical damage. See
+The connection: SCVR quantifies how much the mean of the climate variable shifted.
+The HCR step translates that mean shift into hazard-specific impact ratios. Engineering
+models then translate those ratios into physical damage. See
 [07_hcr_hazard_change.md](07_hcr_hazard_change.md) and [08_efr_equipment_degradation.md](08_efr_equipment_degradation.md) for the full chain.
 
 ---
 
 ## 8. Where SCVR Sits — Full Comparison
 
-> **Why this matters:** If a quant reviewer, regulator, or institutional investor asks
-> "what methodology is this based on?" — the answer is: normalized signed Wasserstein W1
-> distance applied to empirical climate variable distributions. It has a 40-year literature
-> behind it, and it converges with the actuarial AAL integral that the insurance industry
-> has used for decades.
+> **Honest framing for technical counterparties:** "SCVR is the fractional change in the
+> distribution mean, computed empirically via exceedance curve area integration. It is
+> related to the Wasserstein W1 distance (both use quantile integrals) but is a weaker
+> metric — it captures location shift, not shape change. The same integral appears in
+> the actuarial AAL framework used for catastrophe pricing."
 
-| Method | Field | What it integrates | Normalized? | Sign preserved? | Parametric? |
+| Method | Field | What it measures | Normalized? | Sign preserved? | Shape-aware? |
 |---|---|---|---|---|---|
-| KL Divergence | Information theory | Log-ratio weighted sum | No | No | Optional |
-| Wasserstein W1 | Information theory | Full CDF area | No | No (absolute) | No |
-| KS statistic | Statistics | Max point gap only | No | No | No |
-| VaR | Finance | Single quantile | No | Yes | Optional |
-| CVaR / ES | Finance | Tail area only | No | Yes | Optional |
-| AAL | Insurance | Full loss CDF | No | Yes | Yes/No |
-| PSI | Credit/ML | Binned KL-like | No | No | No |
-| Delta method | Hydrology | Mean shift only | No | Yes | No |
-| GEV non-stationary | Hydrology | Parametric full distribution | Optional | Yes | Yes |
-| **SCVR** | **Climate risk** | **Full value CDF** | **Yes (÷ baseline)** | **Yes** | **No** |
+| KL Divergence | Information theory | Log-ratio divergence (full shape) | No | No | Yes |
+| Wasserstein W1 | Information theory | Quantile-by-quantile distance (full shape) | No | No (absolute) | Yes |
+| KS statistic | Statistics | Max CDF gap (single point) | No | No | No |
+| VaR | Finance | Single tail quantile | No | Yes | No |
+| CVaR / ES | Finance | Tail mean | No | Yes | Tail only |
+| AAL | Insurance | Distribution mean (= SCVR equivalent) | No | Yes | No |
+| PSI | Credit/ML | Binned divergence (full shape) | No | No | Yes |
+| Delta method | Hydrology | Mean shift (= SCVR equivalent) | No | Yes | No |
+| GEV non-stationary | Hydrology | Parametric location + scale | Optional | Yes | Yes |
+| **SCVR** | **Climate risk** | **Distribution mean (fractional change)** | **Yes (÷ baseline)** | **Yes** | **No** |
 
-SCVR is the only method in common use that combines:
-- Full distribution (not just tail or mean)
-- Normalized (fractional shift, not absolute)
-- Sign-preserving (direction of shift matters)
-- Empirical (no parametric assumptions)
+SCVR combines:
+- **Normalized** (fractional shift, comparable across variables and sites)
+- **Sign-preserving** (direction of shift matters)
+- **Empirical** (no parametric assumptions)
+- **Mean-based** (captures location shift, not shape change)
+
+The last point is a limitation, not a feature — see Section 10 for what SCVR misses
+and how LTRisk handles it.
 
 ---
 
@@ -398,22 +427,21 @@ SCVR is the only method in common use that combines:
 
 SCVR does not fit a GEV, Normal, or any other distribution. It uses the data directly.
 
-**Why:** At n=65,700 daily values (6 models × 30 years × ~365 days), the empirical CDF
-has already converged to the true distribution. The trapezoid integration error is
-< 0.0001% (see [scvr/01_what_is_scvr.md](scvr/01_what_is_scvr.md) for the error analysis).
-Fitting a parametric model adds distributional assumptions without improving accuracy,
-and introduces risk of misspecification — especially in the tails where climate change
-signal is strongest.
+**Why:** At n ≈ 306,000 daily values (28 models × 30 years × ~365 days), the empirical mean
+is converged to high precision. The trapezoid integration error vs the true mean is
+< 0.003°C (see [04_scvr_methodology.md](../B_scvr_methodology/04_scvr_methodology.md) §3c).
+Fitting a parametric model adds distributional assumptions without improving the mean estimate,
+and introduces risk of misspecification.
 
 ### Choice 2: Normalized ratio, not absolute distance
 
-SCVR = (area_future − area_baseline) / area_baseline.
+SCVR = (mean_future − mean_baseline) / mean_baseline.
 
-**Why:** Absolute Wasserstein distance is not comparable across variables or sites.
+**Why:** Absolute mean shift is not comparable across variables or sites.
 A +2°C shift at a hot desert site (tasmax baseline mean ~38°C) has different
 physical consequences than a +2°C shift at a cold mountain site (baseline mean ~5°C).
-Normalizing by the baseline area converts absolute shift into fractional shift,
-making SCVR dimensionless and comparable:
+Normalizing converts absolute shift into fractional shift, making SCVR dimensionless
+and comparable:
 
 ```
 Hot site (baseline mean = 38°C):  SCVR = 2/38 ≈ 0.053  → 5.3% shift
@@ -422,27 +450,102 @@ Cold site (baseline mean = 5°C):  SCVR = 2/5  ≈ 0.40   → 40% shift — phys
 
 ### Choice 3: Daily granularity, not annual
 
-SCVR is computed from ~65,700 daily values, not from 30 annual means.
+SCVR is computed from ~306,000 daily values, not from 30 annual means.
 
-**Why:** Engineering failure models (Peck's, Coffin-Manson) are driven by the daily
-distribution — cumulative damage depends on every cycle, not on the mean year.
-Annual means collapse 365 days into one number, destroying the tail information that
-drives degradation. A year with 20 days above 40°C and a year with 0 days above 40°C
-can have the same annual mean. SCVR on annual means would call them identical. SCVR
-on daily values captures the difference.
+**Why:** Daily granularity gives a more precise mean estimate (larger n). But more importantly,
+the daily data is preserved for the downstream HCR step, where we DO count tail exceedances
+directly (Pathway B). SCVR itself doesn't use the tail information — it collapses to the
+mean — but the same daily data feeds both SCVR and the direct counting pathway.
 
 ```
-Annual means:   30.1°C   vs   30.1°C   → SCVR = 0 (same)
-Daily data:     20 days >40°C  vs  0 days >40°C  → SCVR captures this
+Annual means:   30.1°C   vs   30.1°C   → SCVR = 0, but Pathway B can still detect
+                                           20 days >40°C vs 0 days >40°C
 ```
+
+### Choice 4: Why a mean metric is sufficient
+
+For **temperature variables** (tasmax, tasmin, tas), climate change primarily shifts the
+entire distribution rightward — a location shift. The mean captures 90%+ of the signal.
+Shape changes (variance, skewness) are secondary and largely consistent across models.
+SCVR works well here.
+
+For **precipitation and wind**, the mean shift is small and unreliable, but the shape
+changes matter — more intense extremes even if the average barely moves. SCVR fails here,
+which is exactly why LTRisk routes precipitation hazards through **Pathway B** (direct
+threshold counting) instead of Pathway A (SCVR × scaling factor). See
+[07_hcr_hazard_change.md](07_hcr_hazard_change.md) for the routing logic.
+
+This design decision — using SCVR where it works (temperature) and bypassing it where
+it doesn't (precipitation) — is more honest than claiming SCVR captures everything.
+
+---
+
+## 10. What SCVR Does NOT Capture
+
+Being transparent about limitations strengthens the methodology. SCVR is blind to:
+
+### Variance changes
+
+If the distribution widens (more extreme days in both directions) but the mean stays
+constant, SCVR = 0.
+
+```
+Baseline:  mean = 30°C, std = 5°C    ← narrow distribution
+Future:    mean = 30°C, std = 8°C    ← wider (more extremes), but same mean
+
+SCVR = (30 - 30) / 30 = 0          ← misses the change entirely
+W1 > 0                              ← would catch it
+Pathway B: counts days >40°C        ← would catch it (more exceedances)
+```
+
+### Skewness and kurtosis changes
+
+If the right tail fattens (more extreme heat days) but the left tail thins by the same
+amount (fewer cold days), the mean can stay constant while the risk profile changes
+dramatically. SCVR = 0.
+
+### Compensating shifts
+
+If temperatures rise in summer but fall in winter by the same amount, the annual mean
+is unchanged but the seasonal risk profile is very different. SCVR = 0.
+
+### How LTRisk handles this
+
+1. **Pathway A** (SCVR × scaling): Used for temperature hazards where mean shift dominates.
+   The scaling factor translates the mean shift into hazard-specific impact.
+
+2. **Pathway B** (direct counting): Used for precipitation, wind, and any hazard where
+   shape changes matter more than mean changes. Bypasses SCVR entirely — counts threshold
+   exceedances directly from the daily data.
+
+3. **Companion metrics**: The `scvr_report.json` includes per-model SCVR, standard
+   deviation changes, percentile shifts, and tail confidence flags. These supplement the
+   headline SCVR number with shape information for review.
+
+---
+
+## 11. References
+
+**Optimal transport and Wasserstein distance:**
+- Villani, C. (2009). *Optimal Transport: Old and New*. Springer. — Definitive reference for Wasserstein distances.
+- Panaretos, V.M. & Zemel, Y. (2019). "Statistical Aspects of Wasserstein Distances." *Annual Review of Statistics and Its Application*, 6, 405-431. — Accessible review of W1 properties and applications.
+
+**The area = mean identity:**
+- This is a standard result in probability theory: ∫₀¹ F⁻¹(p) dp = E[X], where F⁻¹ is the quantile function. See Billingsley, P. (1995). *Probability and Measure*, 3rd ed. Wiley. §21.
+
+**Insurance exceedance curves and AAL:**
+- Grossi, P. & Kunreuther, H. (2005). *Catastrophe Modeling: A New Approach to Managing Risk*. Springer. — EP curves, AAL, and PML as used in the CAT modeling industry.
+
+**Climate model projections (our data source):**
+- Thrasher, B., Wang, W., Michaelis, A. et al. (2022). "NASA Global Daily Downscaled Projections, CMIP6." *Scientific Data* 9, 262. https://doi.org/10.1038/s41597-022-01393-4
 
 ---
 
 ## Cross-References
 
-- [04_scvr_methodology.md](04_scvr_methodology.md) — the SCVR formula step by step, empirical vs theoretical exceedance, trapezoid error analysis, Weibull vs linspace comparison
+- [04_scvr_methodology.md](../B_scvr_methodology/04_scvr_methodology.md) — the SCVR formula step by step, area = mean proof (§3c), trapezoid error analysis
 - [03_scenarios_and_time_windows.md](03_scenarios_and_time_windows.md) — why 1985-2014 baseline and 2026-2055 future
-- [07_hcr_hazard_change.md](07_hcr_hazard_change.md) — how SCVR translates to hazard-specific impact ratios
+- [07_hcr_hazard_change.md](07_hcr_hazard_change.md) — Pathway A vs B routing, how SCVR translates to hazard-specific impact ratios
 - [08_efr_equipment_degradation.md](08_efr_equipment_degradation.md) — Peck's, Coffin-Manson, Palmgren-Miner deep dives
 - [09_nav_impairment_chain.md](09_nav_impairment_chain.md) — the complete SCVR → NAV chain
 
