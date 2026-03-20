@@ -1,8 +1,248 @@
 {
-  "timestamp": "2026-03-19T19:58:17.759906",
+  "timestamp": "2026-03-19T20:05:49.864096",
   "site_id": "hayhurst_solar",
   "lat": 31.815992,
   "lon": -104.0853,
+  "config": {
+    "baseline_years": [
+      1985,
+      2014
+    ],
+    "future_years": [
+      2026,
+      2055
+    ],
+    "scenarios": [
+      "ssp245",
+      "ssp585"
+    ],
+    "variables": [
+      "tasmax",
+      "tasmin",
+      "tas",
+      "pr",
+      "sfcWind",
+      "hurs"
+    ],
+    "decades": [
+      "2026-2035",
+      "2036-2045",
+      "2046-2055"
+    ],
+    "scvr_strategy": {
+      "tasmax": "anchor_3_linear",
+      "tasmin": "anchor_3_linear",
+      "tas": "anchor_3_linear",
+      "pr": "period_average",
+      "sfcWind": "period_average",
+      "hurs": "period_average"
+    },
+    "scipy_available": true,
+    "computation_time_s": 35.5
+  },
+  "models": {
+    "tasmax": {
+      "count": 28,
+      "names": [
+        "ACCESS-CM2",
+        "ACCESS-ESM1-5",
+        "BCC-CSM2-MR",
+        "CMCC-ESM2",
+        "CNRM-CM6-1",
+        "CNRM-ESM2-1",
+        "CanESM5",
+        "EC-Earth3",
+        "EC-Earth3-Veg-LR",
+        "FGOALS-g3",
+        "GFDL-CM4",
+        "GFDL-ESM4",
+        "GISS-E2-1-G",
+        "HadGEM3-GC31-LL",
+        "INM-CM4-8",
+        "INM-CM5-0",
+        "IPSL-CM6A-LR",
+        "KACE-1-0-G",
+        "KIOST-ESM",
+        "MIROC6",
+        "MPI-ESM1-2-HR",
+        "MPI-ESM1-2-LR",
+        "MRI-ESM2-0",
+        "NESM3",
+        "NorESM2-LM",
+        "NorESM2-MM",
+        "TaiESM1",
+        "UKESM1-0-LL"
+      ]
+    },
+    "tasmin": {
+      "count": 28,
+      "names": [
+        "ACCESS-CM2",
+        "ACCESS-ESM1-5",
+        "BCC-CSM2-MR",
+        "CMCC-ESM2",
+        "CNRM-CM6-1",
+        "CNRM-ESM2-1",
+        "CanESM5",
+        "EC-Earth3",
+        "EC-Earth3-Veg-LR",
+        "FGOALS-g3",
+        "GFDL-CM4",
+        "GFDL-ESM4",
+        "GISS-E2-1-G",
+        "HadGEM3-GC31-LL",
+        "INM-CM4-8",
+        "INM-CM5-0",
+        "IPSL-CM6A-LR",
+        "KACE-1-0-G",
+        "KIOST-ESM",
+        "MIROC6",
+        "MPI-ESM1-2-HR",
+        "MPI-ESM1-2-LR",
+        "MRI-ESM2-0",
+        "NESM3",
+        "NorESM2-LM",
+        "NorESM2-MM",
+        "TaiESM1",
+        "UKESM1-0-LL"
+      ]
+    },
+    "tas": {
+      "count": 24,
+      "names": [
+        "ACCESS-CM2",
+        "ACCESS-ESM1-5",
+        "BCC-CSM2-MR",
+        "CESM2",
+        "CMCC-ESM2",
+        "CNRM-ESM2-1",
+        "CanESM5",
+        "EC-Earth3",
+        "EC-Earth3-Veg-LR",
+        "FGOALS-g3",
+        "GFDL-CM4",
+        "GFDL-ESM4",
+        "IITM-ESM",
+        "INM-CM4-8",
+        "KACE-1-0-G",
+        "KIOST-ESM",
+        "MIROC6",
+        "MPI-ESM1-2-HR",
+        "MPI-ESM1-2-LR",
+        "MRI-ESM2-0",
+        "NESM3",
+        "NorESM2-LM",
+        "NorESM2-MM",
+        "TaiESM1"
+      ]
+    },
+    "pr": {
+      "count": 31,
+      "names": [
+        "ACCESS-CM2",
+        "ACCESS-ESM1-5",
+        "BCC-CSM2-MR",
+        "CESM2",
+        "CMCC-CM2-SR5",
+        "CMCC-ESM2",
+        "CNRM-CM6-1",
+        "CNRM-ESM2-1",
+        "CanESM5",
+        "EC-Earth3",
+        "EC-Earth3-Veg-LR",
+        "FGOALS-g3",
+        "GFDL-CM4",
+        "GFDL-ESM4",
+        "GISS-E2-1-G",
+        "HadGEM3-GC31-LL",
+        "IITM-ESM",
+        "INM-CM4-8",
+        "INM-CM5-0",
+        "IPSL-CM6A-LR",
+        "KACE-1-0-G",
+        "KIOST-ESM",
+        "MIROC6",
+        "MPI-ESM1-2-HR",
+        "MPI-ESM1-2-LR",
+        "MRI-ESM2-0",
+        "NESM3",
+        "NorESM2-LM",
+        "NorESM2-MM",
+        "TaiESM1",
+        "UKESM1-0-LL"
+      ]
+    },
+    "sfcWind": {
+      "count": 31,
+      "names": [
+        "ACCESS-CM2",
+        "ACCESS-ESM1-5",
+        "BCC-CSM2-MR",
+        "CESM2",
+        "CMCC-CM2-SR5",
+        "CMCC-ESM2",
+        "CNRM-CM6-1",
+        "CNRM-ESM2-1",
+        "CanESM5",
+        "EC-Earth3",
+        "EC-Earth3-Veg-LR",
+        "FGOALS-g3",
+        "GFDL-CM4",
+        "GFDL-ESM4",
+        "GISS-E2-1-G",
+        "HadGEM3-GC31-LL",
+        "IITM-ESM",
+        "INM-CM4-8",
+        "INM-CM5-0",
+        "IPSL-CM6A-LR",
+        "KACE-1-0-G",
+        "KIOST-ESM",
+        "MIROC6",
+        "MPI-ESM1-2-HR",
+        "MPI-ESM1-2-LR",
+        "MRI-ESM2-0",
+        "NESM3",
+        "NorESM2-LM",
+        "NorESM2-MM",
+        "TaiESM1",
+        "UKESM1-0-LL"
+      ]
+    },
+    "hurs": {
+      "count": 29,
+      "names": [
+        "ACCESS-CM2",
+        "ACCESS-ESM1-5",
+        "CESM2",
+        "CMCC-CM2-SR5",
+        "CMCC-ESM2",
+        "CNRM-CM6-1",
+        "CNRM-ESM2-1",
+        "CanESM5",
+        "EC-Earth3",
+        "EC-Earth3-Veg-LR",
+        "FGOALS-g3",
+        "GFDL-CM4",
+        "GFDL-ESM4",
+        "GISS-E2-1-G",
+        "HadGEM3-GC31-LL",
+        "IITM-ESM",
+        "INM-CM4-8",
+        "INM-CM5-0",
+        "IPSL-CM6A-LR",
+        "KACE-1-0-G",
+        "KIOST-ESM",
+        "MIROC6",
+        "MPI-ESM1-2-HR",
+        "MPI-ESM1-2-LR",
+        "MRI-ESM2-0",
+        "NorESM2-LM",
+        "NorESM2-MM",
+        "TaiESM1",
+        "UKESM1-0-LL"
+      ]
+    }
+  },
   "summary": {
     "ensemble_scvr_rows": 12,
     "decade_scvr_rows": 36,
@@ -167,6 +407,3026 @@
       "window_end_year": 2055
     }
   ],
+  "decade_scvr": [
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "decade": "2026-2035",
+      "scvr": 0.05311174686174852,
+      "area_baseline": 26.54782800669737,
+      "area_future": 27.957829527518317,
+      "n_future_days": 102034
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "decade": "2036-2045",
+      "scvr": 0.07051135086349243,
+      "area_baseline": 26.54782800669737,
+      "area_future": 28.419751221941258,
+      "n_future_days": 102046
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "decade": "2046-2055",
+      "scvr": 0.08306790228594962,
+      "area_baseline": 26.54782800669737,
+      "area_future": 28.753100389461903,
+      "n_future_days": 102034
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "decade": "2026-2035",
+      "scvr": 0.05830503730122453,
+      "area_baseline": 26.54782800669737,
+      "area_future": 28.095700108894352,
+      "n_future_days": 102034
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "decade": "2036-2045",
+      "scvr": 0.07550492304063341,
+      "area_baseline": 26.54782800669737,
+      "area_future": 28.552319717239026,
+      "n_future_days": 102046
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "decade": "2046-2055",
+      "scvr": 0.10583224792088185,
+      "area_baseline": 26.54782800669737,
+      "area_future": 29.357444322063095,
+      "n_future_days": 102034
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "decade": "2026-2035",
+      "scvr": 0.11025256987153263,
+      "area_baseline": 10.585959264925286,
+      "area_future": 11.75308847843866,
+      "n_future_days": 101964
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "decade": "2036-2045",
+      "scvr": 0.1454246909107712,
+      "area_baseline": 10.585959264925286,
+      "area_future": 12.12541911902106,
+      "n_future_days": 101976
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "decade": "2046-2055",
+      "scvr": 0.1767515276920616,
+      "area_baseline": 10.585959264925286,
+      "area_future": 12.457043737086764,
+      "n_future_days": 101964
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "decade": "2026-2035",
+      "scvr": 0.12361853409451494,
+      "area_baseline": 10.585959264925286,
+      "area_future": 11.894580031239599,
+      "n_future_days": 101964
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "decade": "2036-2045",
+      "scvr": 0.17230998894270205,
+      "area_baseline": 10.585959264925286,
+      "area_future": 12.410025788812456,
+      "n_future_days": 101976
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "decade": "2046-2055",
+      "scvr": 0.22477213861946393,
+      "area_baseline": 10.585959264925286,
+      "area_future": 12.965387968241071,
+      "n_future_days": 101964
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "decade": "2026-2035",
+      "scvr": 0.06607881613835943,
+      "area_baseline": 18.545981561891043,
+      "area_future": 19.771478067624646,
+      "n_future_days": 87500
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "decade": "2036-2045",
+      "scvr": 0.09045819209418511,
+      "area_baseline": 18.545981561891043,
+      "area_future": 20.2236175245918,
+      "n_future_days": 87511
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "decade": "2046-2055",
+      "scvr": 0.1073615543345959,
+      "area_baseline": 18.545981561891043,
+      "area_future": 20.537106969036422,
+      "n_future_days": 87500
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "decade": "2026-2035",
+      "scvr": 0.07590577560763642,
+      "area_baseline": 18.545981561891043,
+      "area_future": 19.953728676751307,
+      "n_future_days": 87500
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "decade": "2036-2045",
+      "scvr": 0.10063194057804861,
+      "area_baseline": 18.545981561891043,
+      "area_future": 20.412299676388848,
+      "n_future_days": 87511
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "decade": "2046-2055",
+      "scvr": 0.13613751849015757,
+      "area_baseline": 18.545981561891043,
+      "area_future": 21.070785469691106,
+      "n_future_days": 87500
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "pr",
+      "decade": "2026-2035",
+      "scvr": 0.030351449732850862,
+      "area_baseline": 0.8866535178497515,
+      "area_future": 0.9135647375272237,
+      "n_future_days": 112914
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "pr",
+      "decade": "2036-2045",
+      "scvr": -0.015629771036163503,
+      "area_baseline": 0.8866535178497515,
+      "area_future": 0.872795326377351,
+      "n_future_days": 112927
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "pr",
+      "decade": "2046-2055",
+      "scvr": -0.01835794862119608,
+      "area_baseline": 0.8866535178497515,
+      "area_future": 0.870376378124263,
+      "n_future_days": 112914
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "pr",
+      "decade": "2026-2035",
+      "scvr": 0.0009602299607031112,
+      "area_baseline": 0.8866535178497515,
+      "area_future": 0.8875049091223537,
+      "n_future_days": 112914
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "pr",
+      "decade": "2036-2045",
+      "scvr": 0.021531140182992244,
+      "area_baseline": 0.8866535178497515,
+      "area_future": 0.9057441790363178,
+      "n_future_days": 112927
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "pr",
+      "decade": "2046-2055",
+      "scvr": -0.0434279863607278,
+      "area_baseline": 0.8866535178497515,
+      "area_future": 0.8481479409698812,
+      "n_future_days": 112914
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "decade": "2026-2035",
+      "scvr": -0.022349967652306763,
+      "area_baseline": 3.346233602736191,
+      "area_future": 3.271445389957975,
+      "n_future_days": 112924
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "decade": "2036-2045",
+      "scvr": -0.020461017810962583,
+      "area_baseline": 3.346233602736191,
+      "area_future": 3.2777662573909643,
+      "n_future_days": 112937
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "decade": "2046-2055",
+      "scvr": -0.023232842077770932,
+      "area_baseline": 3.346233602736191,
+      "area_future": 3.2684910858884906,
+      "n_future_days": 112924
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "decade": "2026-2035",
+      "scvr": -0.024198390731767622,
+      "area_baseline": 3.346233602736191,
+      "area_future": 3.26526013453741,
+      "n_future_days": 112924
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "decade": "2036-2045",
+      "scvr": -0.029006630553672558,
+      "area_baseline": 3.346233602736191,
+      "area_future": 3.2491706408753376,
+      "n_future_days": 112937
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "decade": "2046-2055",
+      "scvr": -0.024307755840385938,
+      "area_baseline": 3.346233602736191,
+      "area_future": 3.2648941733359846,
+      "n_future_days": 112924
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "decade": "2026-2035",
+      "scvr": -0.011746659833713709,
+      "area_baseline": 47.90182118467045,
+      "area_future": 47.33913478579875,
+      "n_future_days": 105612
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "decade": "2036-2045",
+      "scvr": -0.04272950209419645,
+      "area_baseline": 47.90182118467045,
+      "area_future": 45.85500021604425,
+      "n_future_days": 105624
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "decade": "2046-2055",
+      "scvr": -0.039146582700714555,
+      "area_baseline": 47.90182118467045,
+      "area_future": 46.02662858014991,
+      "n_future_days": 105612
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "decade": "2026-2035",
+      "scvr": -0.02699690511551791,
+      "area_baseline": 47.90182118467045,
+      "area_future": 46.6086202632874,
+      "n_future_days": 105612
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "decade": "2036-2045",
+      "scvr": -0.024051826282897922,
+      "area_baseline": 47.90182118467045,
+      "area_future": 46.74969490290232,
+      "n_future_days": 105624
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "decade": "2046-2055",
+      "scvr": -0.05651124663415605,
+      "area_baseline": 47.90182118467045,
+      "area_future": 45.1948295534783,
+      "n_future_days": 105612
+    }
+  ],
+  "annual_scvr": [
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2026,
+      "scvr": 0.04717878732118397,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2027,
+      "scvr": 0.048676595092394415,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2028,
+      "scvr": 0.05017440286360442,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2029,
+      "scvr": 0.05167221063481442,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2030,
+      "scvr": 0.05317001840602442,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2031,
+      "scvr": 0.054667826177234424,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2032,
+      "scvr": 0.05616563394844443,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2033,
+      "scvr": 0.05766344171965487,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2034,
+      "scvr": 0.059161249490864876,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2035,
+      "scvr": 0.06065905726207488,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2036,
+      "scvr": 0.06215686503328488,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2037,
+      "scvr": 0.06365467280449488,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2038,
+      "scvr": 0.06515248057570489,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2039,
+      "scvr": 0.06665028834691533,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2040,
+      "scvr": 0.06814809611812533,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2041,
+      "scvr": 0.06964590388933534,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2042,
+      "scvr": 0.07114371166054534,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2043,
+      "scvr": 0.07264151943175534,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2044,
+      "scvr": 0.07413932720296534,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2045,
+      "scvr": 0.07563713497417579,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2046,
+      "scvr": 0.07713494274538579,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2047,
+      "scvr": 0.0786327505165958,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2048,
+      "scvr": 0.0801305582878058,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2049,
+      "scvr": 0.0816283660590158,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2050,
+      "scvr": 0.0831261738302258,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2051,
+      "scvr": 0.0846239816014358,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2052,
+      "scvr": 0.08612178937264625,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2053,
+      "scvr": 0.08761959714385625,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2054,
+      "scvr": 0.08911740491506626,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "year": 2055,
+      "scvr": 0.09061521268627626,
+      "method": "anchor_3_linear",
+      "r2": 0.9913627092020355
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2026,
+      "scvr": 0.045423508388328315,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2027,
+      "scvr": 0.047799868919311095,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2028,
+      "scvr": 0.050176229450293874,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2029,
+      "scvr": 0.052552589981276654,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2030,
+      "scvr": 0.054928950512259433,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2031,
+      "scvr": 0.0573053110432431,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2032,
+      "scvr": 0.05968167157422588,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2033,
+      "scvr": 0.06205803210520866,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2034,
+      "scvr": 0.06443439263619144,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2035,
+      "scvr": 0.06681075316717422,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2036,
+      "scvr": 0.069187113698157,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2037,
+      "scvr": 0.07156347422913978,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2038,
+      "scvr": 0.07393983476012345,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2039,
+      "scvr": 0.07631619529110623,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2040,
+      "scvr": 0.078692555822089,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2041,
+      "scvr": 0.08106891635307178,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2042,
+      "scvr": 0.08344527688405456,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2043,
+      "scvr": 0.08582163741503734,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2044,
+      "scvr": 0.08819799794602012,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2045,
+      "scvr": 0.09057435847700379,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2046,
+      "scvr": 0.09295071900798657,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2047,
+      "scvr": 0.09532707953896935,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2048,
+      "scvr": 0.09770344006995213,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2049,
+      "scvr": 0.10007980060093491,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2050,
+      "scvr": 0.10245616113191769,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2051,
+      "scvr": 0.10483252166290047,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2052,
+      "scvr": 0.10720888219388414,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2053,
+      "scvr": 0.10958524272486692,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2054,
+      "scvr": 0.1119616032558497,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "year": 2055,
+      "scvr": 0.11433796378683247,
+      "method": "anchor_3_linear",
+      "r2": 0.9752002154142638
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2026,
+      "scvr": 0.09593118507156984,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2027,
+      "scvr": 0.09925613296259606,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2028,
+      "scvr": 0.10258108085362316,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2029,
+      "scvr": 0.10590602874464938,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2030,
+      "scvr": 0.1092309766356756,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2031,
+      "scvr": 0.11255592452670271,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2032,
+      "scvr": 0.11588087241772893,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2033,
+      "scvr": 0.11920582030875515,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2034,
+      "scvr": 0.12253076819978226,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2035,
+      "scvr": 0.12585571609080848,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2036,
+      "scvr": 0.1291806639818347,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2037,
+      "scvr": 0.1325056118728618,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2038,
+      "scvr": 0.13583055976388803,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2039,
+      "scvr": 0.13915550765491425,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2040,
+      "scvr": 0.14248045554594047,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2041,
+      "scvr": 0.14580540343696757,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2042,
+      "scvr": 0.1491303513279938,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2043,
+      "scvr": 0.15245529921902,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2044,
+      "scvr": 0.15578024711004712,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2045,
+      "scvr": 0.15910519500107334,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2046,
+      "scvr": 0.16243014289209956,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2047,
+      "scvr": 0.16575509078312667,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2048,
+      "scvr": 0.1690800386741529,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2049,
+      "scvr": 0.1724049865651791,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2050,
+      "scvr": 0.17572993445620622,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2051,
+      "scvr": 0.17905488234723244,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2052,
+      "scvr": 0.18237983023825866,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2053,
+      "scvr": 0.18570477812928576,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2054,
+      "scvr": 0.18902972602031198,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "year": 2055,
+      "scvr": 0.1923546739113382,
+      "method": "anchor_3_linear",
+      "r2": 0.998886674422326
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2026,
+      "scvr": 0.1002305239383059,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2027,
+      "scvr": 0.10528820416455353,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2028,
+      "scvr": 0.11034588439080117,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2029,
+      "scvr": 0.11540356461704881,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2030,
+      "scvr": 0.12046124484329646,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2031,
+      "scvr": 0.1255189250695441,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2032,
+      "scvr": 0.13057660529579174,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2033,
+      "scvr": 0.13563428552203938,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2034,
+      "scvr": 0.14069196574828702,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2035,
+      "scvr": 0.14574964597453466,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2036,
+      "scvr": 0.1508073262007823,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2037,
+      "scvr": 0.15586500642702994,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2038,
+      "scvr": 0.16092268665327758,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2039,
+      "scvr": 0.16598036687952522,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2040,
+      "scvr": 0.17103804710577108,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2041,
+      "scvr": 0.17609572733201873,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2042,
+      "scvr": 0.18115340755826637,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2043,
+      "scvr": 0.186211087784514,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2044,
+      "scvr": 0.19126876801076165,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2045,
+      "scvr": 0.1963264482370093,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2046,
+      "scvr": 0.20138412846325693,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2047,
+      "scvr": 0.20644180868950457,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2048,
+      "scvr": 0.2114994889157522,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2049,
+      "scvr": 0.21655716914199985,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2050,
+      "scvr": 0.2216148493682475,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2051,
+      "scvr": 0.22667252959449513,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2052,
+      "scvr": 0.23173020982074277,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2053,
+      "scvr": 0.2367878900469904,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2054,
+      "scvr": 0.24184557027323805,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "year": 2055,
+      "scvr": 0.2469032504994857,
+      "method": "anchor_3_linear",
+      "r2": 0.9995370248558135
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2026,
+      "scvr": 0.058036202330107756,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2027,
+      "scvr": 0.060100339239919975,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2028,
+      "scvr": 0.06216447614973131,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2029,
+      "scvr": 0.06422861305954353,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2030,
+      "scvr": 0.06629274996935486,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2031,
+      "scvr": 0.06835688687916708,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2032,
+      "scvr": 0.0704210237889793,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2033,
+      "scvr": 0.07248516069879063,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2034,
+      "scvr": 0.07454929760860285,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2035,
+      "scvr": 0.07661343451841418,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2036,
+      "scvr": 0.0786775714282264,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2037,
+      "scvr": 0.08074170833803862,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2038,
+      "scvr": 0.08280584524784995,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2039,
+      "scvr": 0.08486998215766217,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2040,
+      "scvr": 0.0869341190674735,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2041,
+      "scvr": 0.08899825597728572,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2042,
+      "scvr": 0.09106239288709705,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2043,
+      "scvr": 0.09312652979690927,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2044,
+      "scvr": 0.0951906667067215,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2045,
+      "scvr": 0.09725480361653283,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2046,
+      "scvr": 0.09931894052634505,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2047,
+      "scvr": 0.10138307743615638,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2048,
+      "scvr": 0.1034472143459686,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2049,
+      "scvr": 0.10551135125578082,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2050,
+      "scvr": 0.10757548816559215,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2051,
+      "scvr": 0.10963962507540437,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2052,
+      "scvr": 0.1117037619852157,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2053,
+      "scvr": 0.11376789889502792,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2054,
+      "scvr": 0.11583203580484014,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "tas",
+      "year": 2055,
+      "scvr": 0.11789617271465147,
+      "method": "anchor_3_linear",
+      "r2": 0.9891866519775067
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2026,
+      "scvr": 0.06055706463545096,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2027,
+      "scvr": 0.06356865177957705,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2028,
+      "scvr": 0.06658023892370313,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2029,
+      "scvr": 0.06959182606782921,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2030,
+      "scvr": 0.07260341321195529,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2031,
+      "scvr": 0.07561500035608137,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2032,
+      "scvr": 0.07862658750020834,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2033,
+      "scvr": 0.08163817464433443,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2034,
+      "scvr": 0.08464976178846051,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2035,
+      "scvr": 0.08766134893258659,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2036,
+      "scvr": 0.09067293607671267,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2037,
+      "scvr": 0.09368452322083876,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2038,
+      "scvr": 0.09669611036496484,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2039,
+      "scvr": 0.09970769750909092,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2040,
+      "scvr": 0.102719284653217,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2041,
+      "scvr": 0.10573087179734308,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2042,
+      "scvr": 0.10874245894146917,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2043,
+      "scvr": 0.11175404608559525,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2044,
+      "scvr": 0.11476563322972133,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2045,
+      "scvr": 0.11777722037384741,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2046,
+      "scvr": 0.1207888075179735,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2047,
+      "scvr": 0.12380039466209958,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2048,
+      "scvr": 0.12681198180622566,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2049,
+      "scvr": 0.12982356895035174,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2050,
+      "scvr": 0.13283515609447782,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2051,
+      "scvr": 0.1358467432386039,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2052,
+      "scvr": 0.13885833038273,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2053,
+      "scvr": 0.14186991752685607,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2054,
+      "scvr": 0.14488150467098215,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "tas",
+      "year": 2055,
+      "scvr": 0.14789309181510824,
+      "method": "anchor_3_linear",
+      "r2": 0.9894365434587122
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "pr",
+      "year": 2030,
+      "scvr": 0.030351449732850862,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "pr",
+      "year": 2040,
+      "scvr": -0.015629771036163503,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "pr",
+      "year": 2050,
+      "scvr": -0.01835794862119608,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "pr",
+      "year": 2030,
+      "scvr": 0.0009602299607031112,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "pr",
+      "year": 2040,
+      "scvr": 0.021531140182992244,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "pr",
+      "year": 2050,
+      "scvr": -0.0434279863607278,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "year": 2030,
+      "scvr": -0.022349967652306763,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "year": 2040,
+      "scvr": -0.020461017810962583,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "year": 2050,
+      "scvr": -0.023232842077770932,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "year": 2030,
+      "scvr": -0.024198390731767622,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "year": 2040,
+      "scvr": -0.029006630553672558,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "year": 2050,
+      "scvr": -0.024307755840385938,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "year": 2030,
+      "scvr": -0.011746659833713709,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "year": 2040,
+      "scvr": -0.04272950209419645,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "year": 2050,
+      "scvr": -0.039146582700714555,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "year": 2030,
+      "scvr": -0.02699690511551791,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "year": 2040,
+      "scvr": -0.024051826282897922,
+      "method": "period_average",
+      "r2": null
+    },
+    {
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "year": 2050,
+      "scvr": -0.05651124663415605,
+      "method": "period_average",
+      "r2": null
+    }
+  ],
+  "anchor_fits": {
+    "tasmax": {
+      "ssp245": {
+        "mids": [
+          2030.5,
+          2040.5,
+          2050.5
+        ],
+        "scvrs": [
+          0.05311174686174852,
+          0.07051135086349243,
+          0.08306790228594962
+        ],
+        "slope": 0.0014978077712100748,
+        "intercept": -2.9873797571504275,
+        "r2": 0.9913627092020355
+      },
+      "ssp585": {
+        "mids": [
+          2030.5,
+          2040.5,
+          2050.5
+        ],
+        "scvrs": [
+          0.05830503730122453,
+          0.07550492304063341,
+          0.10583224792088185
+        ],
+        "slope": 0.0023763605309829097,
+        "intercept": -4.769082927383047,
+        "r2": 0.9752002154142638
+      }
+    },
+    "tasmin": {
+      "ssp245": {
+        "mids": [
+          2030.5,
+          2040.5,
+          2050.5
+        ],
+        "scvrs": [
+          0.11025256987153263,
+          0.1454246909107712,
+          0.1767515276920616
+        ],
+        "slope": 0.0033249478910264978,
+        "intercept": -6.640413242148115,
+        "r2": 0.998886674422326
+      },
+      "ssp585": {
+        "mids": [
+          2030.5,
+          2040.5,
+          2050.5
+        ],
+        "scvrs": [
+          0.12361853409451494,
+          0.17230998894270205,
+          0.22477213861946393
+        ],
+        "slope": 0.005057680226247531,
+        "intercept": -10.146629614439192,
+        "r2": 0.9995370248558135
+      }
+    },
+    "tas": {
+      "ssp245": {
+        "mids": [
+          2030.5,
+          2040.5,
+          2050.5
+        ],
+        "scvrs": [
+          0.06607881613835943,
+          0.09045819209418511,
+          0.1073615543345959
+        ],
+        "slope": 0.0020641369098118507,
+        "intercept": -4.123905176948702,
+        "r2": 0.9891866519775067
+      },
+      "ssp585": {
+        "mids": [
+          2030.5,
+          2040.5,
+          2050.5
+        ],
+        "scvrs": [
+          0.07590577560763642,
+          0.10063194057804861,
+          0.13613751849015757
+        ],
+        "slope": 0.00301158714412611,
+        "intercept": -6.0409184893640475,
+        "r2": 0.9894365434587122
+      }
+    }
+  },
+  "shape_metrics": [
+    {
+      "n_days": 306144,
+      "min": -10.019049072265602,
+      "max": 46.1490417480469,
+      "mean": 26.547800298064605,
+      "std": 8.391545550922745,
+      "variance": 70.41803673321131,
+      "cv": 0.3160919344242057,
+      "p10": 15.000918579101585,
+      "p25": 20.26185760498049,
+      "p50": 27.088433837890648,
+      "p75": 33.65987548828127,
+      "p90": 37.12465820312502,
+      "p95": 38.54869537353518,
+      "p99": 40.8384625244141,
+      "skewness": -0.31409434620468624,
+      "kurtosis": -0.6886302322416751,
+      "scenario": "baseline",
+      "variable": "tasmax",
+      "period": "baseline"
+    },
+    {
+      "n_days": 102034,
+      "min": -4.649755859374977,
+      "max": 50.71441040039065,
+      "mean": 27.957781254371554,
+      "std": 8.412607766864973,
+      "variance": 70.77196943911687,
+      "cv": 0.300903984129626,
+      "p10": 16.407745361328146,
+      "p25": 21.599420166015648,
+      "p50": 28.55646667480471,
+      "p75": 35.06187591552737,
+      "p90": 38.55539550781252,
+      "p95": 40.025456237792994,
+      "p99": 42.38032226562502,
+      "skewness": -0.31129846977764336,
+      "kurtosis": -0.6768201454874099,
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 102046,
+      "min": -6.687658691406227,
+      "max": 48.9510437011719,
+      "mean": 28.419679802593933,
+      "std": 8.438233109693332,
+      "variance": 71.20377801352481,
+      "cv": 0.29691513656403523,
+      "p10": 16.74347839355471,
+      "p25": 22.054177856445335,
+      "p50": 29.024392700195335,
+      "p75": 35.527688598632835,
+      "p90": 39.04006347656252,
+      "p95": 40.48757324218752,
+      "p99": 42.7921813964844,
+      "skewness": -0.31900948428267667,
+      "kurtosis": -0.6800241811103924,
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 102034,
+      "min": -3.5518249511718523,
+      "max": 54.53469238281252,
+      "mean": 28.753068422993138,
+      "std": 8.421857343913045,
+      "variance": 70.9276811212221,
+      "cv": 0.29290290761379356,
+      "p10": 17.120596313476586,
+      "p25": 22.339959716796898,
+      "p50": 29.41321716308596,
+      "p75": 35.86988983154299,
+      "p90": 39.318356323242206,
+      "p95": 40.7309036254883,
+      "p99": 43.06455139160158,
+      "skewness": -0.3210332844975376,
+      "kurtosis": -0.6896343346721752,
+      "scenario": "ssp245",
+      "variable": "tasmax",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 306144,
+      "min": -10.019049072265602,
+      "max": 46.1490417480469,
+      "mean": 26.547800298064605,
+      "std": 8.391545550922745,
+      "variance": 70.41803673321131,
+      "cv": 0.3160919344242057,
+      "p10": 15.000918579101585,
+      "p25": 20.26185760498049,
+      "p50": 27.088433837890648,
+      "p75": 33.65987548828127,
+      "p90": 37.12465820312502,
+      "p95": 38.54869537353518,
+      "p99": 40.8384625244141,
+      "skewness": -0.31409434620468624,
+      "kurtosis": -0.6886302322416751,
+      "scenario": "baseline",
+      "variable": "tasmax",
+      "period": "baseline"
+    },
+    {
+      "n_days": 102034,
+      "min": -3.5305236816406023,
+      "max": 49.88576660156252,
+      "mean": 28.095651908503807,
+      "std": 8.405068881251927,
+      "variance": 70.64518289858952,
+      "cv": 0.29915906235683165,
+      "p10": 16.50934753417971,
+      "p25": 21.638040161132835,
+      "p50": 28.711526489257835,
+      "p75": 35.209085083007835,
+      "p90": 38.68875732421877,
+      "p95": 40.15202026367189,
+      "p99": 42.434889221191426,
+      "skewness": -0.301053979407048,
+      "kurtosis": -0.7263364234709395,
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 102046,
+      "min": -6.022406005859352,
+      "max": 47.7531677246094,
+      "mean": 28.552244389064892,
+      "std": 8.39702658970634,
+      "variance": 70.51005554823527,
+      "cv": 0.29409339858838845,
+      "p10": 16.95350036621096,
+      "p25": 22.177117919921898,
+      "p50": 29.150170898437523,
+      "p75": 35.63668212890627,
+      "p90": 39.174111938476585,
+      "p95": 40.56697998046877,
+      "p99": 42.82411346435549,
+      "skewness": -0.3056953289316647,
+      "kurtosis": -0.7094201076181021,
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 102034,
+      "min": -3.2964538574218523,
+      "max": 48.63100585937502,
+      "mean": 29.357378754033604,
+      "std": 8.495294942505167,
+      "variance": 72.17003616015387,
+      "cv": 0.2893751180472113,
+      "p10": 17.592510986328147,
+      "p25": 22.874864196777366,
+      "p50": 30.05890808105471,
+      "p75": 36.519448852539085,
+      "p90": 40.01726989746096,
+      "p95": 41.42924194335939,
+      "p99": 43.71740173339846,
+      "skewness": -0.3252680332945306,
+      "kurtosis": -0.70187862098317,
+      "scenario": "ssp585",
+      "variable": "tasmax",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 305904,
+      "min": -28.768408203124977,
+      "max": 30.948266601562523,
+      "mean": 10.585928222408464,
+      "std": 8.452476045441376,
+      "variance": 71.44435129876027,
+      "cv": 0.7984633815624252,
+      "p10": -0.8181427001952897,
+      "p25": 3.5538269042968977,
+      "p50": 11.026055908203148,
+      "p75": 18.32068023681643,
+      "p90": 21.11149597167971,
+      "p95": 22.306329345703148,
+      "p99": 24.356724243164066,
+      "skewness": -0.24457982276130316,
+      "kurtosis": -0.9560598711368011,
+      "scenario": "baseline",
+      "variable": "tasmin",
+      "period": "baseline"
+    },
+    {
+      "n_days": 101964,
+      "min": -26.02092590332029,
+      "max": 31.276116943359398,
+      "mean": 11.752998981234171,
+      "std": 8.587974489793861,
+      "variance": 73.75330583735014,
+      "cv": 0.7307049463295407,
+      "p10": -0.01367797851560193,
+      "p25": 4.592652893066429,
+      "p50": 12.28766784667971,
+      "p75": 19.589700317382835,
+      "p90": 22.445648193359396,
+      "p95": 23.63562164306643,
+      "p99": 25.56080841064455,
+      "skewness": -0.24539709166230855,
+      "kurtosis": -0.9995417219954139,
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 101976,
+      "min": -28.05040588378904,
+      "max": 31.381097412109398,
+      "mean": 12.12531654514726,
+      "std": 8.702244730822006,
+      "variance": 75.72906335511937,
+      "cv": 0.7176921689772114,
+      "p10": 0.14035949707033524,
+      "p25": 4.87378845214846,
+      "p50": 12.67420349121096,
+      "p75": 20.05079040527346,
+      "p90": 22.91614685058596,
+      "p95": 24.14960632324221,
+      "p99": 26.198655700683616,
+      "skewness": -0.24925255244015232,
+      "kurtosis": -1.0090617727971174,
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 101964,
+      "min": -29.854772949218727,
+      "max": 31.743951416015648,
+      "mean": 12.4569308300362,
+      "std": 8.712292783682104,
+      "variance": 75.90404554859926,
+      "cv": 0.6993932054816416,
+      "p10": 0.45992126464846034,
+      "p25": 5.194512939453148,
+      "p50": 13.04444274902346,
+      "p75": 20.43133697509768,
+      "p90": 23.21807556152346,
+      "p95": 24.450646972656273,
+      "p99": 26.516799926757834,
+      "skewness": -0.2515702045181276,
+      "kurtosis": -1.0062412104939458,
+      "scenario": "ssp245",
+      "variable": "tasmin",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 305904,
+      "min": -28.768408203124977,
+      "max": 30.948266601562523,
+      "mean": 10.585928222408464,
+      "std": 8.452476045441376,
+      "variance": 71.44435129876027,
+      "cv": 0.7984633815624252,
+      "p10": -0.8181427001952897,
+      "p25": 3.5538269042968977,
+      "p50": 11.026055908203148,
+      "p75": 18.32068023681643,
+      "p90": 21.11149597167971,
+      "p95": 22.306329345703148,
+      "p99": 24.356724243164066,
+      "skewness": -0.24457982276130316,
+      "kurtosis": -0.9560598711368011,
+      "scenario": "baseline",
+      "variable": "tasmin",
+      "period": "baseline"
+    },
+    {
+      "n_days": 101964,
+      "min": -24.23485412597654,
+      "max": 30.810083007812523,
+      "mean": 11.894495619431606,
+      "std": 8.579781327714922,
+      "variance": 73.61264763140565,
+      "cv": 0.7213236779623042,
+      "p10": 0.106619262695336,
+      "p25": 4.699609375000023,
+      "p50": 12.467797851562523,
+      "p75": 19.736917114257835,
+      "p90": 22.542153930664085,
+      "p95": 23.724070739746114,
+      "p99": 25.668790893554707,
+      "skewness": -0.24249771200891115,
+      "kurtosis": -1.0342419809585355,
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 101976,
+      "min": -23.810202026367165,
+      "max": 32.83883056640627,
+      "mean": 12.409948361657845,
+      "std": 8.649057998750752,
+      "variance": 74.80620426575436,
+      "cv": 0.6969455268221055,
+      "p10": 0.5099578857422102,
+      "p25": 5.198449707031273,
+      "p50": 12.947076416015648,
+      "p75": 20.28815612792971,
+      "p90": 23.12384948730471,
+      "p95": 24.356240844726585,
+      "p99": 26.389993286132835,
+      "skewness": -0.24320296705786448,
+      "kurtosis": -1.0244792929390527,
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 101964,
+      "min": -19.903997802734352,
+      "max": 32.36452636718752,
+      "mean": 12.965321914303543,
+      "std": 8.801712607708325,
+      "variance": 77.47014482869169,
+      "cv": 0.6788657208733198,
+      "p10": 0.8604827880859605,
+      "p25": 5.635072326660179,
+      "p50": 13.485040283203148,
+      "p75": 20.987657165527366,
+      "p90": 23.893704223632835,
+      "p95": 25.184524536132834,
+      "p99": 27.214913330078147,
+      "skewness": -0.23584853960668156,
+      "kurtosis": -1.0298765600492976,
+      "scenario": "ssp585",
+      "variable": "tasmin",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 262511,
+      "min": -15.609991455078102,
+      "max": 38.30571899414065,
+      "mean": 18.54595414163897,
+      "std": 8.143346628187041,
+      "variance": 66.31409430680526,
+      "cv": 0.43909019541376837,
+      "p10": 7.414147949218773,
+      "p25": 11.91443786621096,
+      "p50": 19.073449707031273,
+      "p75": 25.779901123046898,
+      "p90": 28.886315917968773,
+      "p95": 30.034020996093773,
+      "p99": 31.87614746093752,
+      "skewness": -0.24388843932347223,
+      "kurtosis": -0.935886895777712,
+      "scenario": "baseline",
+      "variable": "tas",
+      "period": "baseline"
+    },
+    {
+      "n_days": 87500,
+      "min": -14.122503662109352,
+      "max": 38.63405761718752,
+      "mean": 19.771392173897905,
+      "std": 8.207648494273593,
+      "variance": 67.3654938055516,
+      "cv": 0.4151274944163664,
+      "p10": 8.499060058593773,
+      "p25": 13.020318603515648,
+      "p50": 20.424707031250023,
+      "p75": 27.004541015625023,
+      "p90": 30.175891113281274,
+      "p95": 31.381929016113304,
+      "p99": 33.14617187500001,
+      "skewness": -0.24410864239540145,
+      "kurtosis": -0.9525127843395009,
+      "scenario": "ssp245",
+      "variable": "tas",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 87511,
+      "min": -14.519842529296852,
+      "max": 38.16683349609377,
+      "mean": 20.223521535264275,
+      "std": 8.271672799171602,
+      "variance": 68.42057089655536,
+      "cv": 0.40901248502878557,
+      "p10": 8.816247558593773,
+      "p25": 13.429345703125023,
+      "p50": 20.860314941406273,
+      "p75": 27.559732055664085,
+      "p90": 30.688256835937523,
+      "p95": 31.888894653320335,
+      "p99": 33.65239868164063,
+      "skewness": -0.25404375547557095,
+      "kurtosis": -0.9363629498139616,
+      "scenario": "ssp245",
+      "variable": "tas",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 87500,
+      "min": -11.494116210937477,
+      "max": 42.2590270996094,
+      "mean": 20.537048058733284,
+      "std": 8.297751012246987,
+      "variance": 68.8526718612459,
+      "cv": 0.40403815526537695,
+      "p10": 9.120440673828147,
+      "p25": 13.702973937988304,
+      "p50": 21.20130310058596,
+      "p75": 27.894929504394554,
+      "p90": 31.018338012695338,
+      "p95": 32.1846389770508,
+      "p99": 34.017798461914076,
+      "skewness": -0.2531322768416495,
+      "kurtosis": -0.9498882584537451,
+      "scenario": "ssp245",
+      "variable": "tas",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 262511,
+      "min": -15.609991455078102,
+      "max": 38.30571899414065,
+      "mean": 18.54595414163897,
+      "std": 8.143346628187041,
+      "variance": 66.31409430680526,
+      "cv": 0.43909019541376837,
+      "p10": 7.414147949218773,
+      "p25": 11.91443786621096,
+      "p50": 19.073449707031273,
+      "p75": 25.779901123046898,
+      "p90": 28.886315917968773,
+      "p95": 30.034020996093773,
+      "p99": 31.87614746093752,
+      "skewness": -0.24388843932347223,
+      "kurtosis": -0.935886895777712,
+      "scenario": "baseline",
+      "variable": "tas",
+      "period": "baseline"
+    },
+    {
+      "n_days": 87500,
+      "min": -11.376318359374977,
+      "max": 38.36477050781252,
+      "mean": 19.95365485386442,
+      "std": 8.216720241823039,
+      "variance": 67.51449153238445,
+      "cv": 0.41179023602443976,
+      "p10": 8.660943603515648,
+      "p25": 13.149064636230491,
+      "p50": 20.59949645996096,
+      "p75": 27.227578735351585,
+      "p90": 30.38042907714846,
+      "p95": 31.556936645507836,
+      "p99": 33.301589660644545,
+      "skewness": -0.2424076477144664,
+      "kurtosis": -0.9703358625300775,
+      "scenario": "ssp585",
+      "variable": "tas",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 87511,
+      "min": -9.755773925781227,
+      "max": 38.65508422851565,
+      "mean": 20.412231540445656,
+      "std": 8.217920785047026,
+      "variance": 67.53422202930794,
+      "cv": 0.40259786240243706,
+      "p10": 9.065759277343773,
+      "p25": 13.62275085449221,
+      "p50": 21.059472656250023,
+      "p75": 27.631616210937523,
+      "p90": 30.853417968750023,
+      "p95": 32.013589477539085,
+      "p99": 33.71711730957033,
+      "skewness": -0.24695016070240983,
+      "kurtosis": -0.9694669353748262,
+      "scenario": "ssp585",
+      "variable": "tas",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 87500,
+      "min": -11.143408203124977,
+      "max": 39.00197753906252,
+      "mean": 21.070703852539086,
+      "std": 8.346793045150378,
+      "variance": 69.66895413857071,
+      "cv": 0.396132616336144,
+      "p10": 9.551422119140648,
+      "p25": 14.233140563964866,
+      "p50": 21.738519287109398,
+      "p75": 28.410676574707054,
+      "p90": 31.64434509277346,
+      "p95": 32.92220916748049,
+      "p99": 34.69219573974612,
+      "skewness": -0.2445175121920863,
+      "kurtosis": -0.9643769410308836,
+      "scenario": "ssp585",
+      "variable": "tas",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 338755,
+      "min": 0.0,
+      "max": 68.1186106055975,
+      "mean": 0.8867514430516967,
+      "std": 3.137578512435116,
+      "variance": 9.844398921694555,
+      "cv": 3.538284078385422,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.02545957167967572,
+      "p90": 2.166021619923416,
+      "p95": 5.949035512749104,
+      "p99": 15.70402634236969,
+      "skewness": 6.179411969945324,
+      "kurtosis": 54.75515237430519,
+      "scenario": "baseline",
+      "variable": "pr",
+      "period": "baseline"
+    },
+    {
+      "n_days": 112914,
+      "min": 0.0,
+      "max": 65.61000421643257,
+      "mean": 0.9138471775910836,
+      "std": 3.2244857737095995,
+      "variance": 10.397308504855596,
+      "cv": 3.528473745697172,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.026616871036821976,
+      "p90": 2.234747500042431,
+      "p95": 6.165615885984149,
+      "p99": 15.845704549457809,
+      "skewness": 6.252368858336752,
+      "kurtosis": 56.617405235733635,
+      "scenario": "ssp245",
+      "variable": "pr",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 112927,
+      "min": 0.0,
+      "max": 70.37240043282509,
+      "mean": 0.8730991811232491,
+      "std": 3.1748760382660097,
+      "variance": 10.079837858355672,
+      "cv": 3.636329190208959,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.015169329140007903,
+      "p90": 2.0236908376682594,
+      "p95": 5.854648891836398,
+      "p99": 15.758405498228969,
+      "skewness": 6.526126157243473,
+      "kurtosis": 63.232497611512656,
+      "scenario": "ssp245",
+      "variable": "pr",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 112914,
+      "min": 0.0,
+      "max": 64.88754283636808,
+      "mean": 0.8706560015105574,
+      "std": 3.14428686297228,
+      "variance": 9.886539876660063,
+      "cv": 3.611399746302849,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.015773622408232768,
+      "p90": 2.0347399410093194,
+      "p95": 5.794474423164501,
+      "p99": 15.885743848979452,
+      "skewness": 6.276443590123103,
+      "kurtosis": 56.00122589768328,
+      "scenario": "ssp245",
+      "variable": "pr",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 338755,
+      "min": 0.0,
+      "max": 68.1186106055975,
+      "mean": 0.8867514430516967,
+      "std": 3.137578512435116,
+      "variance": 9.844398921694555,
+      "cv": 3.538284078385422,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.02545957167967572,
+      "p90": 2.166021619923416,
+      "p95": 5.949035512749104,
+      "p99": 15.70402634236969,
+      "skewness": 6.179411969945324,
+      "kurtosis": 54.75515237430519,
+      "scenario": "baseline",
+      "variable": "pr",
+      "period": "baseline"
+    },
+    {
+      "n_days": 112914,
+      "min": 0.0,
+      "max": 65.79682677984238,
+      "mean": 0.8877884072579331,
+      "std": 3.1710158262280514,
+      "variance": 10.05534137018877,
+      "cv": 3.571814860730393,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.021407387862382166,
+      "p90": 2.1122203470440573,
+      "p95": 5.951348195085285,
+      "p99": 15.919948048889585,
+      "skewness": 6.251904872609582,
+      "kurtosis": 56.21376004798849,
+      "scenario": "ssp585",
+      "variable": "pr",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 112927,
+      "min": 0.0,
+      "max": 62.9289586097002,
+      "mean": 0.9060147851369476,
+      "std": 3.251530933957886,
+      "variance": 10.572453414485043,
+      "cv": 3.5888276740057887,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.024911075979616726,
+      "p90": 2.199303789529953,
+      "p95": 6.012657992541786,
+      "p99": 15.9768467796967,
+      "skewness": 6.46413237251974,
+      "kurtosis": 60.12956582261459,
+      "scenario": "ssp585",
+      "variable": "pr",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 112914,
+      "min": 0.0,
+      "max": 65.45772179961205,
+      "mean": 0.8484302860551571,
+      "std": 3.1116335046827053,
+      "variance": 9.682263067463975,
+      "cv": 3.6675181872048537,
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.012013122068310622,
+      "p90": 1.926433299668133,
+      "p95": 5.568912662565699,
+      "p99": 15.752239418216027,
+      "skewness": 6.332236689138159,
+      "kurtosis": 55.68692240787689,
+      "scenario": "ssp585",
+      "variable": "pr",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 338785,
+      "min": 0.6805120706558228,
+      "max": 10.525324821472168,
+      "mean": 3.3462402638482334,
+      "std": 1.1782674494025451,
+      "variance": 1.3883141823215792,
+      "cv": 0.35211681065827516,
+      "p10": 1.996913695335388,
+      "p25": 2.4999306201934814,
+      "p50": 3.17903733253479,
+      "p75": 4.002922534942627,
+      "p90": 4.914813613891603,
+      "p95": 5.511962413787842,
+      "p99": 6.907839183807362,
+      "skewness": 0.9241329946200153,
+      "kurtosis": 1.4014364634523968,
+      "scenario": "baseline",
+      "variable": "sfcWind",
+      "period": "baseline"
+    },
+    {
+      "n_days": 112924,
+      "min": 0.0,
+      "max": 10.521023750305176,
+      "mean": 3.271463004162973,
+      "std": 1.1797795556915305,
+      "variance": 1.3918798000277048,
+      "cv": 0.3606275095241022,
+      "p10": 1.913865864276886,
+      "p25": 2.424578309059143,
+      "p50": 3.1116254329681396,
+      "p75": 3.9375996589660645,
+      "p90": 4.82852611541748,
+      "p95": 5.430548596382137,
+      "p99": 6.781897640228277,
+      "skewness": 0.8866504736182864,
+      "kurtosis": 1.3417875969487216,
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 112937,
+      "min": 0.0,
+      "max": 10.388473510742188,
+      "mean": 3.277783226767678,
+      "std": 1.1832294859485775,
+      "variance": 1.400032016418135,
+      "cv": 0.3609846667973209,
+      "p10": 1.9142148733139037,
+      "p25": 2.4336910247802734,
+      "p50": 3.123384714126587,
+      "p75": 3.93709659576416,
+      "p90": 4.840936088562012,
+      "p95": 5.440319156646728,
+      "p99": 6.82901210784912,
+      "skewness": 0.9007130265700416,
+      "kurtosis": 1.4302034547383906,
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 112924,
+      "min": 0.0,
+      "max": 10.501903533935547,
+      "mean": 3.2685086415957016,
+      "std": 1.188093911508511,
+      "variance": 1.4115671425635936,
+      "cv": 0.3634972526578598,
+      "p10": 1.9063098192214967,
+      "p25": 2.4201537370681763,
+      "p50": 3.106327176094055,
+      "p75": 3.9266637563705444,
+      "p90": 4.838949441909789,
+      "p95": 5.4488703966140735,
+      "p99": 6.847978563308716,
+      "skewness": 0.9279594270263709,
+      "kurtosis": 1.5075203485864064,
+      "scenario": "ssp245",
+      "variable": "sfcWind",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 338785,
+      "min": 0.6805120706558228,
+      "max": 10.525324821472168,
+      "mean": 3.3462402638482334,
+      "std": 1.1782674494025451,
+      "variance": 1.3883141823215792,
+      "cv": 0.35211681065827516,
+      "p10": 1.996913695335388,
+      "p25": 2.4999306201934814,
+      "p50": 3.17903733253479,
+      "p75": 4.002922534942627,
+      "p90": 4.914813613891603,
+      "p95": 5.511962413787842,
+      "p99": 6.907839183807362,
+      "skewness": 0.9241329946200153,
+      "kurtosis": 1.4014364634523968,
+      "scenario": "baseline",
+      "variable": "sfcWind",
+      "period": "baseline"
+    },
+    {
+      "n_days": 112924,
+      "min": 0.0,
+      "max": 10.466361045837402,
+      "mean": 3.265277561482864,
+      "std": 1.1806995781239082,
+      "variance": 1.3940514937819748,
+      "cv": 0.3615924085754339,
+      "p10": 1.9059656381607055,
+      "p25": 2.424115777015686,
+      "p50": 3.106730103492737,
+      "p75": 3.926067888736725,
+      "p90": 4.8274236679077145,
+      "p95": 5.41431210041046,
+      "p99": 6.804885377883914,
+      "skewness": 0.9004993887566364,
+      "kurtosis": 1.4161284656007211,
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 112937,
+      "min": 0.0,
+      "max": 10.418554306030273,
+      "mean": 3.2491879966268815,
+      "std": 1.178638929002772,
+      "variance": 1.3891897249608012,
+      "cv": 0.3627487637607816,
+      "p10": 1.893083643913269,
+      "p25": 2.4065849781036377,
+      "p50": 3.0878989696502686,
+      "p75": 3.9091765880584717,
+      "p90": 4.811650180816651,
+      "p95": 5.401813888549805,
+      "p99": 6.77154613494873,
+      "skewness": 0.9053995837279614,
+      "kurtosis": 1.4056576854150427,
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 112924,
+      "min": 0.0,
+      "max": 10.288832664489746,
+      "mean": 3.2649108174697288,
+      "std": 1.1816296789699645,
+      "variance": 1.3962486982226614,
+      "cv": 0.3619179037440646,
+      "p10": 1.902803897857666,
+      "p25": 2.420216202735901,
+      "p50": 3.1066471338272095,
+      "p75": 3.9270987510681152,
+      "p90": 4.831363153457641,
+      "p95": 5.431872916221616,
+      "p99": 6.768976593017579,
+      "skewness": 0.8918685485335346,
+      "kurtosis": 1.3471999641560108,
+      "scenario": "ssp585",
+      "variable": "sfcWind",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 316848,
+      "min": 6.929925918579102,
+      "max": 100.6539535522461,
+      "mean": 47.90183977439976,
+      "std": 18.908180090824207,
+      "variance": 357.51927434704083,
+      "cv": 0.39472763843465836,
+      "p10": 25.154027938842773,
+      "p25": 33.88095474243164,
+      "p50": 45.08036231994629,
+      "p75": 59.881107330322266,
+      "p90": 75.73429870605469,
+      "p95": 84.42909545898435,
+      "p99": 94.35554847717282,
+      "skewness": 0.5190744243073836,
+      "kurtosis": -0.3295585133395762,
+      "scenario": "baseline",
+      "variable": "hurs",
+      "period": "baseline"
+    },
+    {
+      "n_days": 105612,
+      "min": 7.478041648864746,
+      "max": 100.233642578125,
+      "mean": 47.33919649003054,
+      "std": 18.917520568990714,
+      "variance": 357.8725844781867,
+      "cv": 0.3996164272237843,
+      "p10": 24.51215763092041,
+      "p25": 33.36717128753662,
+      "p50": 44.634605407714844,
+      "p75": 59.23077392578125,
+      "p90": 74.98654403686525,
+      "p95": 83.78521499633788,
+      "p99": 94.14353256225586,
+      "skewness": 0.5183116283761663,
+      "kurtosis": -0.3089248092067929,
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 105624,
+      "min": 7.325453281402588,
+      "max": 100.4673843383789,
+      "mean": 45.85507634853871,
+      "std": 18.734034300460372,
+      "variance": 350.96404117082574,
+      "cv": 0.4085487538623928,
+      "p10": 23.51879138946533,
+      "p25": 32.16085243225098,
+      "p50": 42.91710662841797,
+      "p75": 57.28949737548828,
+      "p90": 73.36224594116212,
+      "p95": 82.49974975585934,
+      "p99": 93.52296859741215,
+      "skewness": 0.5904441183528462,
+      "kurtosis": -0.19065209699508046,
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 105612,
+      "min": 6.9323410987854,
+      "max": 100.1943588256836,
+      "mean": 46.02669994250819,
+      "std": 18.661789654398405,
+      "variance": 348.26239310501137,
+      "cv": 0.405455739336272,
+      "p10": 23.676609230041503,
+      "p25": 32.2876672744751,
+      "p50": 43.16116714477539,
+      "p75": 57.529892921447754,
+      "p90": 73.36439132690431,
+      "p95": 82.33385200500487,
+      "p99": 93.30167427062987,
+      "skewness": 0.577186350614985,
+      "kurtosis": -0.21624145219632673,
+      "scenario": "ssp245",
+      "variable": "hurs",
+      "period": "2046-2055"
+    },
+    {
+      "n_days": 316848,
+      "min": 6.929925918579102,
+      "max": 100.6539535522461,
+      "mean": 47.90183977439976,
+      "std": 18.908180090824207,
+      "variance": 357.51927434704083,
+      "cv": 0.39472763843465836,
+      "p10": 25.154027938842773,
+      "p25": 33.88095474243164,
+      "p50": 45.08036231994629,
+      "p75": 59.881107330322266,
+      "p90": 75.73429870605469,
+      "p95": 84.42909545898435,
+      "p99": 94.35554847717282,
+      "skewness": 0.5190744243073836,
+      "kurtosis": -0.3295585133395762,
+      "scenario": "baseline",
+      "variable": "hurs",
+      "period": "baseline"
+    },
+    {
+      "n_days": 105612,
+      "min": 7.109018325805664,
+      "max": 100.2938003540039,
+      "mean": 46.60868742221893,
+      "std": 18.770872579113828,
+      "variance": 352.3456573813274,
+      "cv": 0.40273334473189915,
+      "p10": 24.007613372802734,
+      "p25": 32.90799903869629,
+      "p50": 43.89132499694824,
+      "p75": 58.00128173828125,
+      "p90": 73.9848846435547,
+      "p95": 83.3289653778076,
+      "p99": 94.10373664855958,
+      "skewness": 0.558908559059808,
+      "kurtosis": -0.20584060341617638,
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "period": "2026-2035"
+    },
+    {
+      "n_days": 105624,
+      "min": 7.09249210357666,
+      "max": 100.29083251953125,
+      "mean": 46.74976062629292,
+      "std": 18.86594371854993,
+      "variance": 355.92383239149353,
+      "cv": 0.4035516645605962,
+      "p10": 24.022185325622562,
+      "p25": 32.90943145751953,
+      "p50": 43.88548469543457,
+      "p75": 58.42125606536865,
+      "p90": 74.53483200073242,
+      "p95": 83.23081741333004,
+      "p99": 94.06152801513676,
+      "skewness": 0.5475000656009128,
+      "kurtosis": -0.26002239274273053,
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "period": "2036-2045"
+    },
+    {
+      "n_days": 105612,
+      "min": 7.385724067687988,
+      "max": 100.24810028076172,
+      "mean": 45.194911192710784,
+      "std": 18.570660187519167,
+      "variance": 344.86941980030934,
+      "cv": 0.41090157492143314,
+      "p10": 23.028169441223145,
+      "p25": 31.73953342437744,
+      "p50": 42.35560417175293,
+      "p75": 56.46106147766113,
+      "p90": 72.19847259521485,
+      "p95": 81.49531173706055,
+      "p99": 93.22353218078614,
+      "skewness": 0.5998146384965042,
+      "kurtosis": -0.12476216945694363,
+      "scenario": "ssp585",
+      "variable": "hurs",
+      "period": "2046-2055"
+    }
+  ],
   "gev_fits": {
     "baseline_tasmax": {
       "shape": 0.2792351650809438,
@@ -313,10 +3573,174 @@
       "ks_pvalue": 0.9982420238625273
     }
   },
+  "gpd_fits": {
+    "baseline_tasmax": {
+      "shape": -0.17674650853786888,
+      "scale": 1.6808531275037897,
+      "threshold": 38.55593719482424,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.014349146961585735,
+      "ks_pvalue": 0.8824472950922604
+    },
+    "ssp245_tasmax": {
+      "shape": -0.22377934633953775,
+      "scale": 1.73018369528232,
+      "threshold": 40.26150054931643,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.009704869308862163,
+      "ks_pvalue": 0.9974361941001608
+    },
+    "ssp585_tasmax": {
+      "shape": -0.19980926816503913,
+      "scale": 1.745410536838616,
+      "threshold": 40.4763381958008,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.021735987740182927,
+      "ks_pvalue": 0.4132062520367441
+    },
+    "baseline_tasmin": {
+      "shape": -0.1314028122726961,
+      "scale": 1.4462580612112526,
+      "threshold": 22.329750061035178,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.029008059650795892,
+      "ks_pvalue": 0.12327754833529636
+    },
+    "ssp245_tasmin": {
+      "shape": -0.142654230652713,
+      "scale": 1.3876509726032669,
+      "threshold": 24.13487243652346,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.03270102180643181,
+      "ks_pvalue": 0.058129076255831746
+    },
+    "ssp585_tasmin": {
+      "shape": -0.2051275517264621,
+      "scale": 1.5413952384085652,
+      "threshold": 24.24152069091799,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.023166029776863217,
+      "ks_pvalue": 0.33567190652758927
+    },
+    "baseline_tas": {
+      "shape": -0.11067998973162271,
+      "scale": 1.269764750673196,
+      "threshold": 30.054608154296897,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.025534008214010945,
+      "ks_pvalue": 0.23012020591296933
+    },
+    "ssp245_tas": {
+      "shape": -0.1319977281043458,
+      "scale": 1.2568482916533477,
+      "threshold": 31.779495239257834,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.023512365641014443,
+      "ks_pvalue": 0.31844641427799225
+    },
+    "ssp585_tas": {
+      "shape": -0.2123103026470709,
+      "scale": 1.4158187275778706,
+      "threshold": 31.96824645996096,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.03270090533089243,
+      "ks_pvalue": 0.05813053714435246
+    },
+    "baseline_pr": {
+      "shape": 0.06535587978197233,
+      "scale": 5.904273558669033,
+      "threshold": 6.011637485353273,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.017532409487700323,
+      "ks_pvalue": 0.6862496111556908
+    },
+    "ssp245_pr": {
+      "shape": 0.10413375338515268,
+      "scale": 6.454091773434233,
+      "threshold": 6.425453700358039,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.01839696886104049,
+      "ks_pvalue": 0.6271760030303224
+    },
+    "ssp585_pr": {
+      "shape": 0.08593741872431197,
+      "scale": 6.447988129956461,
+      "threshold": 6.349870758131143,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.0137525028052633,
+      "ks_pvalue": 0.9106376366014486
+    },
+    "baseline_sfcWind": {
+      "shape": -0.021520399640001735,
+      "scale": 0.8663496972180842,
+      "threshold": 5.535560226440429,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.031381376346478806,
+      "ks_pvalue": 0.07683476060092609
+    },
+    "ssp245_sfcWind": {
+      "shape": -0.031078411848276845,
+      "scale": 0.868287525756188,
+      "threshold": 5.509541702270507,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.02515108431576618,
+      "ks_pvalue": 0.24526957126108506
+    },
+    "ssp585_sfcWind": {
+      "shape": -0.05259888875323261,
+      "scale": 0.8946272481605102,
+      "threshold": 5.532663464546203,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.024363123122480346,
+      "ks_pvalue": 0.27874798572226234
+    },
+    "baseline_hurs": {
+      "shape": -0.5678467007088354,
+      "scale": 9.186433573948555,
+      "threshold": 84.55065689086913,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.011554578903322718,
+      "ks_pvalue": 0.978865528230669
+    },
+    "ssp245_hurs": {
+      "shape": -0.5960782185736466,
+      "scale": 10.648585590456687,
+      "threshold": 82.34896545410156,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.018372070501953663,
+      "ks_pvalue": 0.6288759601595559
+    },
+    "ssp585_hurs": {
+      "shape": -0.5536305514447815,
+      "scale": 10.341222892539264,
+      "threshold": 81.7036148071289,
+      "n_exceedances": 1644,
+      "exceedance_rate": 0.05002434274586173,
+      "ks_statistic": 0.0263863233684018,
+      "ks_pvalue": 0.1989492020351179
+    }
+  },
   "files_saved": [
-    "/Users/divy/code/work/infrasure_git_codes/LTRisk/data/output/scvr/hayhurst_solar/cmip6_ensemble_scvr.parquet",
-    "/Users/divy/code/work/infrasure_git_codes/LTRisk/data/output/scvr/hayhurst_solar/cmip6_scvr_decade.parquet",
-    "/Users/divy/code/work/infrasure_git_codes/LTRisk/data/output/scvr/hayhurst_solar/cmip6_shape_metrics.parquet",
-    "/Users/divy/code/work/infrasure_git_codes/LTRisk/data/output/scvr/hayhurst_solar/cmip6_scvr_annual.parquet"
+    "cmip6_ensemble_scvr.parquet",
+    "cmip6_scvr_decade.parquet",
+    "cmip6_shape_metrics.parquet",
+    "cmip6_scvr_annual.parquet"
   ]
 }

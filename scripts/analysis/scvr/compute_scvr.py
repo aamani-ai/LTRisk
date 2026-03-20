@@ -338,11 +338,22 @@ def compute_shape_metrics(values):
     if len(v) == 0:
         return None
 
+    mean_val = float(np.mean(v))
+    std_val = float(np.std(v))
+
     result = {
         "n_days": len(v),
-        "mean": float(np.mean(v)),
-        "std": float(np.std(v)),
+        "min": float(np.min(v)),
+        "max": float(np.max(v)),
+        "mean": mean_val,
+        "std": std_val,
         "variance": float(np.var(v)),
+        "cv": std_val / abs(mean_val) if mean_val != 0 else None,
+        "p10": float(np.percentile(v, 10)),
+        "p25": float(np.percentile(v, 25)),
+        "p50": float(np.percentile(v, 50)),
+        "p75": float(np.percentile(v, 75)),
+        "p90": float(np.percentile(v, 90)),
         "p95": float(np.percentile(v, 95)),
         "p99": float(np.percentile(v, 99)),
     }
@@ -460,6 +471,7 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
     decade_rows = []
     shape_rows = []
     annual_rows = []
+    anchor_fits = {}
 
     for scen in scenarios:
         print(f"    [{variable}] Loading {scen} ...", flush=True)
@@ -535,6 +547,14 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
                         "method": "anchor_3_linear",
                         "r2": fit["r2"],
                     })
+                # Save anchor fit details for report
+                anchor_fits[scen] = {
+                    "mids": fit["mids"],
+                    "scvrs": fit["scvrs"],
+                    "slope": fit["fit"][0],
+                    "intercept": fit["fit"][1],
+                    "r2": fit["r2"],
+                }
         else:
             # period_average: use decade SCVR directly, assign to midpoint year
             for label, dr in dec_results.items():
@@ -548,8 +568,9 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
                     "r2": None,
                 })
 
-    # 5. GEV fits (baseline and future)
+    # 5. GEV + GPD fits (baseline and future)
     gev_fits = {}
+    gpd_fits = {}
     if HAS_SCIPY:
         for scen in scenarios:
             baseline_daily, future_daily = load_data(
@@ -558,15 +579,19 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
             )
             if baseline_daily:
                 gev_fits[f"baseline_{variable}"] = fit_gev(baseline_daily)
+                gpd_fits[f"baseline_{variable}"] = fit_gpd(baseline_daily)
             if future_daily.get(scen):
                 gev_fits[f"{scen}_{variable}"] = fit_gev(future_daily[scen])
+                gpd_fits[f"{scen}_{variable}"] = fit_gpd(future_daily[scen])
 
     return {
         "ensemble_scvr": ensemble_rows,
         "decade_scvr": decade_rows,
         "shape_metrics": shape_rows,
         "annual_scvr": annual_rows,
+        "anchor_fits": anchor_fits,
         "gev_fits": gev_fits,
+        "gpd_fits": gpd_fits,
     }
 
 
@@ -574,8 +599,16 @@ def run_scvr_pipeline(variable, models, scenarios, baseline_years, future_years,
 # Output
 # ══════════════════════════════════════════════════════════════════════════════
 
-def save_outputs(all_results, site_id, lat, lon, out_dir):
-    """Save DataFrames and JSON report."""
+def save_outputs(all_results, site_id, lat, lon, out_dir, config=None):
+    """Save DataFrames and comprehensive JSON report.
+
+    Args:
+        all_results: dict of {variable: pipeline_result}
+        site_id: site identifier
+        lat, lon: coordinates
+        out_dir: output directory
+        config: run configuration dict (from main())
+    """
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -585,6 +618,8 @@ def save_outputs(all_results, site_id, lat, lon, out_dir):
     shape_rows = []
     annual_rows = []
     gev_fits = {}
+    gpd_fits = {}
+    anchor_fits_all = {}
 
     for var, res in all_results.items():
         ensemble_rows.extend(res["ensemble_scvr"])
@@ -592,6 +627,9 @@ def save_outputs(all_results, site_id, lat, lon, out_dir):
         shape_rows.extend(res["shape_metrics"])
         annual_rows.extend(res["annual_scvr"])
         gev_fits.update(res["gev_fits"])
+        gpd_fits.update(res.get("gpd_fits", {}))
+        if res.get("anchor_fits"):
+            anchor_fits_all[var] = res["anchor_fits"]
 
     # Save Parquet files
     saved = []
@@ -601,7 +639,7 @@ def save_outputs(all_results, site_id, lat, lon, out_dir):
         df["site_id"] = site_id
         path = out_dir / "cmip6_ensemble_scvr.parquet"
         df.to_parquet(path, index=False)
-        saved.append(str(path))
+        saved.append(path.name)
         print(f"  Saved: {path} ({len(df)} rows)")
 
     if decade_rows:
@@ -609,7 +647,7 @@ def save_outputs(all_results, site_id, lat, lon, out_dir):
         df["site_id"] = site_id
         path = out_dir / "cmip6_scvr_decade.parquet"
         df.to_parquet(path, index=False)
-        saved.append(str(path))
+        saved.append(path.name)
         print(f"  Saved: {path} ({len(df)} rows)")
 
     if shape_rows:
@@ -617,7 +655,7 @@ def save_outputs(all_results, site_id, lat, lon, out_dir):
         df["site_id"] = site_id
         path = out_dir / "cmip6_shape_metrics.parquet"
         df.to_parquet(path, index=False)
-        saved.append(str(path))
+        saved.append(path.name)
         print(f"  Saved: {path} ({len(df)} rows)")
 
     if annual_rows:
@@ -625,25 +663,64 @@ def save_outputs(all_results, site_id, lat, lon, out_dir):
         df["site_id"] = site_id
         path = out_dir / "cmip6_scvr_annual.parquet"
         df.to_parquet(path, index=False)
-        saved.append(str(path))
+        saved.append(path.name)
         print(f"  Saved: {path} ({len(df)} rows)")
 
-    # Save JSON report
+    # Filter out None GPD fits
+    gpd_fits = {k: v for k, v in gpd_fits.items() if v is not None}
+
+    # Build comprehensive JSON report
     report = {
         "timestamp": datetime.now().isoformat(),
         "site_id": site_id,
         "lat": lat,
         "lon": lon,
+
+        # Run configuration — what was computed and how
+        "config": config or {},
+
+        # Model coverage per variable
+        "models": {
+            var: {
+                "count": len(models),
+                "names": models,
+            }
+            for var, models in (config or {}).get("models_per_var", {}).items()
+        } if config else {},
+
+        # Row counts
         "summary": {
             "ensemble_scvr_rows": len(ensemble_rows),
             "decade_scvr_rows": len(decade_rows),
             "shape_metrics_rows": len(shape_rows),
             "annual_scvr_rows": len(annual_rows),
         },
+
+        # All SCVR data (mirrors Parquet but readable without pandas)
         "ensemble_scvr": ensemble_rows,
+        "decade_scvr": decade_rows,
+        "annual_scvr": annual_rows,
+
+        # Anchor fit details (temperature variables only)
+        "anchor_fits": anchor_fits_all,
+
+        # Distribution shape metrics
+        "shape_metrics": shape_rows,
+
+        # Extreme value fits
         "gev_fits": gev_fits,
+        "gpd_fits": gpd_fits,
+
+        # Output manifest (relative filenames)
         "files_saved": saved,
     }
+
+    # Remove models_per_var from config to avoid duplication with top-level "models"
+    if config and "models_per_var" in report.get("config", {}):
+        report["config"] = {
+            k: v for k, v in report["config"].items() if k != "models_per_var"
+        }
+
     report_path = out_dir / "scvr_report.json"
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2, default=str)
@@ -745,10 +822,25 @@ def main():
     elapsed = time.time() - t0
     print(f"\nComputation done in {elapsed:.1f}s")
 
+    # Build run configuration for report
+    config = {
+        "baseline_years": [baseline_years[0], baseline_years[1]],
+        "future_years": [future_years[0], future_years[1]],
+        "scenarios": scenarios,
+        "variables": variables,
+        "decades": [d[0] for d in DEFAULT_DECADES],
+        "scvr_strategy": {v: SCVR_STRATEGY.get(v, "period_average")
+                          for v in variables},
+        "scipy_available": HAS_SCIPY,
+        "computation_time_s": round(elapsed, 1),
+        "models_per_var": {v: sorted(models_per_var[v]) for v in variables
+                           if v in models_per_var},
+    }
+
     # Save outputs
     out_dir = OUTPUT_DIR / args.site
     print(f"\nSaving outputs to {out_dir}/ ...")
-    save_outputs(all_results, args.site, lat, lon, out_dir)
+    save_outputs(all_results, args.site, lat, lon, out_dir, config)
     print("\nDone.")
 
 
