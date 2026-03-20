@@ -1,0 +1,6 @@
+# Lightweight requirements for Streamlit Cloud dashboard deployment.
+# Only includes packages needed by scripts/presentation/scvr_dashboard.py.
+streamlit>=1.30
+plotly>=5.14
+pandas>=2.0
+numpy>=1.24
