@@ -41,8 +41,8 @@
   │  fetch_cmip6.py    DONE   Fetch 34 CMIP6 models from THREDDS → cache  │
   │  compute_scvr.py   DONE   SCVR: ensemble, decade, annual, shape, GEV  │
   │  ─────────────────────────────────────────────────────────────────────  │
-  │  NB04  IN PROGRESS  HCR + EFR + IUL + NAV impairment                  │
-  │                     See: notebook_analysis/04_hcr_efr_iul_nav.ipynb    │
+  │  NB04  DONE         HCR: Hazard Change Ratio (10 hazards, 31 models)  │
+  │                     See: notebook_analysis/04_hcr_hazard_change_ratio │
   │                                                                        │
   └──────────────────────────────────────────────────────────────────────────┘
 
@@ -195,7 +195,7 @@ LTRisk/
 │
 ├── notebook_analysis/
 │   ├── README.md                        ← notebook index
-│   ├── 04_hcr_efr_iul_nav.ipynb        ← ONLY active notebook (HCR → NAV)
+│   ├── 04_hcr_hazard_change_ratio.ipynb ← HCR: Hazard Change Ratio
 │   └── archive/                         ← NB01-03 (superseded by scripts)
 │
 ├── scripts/

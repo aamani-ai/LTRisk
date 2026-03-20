@@ -6,7 +6,7 @@ Interactive Jupyter notebooks for exploratory analysis.
 
 | # | File | Status | What it does |
 |---|---|---|---|
-| 04 | `04_hcr_efr_iul_nav.ipynb` | In progress | HCR + EFR + IUL + NAV impairment from SCVR outputs |
+| 04 | `04_hcr_hazard_change_ratio.ipynb` | Done | HCR: 10 hazards × 2 scenarios × 30 years (Pathway A for temp, B for precip) |
 
 ## Archive
 
