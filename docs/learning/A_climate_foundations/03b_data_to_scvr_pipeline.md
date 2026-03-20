@@ -189,6 +189,10 @@ WHAT WE DON'T DOWNLOAD:
 
 **30 years per period** ensures we capture enough natural variability (El Nino cycles, wet/dry years) to build a robust statistical picture.
 
+**Important distinction**: "Historical" here means the models' **simulation** of past climate — not raw observations. Each model was run with observed greenhouse gas concentrations as input, producing its own version of 1985–2014 weather. This is still model output, just driven by known forcings rather than future scenarios.
+
+ERA5 (the European reanalysis dataset) enters only indirectly: NASA used it as the reference when bias-correcting the models (the BCSD step in Section 2). So the model outputs are *adjusted* to match ERA5's statistical patterns, but the daily values we download are model-generated, not observed. This is why baseline and future data come from the same pipeline — same models, same grid, same download process — just different experiment labels (`historical` vs `ssp245`/`ssp585`).
+
 ### Caching
 
 Every file is downloaded once and cached locally:
