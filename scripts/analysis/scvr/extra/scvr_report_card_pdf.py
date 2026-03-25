@@ -47,11 +47,14 @@ VAR_LABELS = {
     "tasmax": "Max Temperature",
     "tasmin": "Min Temperature",
     "tas": "Mean Temperature",
-    "pr": "Precipitation",
+    "pr": "Precipitation †",
     "sfcWind": "Wind Speed",
     "hurs": "Relative Humidity",
     "rsds": "Solar Irradiance",
 }
+
+# Variables where SCVR (mean metric) is unreliable — Pathway B primary
+PATHWAY_B_VARS = {"pr"}
 
 SCENARIO_LABELS = {"ssp245": "SSP2-4.5", "ssp585": "SSP5-8.5"}
 
@@ -460,18 +463,26 @@ def page_epoch_table(pdf, data):
             else:
                 cell.set_facecolor("#f8f9fa" if i % 2 == 0 else "white")
 
-    # Key observations
-    fig.text(0.08, 0.10, "Key Observations:", fontsize=11,
+    # Confidence legend
+    fig.text(0.08, 0.13, "Confidence Levels:", fontsize=10,
              fontweight="bold", color="#2c3e50")
-    observations = [
-        "tasmax/tas: HIGH \u2014 tail tracks mean (M-T \u2248 0.70). Safe for direct use in EFR/IUL models.",
-        "tasmin: MODERATE \u2014 nighttime tail amplification weaker (M-T = 0.56). Nighttime has different physics.",
-        "pr: DIVERGENT \u2014 mean \u2248 0 but P95 positive. Extreme rain increasing while total flat. Pathway B mandatory.",
-        "rsds: MODERATE \u2014 both signals near noise floor (< 0.005). Guard threshold prevents false DIVERGENT.",
+    legend_items = [
+        ("HIGH", "#27ae60", "Mean and tail shift together. SCVR reliable."),
+        ("MODERATE", "#f39c12", "Weaker mean-tail agreement. SCVR usable with caution."),
+        ("LOW", "#e67e22", "Weak linkage or high model disagreement. Check Pathway B."),
+        ("DIVERGENT", "#c0392b", "Mean and tail shift in opposite directions. Pathway B required."),
     ]
-    for i, obs in enumerate(observations):
-        fig.text(0.10, 0.07 - i * 0.022, f"\u2022 {obs}",
-                 fontsize=8, color="#2c3e50")
+    for i, (label, color, desc) in enumerate(legend_items):
+        y = 0.11 - i * 0.018
+        fig.patches.append(plt.Rectangle((0.10, y - 0.004), 0.015, 0.012,
+                           transform=fig.transFigure, facecolor=color, edgecolor="none"))
+        fig.text(0.12, y, f"{label}: {desc}", fontsize=7.5, color="#2c3e50")
+
+    # Footnote
+    fig.text(0.08, 0.03, "\u2020 SCVR is a mean-based metric. For precipitation, SCVR \u2248 0 is expected and does NOT mean 'no change.'",
+             fontsize=8, fontstyle="italic", color="#666666")
+    fig.text(0.10, 0.015, "These hazards use Pathway B (direct threshold counting) instead.",
+             fontsize=8, fontstyle="italic", color="#666666")
 
     pdf.savefig(fig)
     plt.close(fig)

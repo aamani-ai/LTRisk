@@ -2720,7 +2720,7 @@
       "cvar95_ratio": 0.023507839863149853,
       "mean_tail_ratio": -19.180491975303237,
       "model_iqr": 0.06903670303549267,
-      "tail_confidence": "LOW",
+      "tail_confidence": "DIVERGENT",
       "n_models": 31,
       "per_model_scvr": {
         "ACCESS-CM2": 0.09249910825277005,

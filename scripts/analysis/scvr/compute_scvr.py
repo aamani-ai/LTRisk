@@ -398,9 +398,14 @@ def _classify_tail_confidence(mean_scvr, tail_scvr_p95, mean_tail_ratio, iqr):
     """Classify SCVR tail confidence: HIGH / MODERATE / LOW / DIVERGENT."""
     if tail_scvr_p95 is None or mean_scvr is None:
         return "INSUFFICIENT_DATA"
-    # Signs differ → divergent
+    # Signs differ → divergent (both signals above noise floor)
     if (abs(mean_scvr) > 0.005 and abs(tail_scvr_p95) > 0.005
             and np.sign(mean_scvr) != np.sign(tail_scvr_p95)):
+        return "DIVERGENT"
+    # Mean near-zero but tail has real opposite-sign signal
+    # (precipitation pattern: average flat, extremes increasing)
+    if (abs(mean_scvr) <= 0.005 and abs(tail_scvr_p95) > 0.005
+            and mean_scvr != 0 and np.sign(mean_scvr) != np.sign(tail_scvr_p95)):
         return "DIVERGENT"
     # Weak mean-tail linkage or high model disagreement
     if mean_tail_ratio is not None and abs(mean_tail_ratio) < 0.3:
