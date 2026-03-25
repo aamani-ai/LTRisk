@@ -35,6 +35,9 @@ VAR_LABELS = {
 
 SCENARIO_LABELS = {"ssp245": "SSP2-4.5", "ssp585": "SSP5-8.5"}
 
+# Variables where SCVR (mean metric) is unreliable — Pathway B primary
+PATHWAY_B_VARS = {"pr"}
+
 SCENARIO_COLORS = {"ssp245": "#3498db", "ssp585": "#e74c3c"}
 
 SEVERITY_COLORS = {
@@ -641,6 +644,11 @@ with tab1:
             yaxis=dict(autorange="reversed"),
         )
         st.plotly_chart(fig_heat, use_container_width=True)
+        st.caption(
+            "⚠ Precipitation SCVR ≈ 0 does not mean 'no change' — SCVR is a mean metric and "
+            "precipitation extremes can intensify while the average stays flat. "
+            "See the Report Card tab for tail confidence details."
+        )
 
         # Grouped bar chart
         st.subheader("SCVR by Variable")
@@ -704,11 +712,22 @@ with tab_rc:
             "Hover any column header for its definition and formula."
         )
 
+        # ── Info banner for unreliable variables ────────────────────────────
+        st.info(
+            "**† = SCVR unreliable for this variable.** SCVR is a mean-based metric. "
+            "For precipitation, the average barely changes but extreme events intensify — "
+            "SCVR ≈ 0 does NOT mean 'no change.' These variables use **Pathway B** "
+            "(direct threshold counting) instead. See the Tail Confidence column."
+        )
+
         # ── Section 1: Tail Confidence Overview Table ────────────────────────
         table_rows = []
         for c in companions:
+            vname = var_label(c["variable"])
+            if c["variable"] in PATHWAY_B_VARS:
+                vname += " †"
             table_rows.append({
-                "Variable": var_label(c["variable"]),
+                "Variable": vname,
                 "Scenario": scen_label(c["scenario"]),
                 "Mean SCVR": c.get("mean_scvr"),
                 "P95 SCVR": c.get("tail_scvr_p95"),
@@ -823,6 +842,14 @@ with tab_rc:
             column_config=col_config,
         )
 
+        # ── Confidence Level Legend ─────────────────────────────────────────
+        st.markdown("**Confidence Levels:**")
+        leg_cols = st.columns(4)
+        leg_cols[0].markdown(":green[**HIGH**] — Mean and tail shift together. SCVR reliable.")
+        leg_cols[1].markdown(":orange[**MODERATE**] — Weaker agreement. SCVR usable with caution.")
+        leg_cols[2].markdown(":orange[**LOW**] — Weak linkage or high model disagreement.")
+        leg_cols[3].markdown(":red[**DIVERGENT**] — Mean and tail oppose. SCVR misleading.")
+
         # ── Metric Definitions (expandable reference) ─────────────────────────
         with st.expander("Metric Definitions & Formulas"):
             st.markdown(r"""
@@ -838,6 +865,7 @@ with tab_rc:
 
 **Tail Confidence Algorithm:**
 1. If `sign(Mean) != sign(P95)` and both > 0.5% magnitude: **DIVERGENT**
+1b. If `|Mean| <= 0.5%` but `|P95| > 0.5%` and signs differ: **DIVERGENT** *(near-zero mean with opposite-sign tail — classic precipitation pattern)*
 2. If `|Mean-Tail Ratio| < 0.3`: **LOW** (weak linkage)
 3. If `Model IQR > 2 * |Mean SCVR|`: **LOW** (model disagreement exceeds signal)
 4. If `Mean-Tail Ratio > 0.6`: **HIGH** (mean and tail agree)
@@ -944,7 +972,7 @@ but without companion metrics, a reviewer cannot see this from the report alone.
                           "RED/DIVERGENT = SCVR misleading, Pathway B handles this.")
         # Variable-specific processing notes
         _VAR_NOTES = {
-            "pr": "P95/CVaR computed on wet days only (> 0.1 mm). Shape tab shows all-day P95.",
+            "pr": "† SCVR unreliable (mean metric). P95/CVaR on wet days only. Uses Pathway B for hazard counting.",
             "sfcWind": "R² ~ 0.13 — decade-level SCVR only, no annual interpolation.",
         }
         for c in companions:
