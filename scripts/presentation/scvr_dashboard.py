@@ -117,7 +117,7 @@ where extreme events intensify even though the average barely changes.
 | Mean SCVR | -0.1% | "Almost no change" |
 | P95 SCVR | +1.9% | 95th percentile shifted up |
 | CVaR 95% | +2.4% | Average severity of tail events increased |
-| **Tail Confidence** | **LOW** | Mean and tail decouple — SCVR alone is misleading |
+| **Tail Confidence** | **DIVERGENT** | Mean and tail oppose — SCVR alone is misleading |
 
 The mean barely moved, but the tails ARE fattening. This is why we compute
 **companion metrics** (see the Report Card tab) alongside SCVR — they tell you
@@ -472,7 +472,7 @@ def load_sites():
 
 
 @st.cache_data
-def load_site_data(site_id):
+def load_site_data(site_id, _file_mtime=None):
     report_path = OUTPUT_DIR / site_id / "scvr_report.json"
     if not report_path.exists():
         return None
@@ -515,7 +515,10 @@ with st.sidebar:
         format_func=lambda s: sites[s]["name"],
     )
 
-    data = load_site_data(selected_site)
+    # Pass file mtime so cache invalidates when JSON is regenerated
+    _report_path = OUTPUT_DIR / selected_site / "scvr_report.json"
+    _mtime = _report_path.stat().st_mtime if _report_path.exists() else None
+    data = load_site_data(selected_site, _file_mtime=_mtime)
 
     if data is None:
         st.error(f"No SCVR outputs for **{selected_site}**. Run `compute_scvr.py` first.")
@@ -717,7 +720,8 @@ with tab_rc:
             "**† = SCVR unreliable for this variable.** SCVR is a mean-based metric. "
             "For precipitation, the average barely changes but extreme events intensify — "
             "SCVR ≈ 0 does NOT mean 'no change.' These variables use **Pathway B** "
-            "(direct threshold counting) instead. See the Tail Confidence column."
+            "(direct threshold counting) instead. **P95/P99/CVaR use wet-day filtering "
+            "(> 0.1 mm/day)** — see the Data Filter column."
         )
 
         # ── Section 1: Tail Confidence Overview Table ────────────────────────
@@ -735,6 +739,7 @@ with tab_rc:
                 "CVaR 95%": c.get("cvar95_ratio"),
                 "Mean-Tail Ratio": c.get("mean_tail_ratio"),
                 "Model IQR": c.get("model_iqr"),
+                "Data Filter": "Wet days only (> 0.1 mm)" if c["variable"] == "pr" else "All days",
                 "Tail Confidence": c.get("tail_confidence", "N/A"),
             })
         df_rc = pd.DataFrame(table_rows)
@@ -817,6 +822,16 @@ with tab_rc:
                     "confidence is LOW regardless of mean-tail agreement."
                 ),
             ),
+            "Data Filter": st.column_config.TextColumn(
+                "Data Filter",
+                help=(
+                    "Which daily values were used for P95/P99/CVaR computation. "
+                    "Precipitation uses wet-day filtering (> 0.1 mm/day) because "
+                    "~78% of days at arid sites are dry — the all-day P95 sits in "
+                    "the dry/wet transition zone and is meaningless for tail analysis. "
+                    "Mean SCVR always uses all days regardless of this filter."
+                ),
+            ),
             "Tail Confidence": st.column_config.TextColumn(
                 "Tail Confidence",
                 help=(
@@ -849,6 +864,13 @@ with tab_rc:
         leg_cols[1].markdown(":orange[**MODERATE**] — Weaker agreement. SCVR usable with caution.")
         leg_cols[2].markdown(":orange[**LOW**] — Weak linkage or high model disagreement.")
         leg_cols[3].markdown(":red[**DIVERGENT**] — Mean and tail oppose. SCVR misleading.")
+
+        st.caption(
+            "**Data Filter note:** For precipitation, P95/P99/CVaR are computed on wet days "
+            "only (> 0.1 mm/day). At arid sites, ~78% of days are dry — using all days would "
+            "place P95 in the meaningless dry/wet transition zone (~5.9 mm vs ~15 mm on wet days). "
+            "Mean SCVR always uses all days."
+        )
 
         # ── Metric Definitions (expandable reference) ─────────────────────────
         with st.expander("Metric Definitions & Formulas"):
