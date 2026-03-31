@@ -91,7 +91,7 @@ and fit a linear trend. The slope shows whether SCVR is accelerating.
 ## 4. Variable-Specific Strategy Decision
 
 Not all variables respond the same way to the anchor fit approach. Based on empirical testing
-(documented in `discussion_annual_scvr_methodology.md` §14):
+(documented in `annual_scvr_methodology.md` §14):
 
 | Strategy | Variables | R² | Rationale |
 |----------|-----------|-----|-----------|
@@ -133,7 +133,7 @@ without improving the SCVR estimate.
 **Decision:** Compute GEV alongside empirical as a **diagnostic** (ξ parameter evolution),
 not as a replacement for the SCVR computation itself.
 
-**Reference:** Full analysis in `discussion_annual_scvr_methodology.md` §14.6
+**Reference:** Full analysis in `annual_scvr_methodology.md` §14.6
 
 ### Quantitative proof: parametric vs empirical SCVR
 
@@ -239,7 +239,7 @@ scenario separation in the tail, which addresses the "exceedance curves all look
 
 ## Cross-References
 
-- [discussion_annual_scvr_methodology.md](discussion_annual_scvr_methodology.md) — Anchor fit methodology, variable-specific strategy evidence
+- [annual_scvr_methodology.md](annual_scvr_methodology.md) — Anchor fit methodology, variable-specific strategy evidence
 - [docs/implementation/03_integrated_scvr_cmip6.md](../implementation/03_integrated_scvr_cmip6.md) — NB03 implementation (Section 3b)
 - [docs/implementation/ensemble_exceedance_script.md](../implementation/ensemble_exceedance_script.md) — Script implementation (Sections 6b-6d)
 - [scripts/shared/scvr_utils.py](../../scripts/shared/scvr_utils.py) — Shared analysis functions

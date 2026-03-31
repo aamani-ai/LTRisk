@@ -17,8 +17,8 @@ relates-to:
   - docs/learning/C_financial_translation/07_hcr_hazard_change.md
   - docs/learning/C_financial_translation/08_efr_equipment_degradation.md
   - docs/learning/C_financial_translation/09_nav_impairment_chain.md
-  - docs/discussion/discussion_scvr_performance_adjustment.md
-  - docs/discussion/discussion_annual_scvr_methodology.md
+  - docs/discussion/scvr_methodology/scvr_performance_adjustment.md
+  - docs/discussion/scvr_methodology/annual_scvr_methodology.md
 ---
 
 # Discussion — Integrating LTRisk into Project Finance Cash Flows
@@ -582,5 +582,5 @@ completeness but is not the main financial driver. The integration should
 
 *This document should be reviewed alongside:*
 - *`discussion_scaling_1yr_to_multiyear.md` (project_finance Stage 4 roadmap)*
-- *`discussion_annual_scvr_methodology.md` (how annual SCVR values are computed)*
+- *`../scvr_methodology/annual_scvr_methodology.md` (how annual SCVR values are computed)*
 - *`09_nav_impairment_chain.md` (full SCVR→NAV walkthrough)*

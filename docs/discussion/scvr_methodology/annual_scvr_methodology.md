@@ -775,7 +775,7 @@ The only thing that changes is the **windowing strategy** for the future pool.
 >
 > **Follow-up:** The variable-specific strategy, decade analysis, and shape metrics were
 > implemented in NB03 and the presentation script based on these results.
-> See [discussion_decade_shape_analysis.md](discussion_decade_shape_analysis.md) for
+> See [decade_shape_analysis.md](decade_shape_analysis.md) for
 > the full decade-resolved analysis, team feedback response, and first results with 13 models.
 
 We ran the experiment described in Section 4 for all 7 climate variables,

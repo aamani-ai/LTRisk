@@ -175,7 +175,7 @@ If Pathway A ≠ Pathway B:
 ## 6. Connection to SCVR Decomposition
 
 The SCVR decomposition diagnostic (§11 of the
-[SCVR method equivalence discussion](discussion_scvr_method_equivalence.md))
+[SCVR method equivalence discussion](../scvr_methodology/scvr_method_equivalence.md))
 directly measures the Jensen's gap by comparing mean SCVR against tail-specific
 metrics (P95, P99, CVaR). The "Tail P95 SCVR" column in the table above is
 essentially measuring: "what does the hazard-relevant part of the distribution do,
@@ -201,4 +201,4 @@ mandatory.
 *References: Jensen (1906); HCR Pathway A/B — see
 [07_hcr_hazard_change.md](../learning/C_financial_translation/07_hcr_hazard_change.md) §10;
 SCVR decomposition — see
-[discussion_scvr_method_equivalence.md](discussion_scvr_method_equivalence.md) §11.*
+[scvr_method_equivalence.md](../scvr_methodology/scvr_method_equivalence.md) §11.*

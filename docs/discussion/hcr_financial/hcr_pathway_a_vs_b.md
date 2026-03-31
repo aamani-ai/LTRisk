@@ -113,7 +113,7 @@ Temperature distribution:
   true when SCVR is small (< 0.15). For larger shifts, the relationship is non-linear.
 - **Jensen's inequality:** Hazard thresholds are non-linear functions of the
   distribution. The mean shift (SCVR) doesn't tell you how the tail changes.
-  See [discussion_jensen_inequality_hcr_scvr.md](discussion_jensen_inequality_hcr_scvr.md)
+  See [jensen_inequality_hcr_scvr.md](jensen_inequality_hcr_scvr.md)
   for the full explanation.
 
 ### When Pathway A fails
@@ -361,7 +361,7 @@ wrong sign. No scaling factor can fix a zero (or wrong-sign) input.
 ## 8. The Relationship to Jensen's Inequality
 
 The full mathematical explanation is in
-[discussion_jensen_inequality_hcr_scvr.md](discussion_jensen_inequality_hcr_scvr.md).
+[jensen_inequality_hcr_scvr.md](jensen_inequality_hcr_scvr.md).
 Here is the one-paragraph version:
 
 Jensen's inequality says: **E[f(X)] ≠ f(E[X])** for non-linear f. Hazard thresholds
@@ -427,7 +427,7 @@ pathways unless explicitly noted otherwise.
 
 *Cross-references:*
 - *[07_hcr_hazard_change.md](../learning/C_financial_translation/07_hcr_hazard_change.md) §10 — HCR two-pathway summary and calibration example*
-- *[discussion_jensen_inequality_hcr_scvr.md](discussion_jensen_inequality_hcr_scvr.md) — Why E[f(X)] ≠ f(E[X]) and its empirical evidence*
-- *[discussion_scvr_method_equivalence.md](discussion_scvr_method_equivalence.md) §11 — SCVR decomposition showing mean vs tail divergence*
-- *[discussion_scvr_method_equivalence.md](discussion_scvr_method_equivalence.md) §13 — Companion metrics discussion*
+- *[jensen_inequality_hcr_scvr.md](jensen_inequality_hcr_scvr.md) — Why E[f(X)] ≠ f(E[X]) and its empirical evidence*
+- *[scvr_method_equivalence.md](../scvr_methodology/scvr_method_equivalence.md) §11 — SCVR decomposition showing mean vs tail divergence*
+- *[scvr_method_equivalence.md](../scvr_methodology/scvr_method_equivalence.md) §13 — Companion metrics discussion*
 - *[LONG_TERM_RISK_FRAMEWORK.md](../background/LONG_TERM_RISK_FRAMEWORK.md) §3-4 — Framework-level Pathways A/B/C*

@@ -378,4 +378,4 @@ These are visualisation and reporting tools that consume `compute_scvr.py` outpu
 - [`scripts/data/README.md`](../../data/README.md) — fetch_cmip6.py documentation
 - [`data/schema/scvr_schema.json`](../../../data/schema/scvr_schema.json) — Output format specification
 - [`docs/learning/B_scvr_methodology/04_scvr_methodology.md`](../../../docs/learning/B_scvr_methodology/04_scvr_methodology.md) — SCVR formula derivation
-- [`docs/discussion/discussion_annual_scvr_methodology.md`](../../../docs/discussion/discussion_annual_scvr_methodology.md) — Anchor fit vs per-year SCVR analysis
+- [`docs/discussion/scvr_methodology/annual_scvr_methodology.md`](../../../docs/discussion/scvr_methodology/annual_scvr_methodology.md) — Anchor fit vs per-year SCVR analysis

@@ -20,7 +20,7 @@
 | **Understand what this project does** | [The Framework](#the-framework) |
 | **Compute SCVR from cached data** | [`scripts/analysis/scvr/compute_scvr.py`](scripts/analysis/scvr/compute_scvr.py) — [README](scripts/analysis/scvr/README.md) |
 | **Learn the methodology from scratch** | [`docs/learning/00_index.md`](docs/learning/00_index.md) — 11 guides in 4 categories |
-| **Read the annual SCVR methodology discussion** | [`docs/discussion/discussion_annual_scvr_methodology.md`](docs/discussion/discussion_annual_scvr_methodology.md) |
+| **Read the annual SCVR methodology discussion** | [`docs/discussion/scvr_methodology/annual_scvr_methodology.md`](docs/discussion/scvr_methodology/annual_scvr_methodology.md) |
 | **See how SCVR translates to financial impact** | [`docs/learning/C_financial_translation/09_nav_impairment_chain.md`](docs/learning/C_financial_translation/09_nav_impairment_chain.md) |
 | **See NB03 implementation details** | [`docs/implementation/03_integrated_scvr_cmip6.md`](docs/implementation/03_integrated_scvr_cmip6.md) |
 | **Check project TODO and roadmap** | [`docs/todo.md`](docs/todo.md) |
@@ -77,7 +77,7 @@ rsds        None    0.31      Period average (SCVR ~ 0)
 10-year anchors capture the climate signal with R² > 0.95. **Precipitation** is non-linear
 and noisy. **Wind/radiation** show no meaningful climate change signal at these sites.
 
-Full analysis: [`docs/discussion/discussion_annual_scvr_methodology.md`](docs/discussion/discussion_annual_scvr_methodology.md)
+Full analysis: [`docs/discussion/scvr_methodology/annual_scvr_methodology.md`](docs/discussion/scvr_methodology/annual_scvr_methodology.md)
 Experiment script: [`scripts/archive/experiments/annual_scvr_test.py`](scripts/archive/experiments/annual_scvr_test.py)
 
 ---
@@ -171,8 +171,8 @@ Full index with reading orders: [`docs/learning/00_index.md`](docs/learning/00_i
 
 | Document | What It Addresses |
 |---|---|
-| [`discussion_annual_scvr_methodology.md`](docs/discussion/discussion_annual_scvr_methodology.md) | **How to compute annual SCVR values** — 3 options analysed, experiment with real data, variable-specific recommendation. Key decision before NB04. |
-| [`discussion_scvr_performance_adjustment.md`](docs/discussion/discussion_scvr_performance_adjustment.md) | How SCVR feeds into the 3 channels of financial impact — Channel 1 (hazard BI), Channel 2 (generation), Channel 3 (equipment life). |
+| [`annual_scvr_methodology.md`](docs/discussion/scvr_methodology/annual_scvr_methodology.md) | **How to compute annual SCVR values** — 3 options analysed, experiment with real data, variable-specific recommendation. Key decision before NB04. |
+| [`scvr_performance_adjustment.md`](docs/discussion/scvr_methodology/scvr_performance_adjustment.md) | How SCVR feeds into the 3 channels of financial impact — Channel 1 (hazard BI), Channel 2 (generation), Channel 3 (equipment life). |
 
 ### Implementation Docs (`docs/implementation/`)
 

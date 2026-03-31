@@ -351,7 +351,7 @@ For SCVR, we don't need to extrapolate beyond observed data — we have 65,700 d
 **The rule of thumb:** Use parametric fitting when you need to estimate beyond your data. Use empirical when your data is sufficient. 65,700 points is more than sufficient.
 
 > **Note on anchor pool sizes:** When using the anchor method for annual SCVR (see
-> [`discussion_annual_scvr_methodology.md`](../../discussion/discussion_annual_scvr_methodology.md), §14.6),
+> [`annual_scvr_methodology.md`](../../discussion/scvr_methodology/annual_scvr_methodology.md), §14.6),
 > pool sizes drop to ~21,900 (10-year anchors) or ~10,950 (5-year anchors). The empirical
 > approach still holds because SCVR is an area/mean metric, not tail-sensitive. Parametric
 > fitting would only matter if we added tail-focused metrics like CVaR or return periods.

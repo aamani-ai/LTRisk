@@ -903,7 +903,7 @@ number (EFR, IUL, CFADS) inherits the error.
 data) never touches SCVR. It computes E[h(X)] directly — counting how many days exceed
 each hazard threshold — and avoids Jensen's inequality entirely. This is already
 implemented for heat_wave_days, frost_days, rx5day, fwi_mean (see
-[discussion_jensen_inequality_hcr_scvr.md](discussion_jensen_inequality_hcr_scvr.md) §5).
+[jensen_inequality_hcr_scvr.md](../hcr_financial/jensen_inequality_hcr_scvr.md) §5).
 
 **But Pathway B does not fix everything:**
 

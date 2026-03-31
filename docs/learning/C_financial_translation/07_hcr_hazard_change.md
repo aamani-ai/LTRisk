@@ -1227,8 +1227,8 @@ Where they disagree, investigate the scaling factor.
 ```
 
 **Deep dives:**
-- [Pathway A vs B from basics](../../discussion/discussion_hcr_pathway_a_vs_b.md) — worked examples, decision matrix per variable, naming clarification (HCR-level vs framework-level pathways)
-- [Jensen's inequality: why HCR ≠ f(SCVR)](../../discussion/discussion_jensen_inequality_hcr_scvr.md) — why Pathway A fails for precipitation and when the linear scaling approximation breaks down
+- [Pathway A vs B from basics](../../discussion/hcr_financial/hcr_pathway_a_vs_b.md) — worked examples, decision matrix per variable, naming clarification (HCR-level vs framework-level pathways)
+- [Jensen's inequality: why HCR ≠ f(SCVR)](../../discussion/hcr_financial/jensen_inequality_hcr_scvr.md) — why Pathway A fails for precipitation and when the linear scaling approximation breaks down
 
 ### Calibrating Scaling Factors Using NB01 Data
 
@@ -1266,7 +1266,7 @@ NB04 cross-validation (simple P90 per-DOY exceedance):
 
 **Why:** NB04 Part B (2026-03-19) revealed that routing temperature hazards through Pathway B with per-DOY P90 compound thresholds produces HCR values of +1,549% (SSP2-4.5) — technically correct but financially misleading. The per-DOY P90 definition creates a tiny baseline denominator (~1 compound HW day/year), so even modest warming produces huge ratios. Meanwhile, Pathway A's 2.5× scaling factor was calibrated against absolute thresholds (~15 HW days/year baseline) and produces a more interpretable +17% HCR. Both are mathematically valid for their threshold definitions, but the absolute-threshold framing is what the BI loss model expects.
 
-For precipitation, Pathway A gives the wrong sign (SCVR ≈ 0 → HCR ≈ 0, but actual extreme rain days increase). Pathway B is mandatory — see [Jensen's inequality discussion](../../discussion/discussion_jensen_inequality_hcr_scvr.md).
+For precipitation, Pathway A gives the wrong sign (SCVR ≈ 0 → HCR ≈ 0, but actual extreme rain days increase). Pathway B is mandatory — see [Jensen's inequality discussion](../../discussion/hcr_financial/jensen_inequality_hcr_scvr.md).
 
 | Hazard | Input Var | Primary Pathway | Rationale |
 |--------|-----------|-----------------|-----------|

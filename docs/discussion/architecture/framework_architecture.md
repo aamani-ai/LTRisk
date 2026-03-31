@@ -15,10 +15,10 @@ relates-to:
   - docs/learning/C_financial_translation/07_hcr_hazard_change.md
   - docs/learning/C_financial_translation/08_efr_equipment_degradation.md
   - docs/learning/C_financial_translation/09_nav_impairment_chain.md
-  - docs/discussion/discussion_ltrisk_cashflow_integration.md
-  - docs/discussion/discussion_scvr_performance_adjustment.md
-  - docs/discussion/discussion_hcr_pathway_a_vs_b.md
-  - docs/discussion/discussion_scvr_method_equivalence.md
+  - docs/discussion/hcr_financial/cashflow_integration.md
+  - docs/discussion/scvr_methodology/scvr_performance_adjustment.md
+  - docs/discussion/hcr_financial/hcr_pathway_a_vs_b.md
+  - docs/discussion/scvr_methodology/scvr_method_equivalence.md
 ---
 
 # LTRisk Framework Architecture
@@ -55,7 +55,7 @@ will quantify.
     Wind icing reduction:   ~0.5% (fewer shutdowns — nearly cancels density)
   Initial estimates suggest these are much smaller than EFR life-shortening,
   but actual ratios will come from NB04/NB05 computation.
-  See: discussion_scvr_performance_adjustment.md for the full analysis.
+  See: ../scvr_methodology/scvr_performance_adjustment.md for the full analysis.
 
   Year-to-year weather VARIABILITY (which drives DSCR P10/P90 spread)
   is handled separately by the bootstrap in project_finance (40yr ERA5
@@ -118,7 +118,7 @@ and NB05 (financial integration).
 
 There is also a **Channel 3** (resource change — rsds/sfcWind SCVR), which
 appears negligible at these sites based on near-zero SCVR values. See
-[discussion_scvr_performance_adjustment.md](discussion_scvr_performance_adjustment.md) for the analysis.
+[scvr_performance_adjustment.md](../scvr_methodology/scvr_performance_adjustment.md) for the analysis.
 
 ---
 
@@ -362,9 +362,9 @@ routing** so each variable enters the pipeline through the right door.
 | HCR deep dive | [07_hcr_hazard_change.md](../learning/C_financial_translation/07_hcr_hazard_change.md) | Scaling factors, annual HCR, Pathway A vs B, cross-validation |
 | EFR deep dive | [08_efr_equipment_degradation.md](../learning/C_financial_translation/08_efr_equipment_degradation.md) | Peck's, Coffin-Manson, Palmgren-Miner with worked examples |
 | NAV chain | [09_nav_impairment_chain.md](../learning/C_financial_translation/09_nav_impairment_chain.md) | SCVR → (HCR + EFR) → CFADS → NAV two-channel walkthrough |
-| Cash flow integration | [discussion_ltrisk_cashflow_integration.md](discussion_ltrisk_cashflow_integration.md) | How LTRisk connects to project_finance, BI conversion approaches |
-| Performance assessment | [discussion_scvr_performance_adjustment.md](discussion_scvr_performance_adjustment.md) | Why Channel 3 is negligible — the resource is stable |
-| HCR pathways | [discussion_hcr_pathway_a_vs_b.md](discussion_hcr_pathway_a_vs_b.md) | When SCVR-based HCR (Pathway A) fails and Pathway B is needed |
+| Cash flow integration | [cashflow_integration.md](../hcr_financial/cashflow_integration.md) | How LTRisk connects to project_finance, BI conversion approaches |
+| Performance assessment | [scvr_performance_adjustment.md](../scvr_methodology/scvr_performance_adjustment.md) | Why Channel 3 is negligible — the resource is stable |
+| HCR pathways | [hcr_pathway_a_vs_b.md](../hcr_financial/hcr_pathway_a_vs_b.md) | When SCVR-based HCR (Pathway A) fails and Pathway B is needed |
 | Report Card algorithm | [03_integrated_scvr_cmip6.md §3b.F](../implementation/03_integrated_scvr_cmip6.md) | Tail Confidence decision tree, guard thresholds, actual results |
 | SCVR methodology | [04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) | SCVR formula, exceedance curve area, empirical computation |
-| Companion metrics | [discussion_scvr_method_equivalence.md §13](discussion_scvr_method_equivalence.md) | Why mean SCVR alone isn't enough, Tail Confidence design rationale |
+| Companion metrics | [scvr_method_equivalence.md §13](../scvr_methodology/scvr_method_equivalence.md) | Why mean SCVR alone isn't enough, Tail Confidence design rationale |
