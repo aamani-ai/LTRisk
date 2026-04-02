@@ -17,7 +17,7 @@ A comprehensive guide to the climate science, data engineering, and financial me
 
 | # | Topic | What You'll Learn |
 |---|---|---|
-| [04](B_scvr_methodology/04_scvr_methodology.md) | **SCVR Methodology** | Definitive reference: step-by-step computation, empirical vs theoretical exceedance (deep dive), trapezoid error analysis, actual code, edge cases, interpretation guide |
+| [04](B_scvr_methodology/04_scvr_methodology.md) | **SCVR Report Methodology** | Definitive reference: honest framing (SCVR = mean ratio), step-by-step computation, method equivalence proof, Report Card (tail confidence, companion metrics), decade progression, annual variable-specific strategy, shape metrics & GEV/GPD fits, per-model vs ensemble, comparison to W1/CVaR/AAL, interpretation guide, downstream pipeline (HCR/EFR) |
 | [05](B_scvr_methodology/05_variables_and_use_cases.md) | **Variables and Asset Use Cases** | What SCVR means per variable, failure pathways, real Hayhurst Solar walkthrough, Maverick Creek Wind walkthrough, solar vs wind comparison |
 | [06](B_scvr_methodology/06_scenario_comparison.md) | **Scenario Comparison** | SSP2-4.5 vs SSP5-8.5 — how much the emissions pathway changes SCVR, and when to use each |
 
