@@ -6,7 +6,7 @@ EFR is computed **directly from SCVR** — it does NOT depend on HCR. EFR and HC
 
 EFR uses three well-established engineering models — Peck's (thermal aging), Coffin-Manson (thermal cycling fatigue), and Palmgren-Miner (structural fatigue) — to quantify how climate change accelerates the physical wear-out of renewable energy assets.
 
-This is the implementation reference for degradation computation in Notebook 04.
+This is the implementation reference for degradation computation in Notebook ?.
 
 ---
 
@@ -719,7 +719,141 @@ But for reference, the formula for any site:
 
 ---
 
-## 8. Combining EFR — Annual Cumulative Effect
+## 8. How EFR Is Computed — End-to-End Summary
+
+Before diving into the combining formula, here's the complete chain from
+SCVR inputs to financial impact in one diagram:
+
+```
+SCVR INPUTS                 PHYSICS MODELS              EFR OUTPUT
+──────────────              ──────────────              ──────────
+
+SCVR_tas(t) ────────────►  Peck's Thermal Aging  ────► EFR_peck(t)
+SCVR_hurs(t) ───────────►  (Arrhenius equation)        e.g., 0.11
+                            AF = exp(Ea/k × ΔT)
+                            EFR = AF_ratio - 1
+
+SCVR_tasmax(t) ──────────► Coffin-Manson         ────► EFR_coffin(t)
+SCVR_tasmin(t) ──────────► (Thermal cycling)            e.g., 0.03
+  OR (proposed):            N_f = C × (ΔT)^(-β)
+  Direct freeze-thaw ─────► EFR = 1-(base/fut)^β
+  cycle counts from
+  Pathway B daily data
+
+SCVR_sfcWind(t) ─────────► Palmgren-Miner        ────► EFR_palmgren(t)
+                            (Structural fatigue)        e.g., ≈ 0
+                            D = Σ(n_i / N_i)
+
+
+COMBINE:     EFR_combined(t) = w₁ × EFR_peck + w₂ × EFR_coffin + w₃ × EFR_palmgren
+             Solar weights:    0.80              0.20              0.00
+             Wind weights:     small             small             main
+
+
+                          EFR_combined(t)
+                          e.g., 0.094
+                               │
+                ┌──────────────┴──────────────┐
+                │                             │
+                ▼                             ▼
+         EFFECT 1                      EFFECT 2
+         Annual generation             Life truncation
+         reduction (gradual)           via IUL (terminal)
+                │                             │
+                ▼                             ▼
+         climate_degrad(t)             IUL = EUL × (1 - avg_EFR)
+         = EFR × std_rate × t         If t > IUL: CFADS = 0
+                │                             │
+                ▼                             ▼
+         ~$0.5-1.0M NPV               ~$2.8-5.1M NPV
+         (~14% of impact)             (~86% of impact)
+```
+
+### Complete Worked Example: Hayhurst Solar, Year 2040, SSP5-8.5
+
+All three models computed for one year, then combined and translated to
+both financial effects:
+
+```
+STEP 1: SCVR INPUTS (from SCVR Report, year 2040)
+─────────────────────────────────────────────────
+  SCVR_tas(2040)    = +0.074   (7.4% warmer mean temperature)
+  SCVR_hurs(2040)   = -0.032   (3.2% drier)
+  SCVR_tasmax(2040) = +0.074   (7.4% hotter daily max)
+  SCVR_tasmin(2040) = +0.148   (14.8% warmer nights)
+  SCVR_sfcWind(2040)= -0.011   (essentially unchanged)
+
+
+STEP 2: PECK'S THERMAL AGING
+─────────────────────────────
+  Baseline annual mean:  T_ref = 20°C = 293.15 K
+  Future mean:           T_stress = 293.15 × 1.074 = 314.8 K (41.7°C)
+  
+  Using "10°C doubles" linearisation:
+    ΔT = 0.074 × 20 = 1.48°C
+    AF = 2^(1.48/10) = 1.108
+    Extra degradation rate = 0.5% × 0.108 = 0.054%/yr
+    EFR_peck = 0.054 / 0.5 = 0.108 ≈ 0.11
+
+
+STEP 3: COFFIN-MANSON THERMAL CYCLING
+──────────────────────────────────────
+  Baseline ΔT: tasmax(32°C) - tasmin(14°C) = 18.0°C
+  Future ΔT:   34.4°C - 16.1°C = 18.3°C
+  β = 2 (solder fatigue exponent)
+
+  EFR_coffin = 1 - (18.0 / 18.3)^2 = 1 - 0.9675 = 0.033 ≈ 0.03
+
+  (Small — the daily swing barely changes because nights warm faster)
+
+
+STEP 4: PALMGREN-MINER STRUCTURAL FATIGUE
+──────────────────────────────────────────
+  SCVR_sfcWind ≈ 0 → wind distribution unchanged
+  No incremental fatigue loading
+  EFR_palmgren ≈ 0.00
+
+
+STEP 5: COMBINE
+────────────────
+  EFR_combined(2040) = 0.80 × 0.11 + 0.20 × 0.03 + 0.00 × 0.00
+                     = 0.088 + 0.006 + 0.000
+                     = 0.094 ≈ 0.09
+
+
+STEP 6: FINANCIAL EFFECT 1 — Annual Generation Reduction
+─────────────────────────────────────────────────────────
+  Year: 2040 (= year 14 of asset life, installed 2026)
+  Gen_base = 54,300 MWh
+  std_degrad = 0.005
+  climate_degrad(14) = EFR_combined × std_degrad × t
+                     = 0.094 × 0.005 × 14 = 0.0066
+
+  Gen(14) = 54,300 × (1-0.005)^14 × (1-0.0066)
+          = 54,300 × 0.932 × 0.993
+          = 50,260 MWh
+
+  vs no climate: 54,300 × 0.932 = 50,612 MWh
+  Extra loss: 352 MWh × $40/MWh = $14,080 at year 14
+
+
+STEP 7: FINANCIAL EFFECT 2 — Life Truncation
+─────────────────────────────────────────────
+  Average EFR over asset life ≈ 0.09
+  IUL = EUL × (1 - avg_EFR) = 25 × 0.91 = 22.75 years ≈ 23 years
+  
+  Lost years: 25 - 23 = 2 years of post-debt cash flow
+  Each year's NCF (post-debt): ~$1.3-1.5M
+  
+  Effect 2 impact: 2 × ~$1.4M = ~$2.8M NPV
+
+  (Under full Peck's exponential: avg_EFR ≈ 0.17 → IUL ≈ 21 years
+   → 4 lost years → ~$5.1M. Range: $2.8M to $5.1M.)
+```
+
+---
+
+## 8b. Combining EFR — Annual Cumulative Effect
 
 ### EFR Components
 
@@ -777,9 +911,88 @@ Each year, the panel degrades slightly faster than the year before.
 
 ---
 
-## 9. From EFR to IUL — Impaired Useful Life
+## 9. EFR's Two Financial Effects
 
-### Team Framework Definition
+EFR produces **two distinct financial impacts** that flow through different
+parts of the cash flow model. Understanding this separation is critical
+because the second effect is roughly 10x larger than the first.
+
+```
+EFFECT 1: ANNUAL GENERATION REDUCTION (gradual, every year)
+══════════════════════════════════════════════════════════════
+
+  What it does:  Panels produce slightly less each year because
+                 climate-accelerated aging compounds on top of
+                 standard degradation.
+
+  Where it lives: In the ANNUAL CASH FLOW — it reduces Revenue(t)
+                  every year through the generation formula.
+
+  Formula:
+    Gen(t) = Gen_base × (1 - std_degrad)^t × (1 - climate_degrad(t))
+                                               ^^^^^^^^^^^^^^^^^^^^^^^
+                                               THIS is Effect 1
+
+    climate_degrad(t) = EFR_combined(t) × std_degrad_rate × t
+
+  Character:  Continuous, multiplicative, grows over time.
+              Small early (~$10K/yr at year 5), larger late (~$60K/yr at year 25).
+
+  Example (Hayhurst SSP5-8.5, year 15):
+    Climate-driven extra loss: 1,031 MWh × $40/MWh = ~$41K/yr
+
+  Total impact over asset life (NPV): ~$0.5-1.0M
+
+
+EFFECT 2: LIFE TRUNCATION via IUL (terminal, at the NAV level)
+══════════════════════════════════════════════════════════════
+
+  What it does:  The asset reaches end-of-life EARLIER than planned.
+                 Years IUL+1 through EUL produce ZERO cash flow.
+
+  Where it lives: In the NAV/DCF CALCULATION — it changes how many
+                  years you sum over. The cash flow per year doesn't
+                  change for those years; the years simply DISAPPEAR.
+
+  Formula:
+    If t > IUL:  CFADS(t) = 0    (asset is dead)
+
+    NAV = Σ_{t=1}^{IUL} CFADS(t) / (1+r)^t    ← sum stops at IUL, not EUL
+
+  Character:  Binary cliff. Not gradual. Either the year exists or it doesn't.
+              Hits the highest-value years (post-debt, maximum margin).
+
+  Example (Hayhurst SSP5-8.5):
+    EUL = 25 years → IUL ≈ 21-23 years
+    Lost years: 2-4 years of post-debt cash flow
+    Each lost year: ~$1.3-1.8M (NCF after debt service ends)
+
+  Total impact (NPV): ~$2.8-5.1M
+
+
+WHY EFFECT 2 DOMINATES
+══════════════════════════════════════════════════════════════
+
+  Effect 1 (annual reduction):     ~$0.5-1.0M NPV   (~14% of total)
+  Effect 2 (life truncation):      ~$2.8-5.1M NPV   (~86% of total)
+                                   ─────────────
+  Combined Channel 2 impact:       ~$3.3-6.1M
+
+  Effect 2 is ~5-10× larger because:
+    1. Post-debt years are highest-margin (loan is paid off)
+    2. Losing an entire year of cash flow > losing 1% of each year
+    3. The truncated years are undiscounted relative to early years
+
+  For investors: the risk is not that panels produce 1% less per year.
+  The risk is that the asset DIES 3 years early and you lose $5M of
+  tail-end revenue that was supposed to be pure profit.
+```
+
+---
+
+### From EFR to IUL — Impaired Useful Life
+
+#### Team Framework Definition
 
 ```
 IUL = EUL × (1 − Σ(EFR(t) × SCVR(t)) averaged across years)
@@ -914,7 +1127,7 @@ Generation (% of rated)
 
 ---
 
-## 11. The Revised Generation Formula
+## 11. The Revised Generation Formula & Cash Flow Impact
 
 The complete annual generation formula for NB04 combines all effects.
 
@@ -930,13 +1143,36 @@ Where:
   (1 − std_degrad)^t = Standard degradation (0.5%/yr, Jordan & Kurtz)
                        Always applied, regardless of climate scenario
 
-  (1 − climate_degrad(t)) = Climate-driven EXTRA degradation
+  (1 − climate_degrad(t)) = Climate-driven EXTRA degradation            ← EFR Effect 1
                              climate_degrad(t) = EFR_combined(t) × std_degrad × t
                              This is the NEW TERM from Peck's / C-M / P-M
 
-  (1 − hazard_BI(t)) = Business interruption from climate hazards
+  (1 − hazard_BI(t)) = Business interruption from climate hazards       ← Channel 1 (HCR)
                         hazard_BI(t) = Σ(HCR_h(t) × baseline_BI_h)
                         Shut-downs, derating hours, flood downtime
+
+PLUS the life truncation rule:                                          ← EFR Effect 2
+  If t > IUL:  Gen(t) = 0   (asset has reached end-of-life)
+```
+
+### How EFR's Two Effects Enter the Cash Flow
+
+```
+CFADS(t) for t ≤ IUL:
+  Revenue(t) = Gen(t) × Price(t)                     ← Effect 1 reduces Gen(t)
+  CFADS(t)   = Revenue(t) - OpEx(t) - DebtService(t)
+
+CFADS(t) for t > IUL:
+  CFADS(t)   = 0                                      ← Effect 2 kills the year
+
+NAV impairment = Σ_{t=1}^{EUL} [CFADS_baseline(t) - CFADS_climate(t)] / (1+r)^t
+
+  Where CFADS_baseline uses EUL and no climate_degrad
+  And CFADS_climate uses IUL truncation and climate_degrad(t)
+
+  The impairment captures BOTH effects:
+    Effect 1 contributes: smaller CFADS each year during years 1 to IUL
+    Effect 2 contributes: CFADS_baseline - 0 for years IUL+1 to EUL
 ```
 
 ### Why There's No CMIP Factor on the Resource
@@ -1014,6 +1250,61 @@ NB04 should implement **both** approaches and report the range:
 - Conservative (linearised "10°C doubles"): EFR ≈ 0.06–0.11
 - Full Peck's exponential: EFR ≈ 0.11–0.16
 - The true value is likely between, depending on how T_stress is defined
+
+### Coffin-Manson Input Improvement
+
+The current Coffin-Manson implementation estimates ΔT change from SCVR
+mean shifts (Section 5). This is a mean-based approximation. The
+[hcr_efr_boundary.md](../../discussion/hcr_financial/hcr_efr_boundary.md)
+discussion proposes feeding **direct freeze-thaw cycle counts** from
+Pathway B daily data instead:
+
+```
+Current (SCVR mean approximation):
+  ΔT_future = tasmax × (1 + SCVR_tasmax) - tasmin × (1 + SCVR_tasmin)
+  EFR_coffin = 1 - (ΔT_base / ΔT_future)^β
+
+Proposed (direct daily counts):
+  cycles_baseline = count of days with tasmin < 0°C AND tasmax > 0°C (baseline)
+  cycles_future   = same count from future daily data (Pathway B)
+  EFR_coffin = (cycles_future - cycles_baseline) / cycles_to_failure
+
+  Advantage: uses actual event counts, not derived estimates
+  Requires: knowing cycles_to_failure for the specific solder material
+```
+
+This is particularly important because at Hayhurst the ΔT barely changes
+(EFR_coffin ≈ 0.03), but the actual freeze-thaw cycle COUNT decreases
+by ~25% (warming = fewer 0°C crossings). The direct count approach
+would capture this correctly; the SCVR approximation may miss it.
+
+### IUL Threshold Definition
+
+Section 9 gives two formulas for IUL but does not specify the failure
+threshold. This needs to be defined for NB04:
+
+```
+Option A (team formula, simpler):
+  IUL = EUL × (1 - avg_EFR)
+  No explicit threshold — just scales lifetime by degradation ratio.
+  Used in current worked examples.
+
+Option B (cumulative, more physical):
+  Track cumulative degradation year by year:
+    cumul(t) = Σ_{s=1}^{t} (std_degrad + climate_extra(s))
+  IUL = year where cumul(t) reaches the failure threshold
+
+  What should the threshold be?
+    80% of rated capacity? (IEC 61215 warranty limit)
+    85%? (some manufacturers use this)
+    The same total degradation the standard asset accumulates at EUL?
+      → cumul_threshold = std_degrad × EUL = 0.5% × 25 = 12.5%
+      → IUL = year where climate-adjusted cumulative reaches 12.5%
+
+Recommendation: Use Option A for Phase 1 (simpler, consistent with
+doc 09 worked examples). Implement Option B in Phase 2 when field
+data can inform the threshold choice. Report both if feasible.
+```
 
 ### Field Validation Opportunities
 
