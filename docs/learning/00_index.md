@@ -25,6 +25,7 @@ A comprehensive guide to the climate science, data engineering, and financial me
 
 | # | Topic | What You'll Learn |
 |---|---|---|
+| [06b](C_financial_translation/06b_climate_risk_orchestrator.md) | **Climate Risk Orchestrator** | The routing layer between SCVR Report and financial channels — maps InfraSure's canonical hazard taxonomy to LTRisk's climate signals, three routing rules (metric selection, channel assignment, pipeline complementarity), full routing matrix, coverage maps per asset type, YAML schema, worked Hayhurst example |
 | [07](C_financial_translation/07_hcr_hazard_change.md) | **HCR: Hazard Change Ratio** | How SCVR translates to hazard-specific impact — non-linear tail amplification, variable-to-hazard mapping, annual HCR computation, scaling factors, worked examples for heat and precipitation, negative HCR (warming benefits), compound events |
 | [08](C_financial_translation/08_efr_equipment_degradation.md) | **EFR: Equipment Degradation** | Peck's thermal aging (deep dive), Coffin-Manson thermal cycling, Palmgren-Miner wind fatigue, temperature coefficient derating, combining EFR, IUL computation, standard vs climate degradation, the revised generation formula |
 | [09](C_financial_translation/09_nav_impairment_chain.md) | **NAV Impairment Chain** | The complete SCVR → HCR → EFR → CFADS → NAV pipeline with annual framing, CFADS chart overlay, three channels of financial impact, worked examples with real dollar amounts, investor/lender/insurance perspectives |
