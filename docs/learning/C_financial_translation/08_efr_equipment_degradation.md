@@ -2,11 +2,31 @@
 
 **EFR (Equipment Failure Ratio) translates climate stress into physical equipment degradation using physics-based engineering models.** It answers: *"If mean temperature increases 7.4% (SCVR), how much faster do solar panels age?"*
 
-EFR is computed **directly from SCVR** — it does NOT depend on HCR. EFR and HCR are parallel channels: SCVR branches into HCR (→ Channel 1: business interruption) and EFR (→ Channel 2: equipment degradation) independently.
+EFR and HCR are parallel channels: SCVR branches into HCR (→ Channel 1: business interruption) and EFR (→ Channel 2: equipment degradation) independently.
 
 EFR uses three well-established engineering models — Peck's (thermal aging), Coffin-Manson (thermal cycling fatigue), and Palmgren-Miner (structural fatigue) — to quantify how climate change accelerates the physical wear-out of renewable energy assets.
 
-This is the implementation reference for degradation computation in Notebook ?.
+### Two Input Modes (Mirroring HCR's Pathway A/B)
+
+Like HCR, EFR can be computed in **two modes** because the physics models
+are non-linear functions — Jensen's inequality means applying them to the
+mean temperature gives a different answer than integrating over daily data:
+
+```
+Mode A (SCVR-based):   Apply physics model to mean-shifted conditions
+                       Fast, parametric, acceptable when variance is stable
+                       → Phase 1 default for Peck's and Palmgren-Miner
+
+Mode B (Daily-based):  Integrate physics model over actual daily data
+                       Slower, exact, captures non-linear effects
+                       → Mandatory for Coffin-Manson (Mode A gives wrong direction)
+                       → Phase 2 upgrade for Peck's (~10% more accurate)
+```
+
+For the full analysis of why two modes are needed and how they mirror HCR's
+Pathway A/B structure, see [efr_two_modes.md](../../discussion/efr_degradation/efr_two_modes.md).
+
+This is the implementation reference for degradation computation in NB04.
 
 ---
 
