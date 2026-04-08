@@ -72,6 +72,38 @@ cracking, and solder joint degradation are all chemical processes
 that follow Arrhenius kinetics.
 ```
 
+```
+THE ARRHENIUS CURVE — Temperature vs Degradation Rate
+
+  Acceleration
+  Factor (AF)
+    ▲
+ 8× │                                                ●
+    │                                           ╭────╯
+    │                                      ╭────╯
+ 4× │                                ╭─────╯
+    │                          ╭─────╯
+    │                    ╭─────╯
+ 2× │              ╭─────╯
+    │        ╭─────╯
+    │   ╭────╯
+ 1× │───╯
+    │
+    └────────┬──────────┬──────────┬──────────┬──────────►
+           25°C       35°C       45°C       55°C
+           STC ref   Hayhurst   Cell temp   Extreme
+                     baseline   operating   summer peak
+
+  The curve is EXPONENTIAL — each 10°C step doubles the rate.
+  This means small temperature increases have large effects:
+
+    Hayhurst baseline (35°C operating):  AF = 2.0×
+    Hayhurst future (+1.5°C from SCVR):  AF = 2.2×  (+10% faster)
+    
+    The 1.5°C shift looks small on this curve, but it adds
+    0.055%/yr EXTRA degradation — compounding over 25 years.
+```
+
 ### Thermal cycling: Expansion/contraction creates microcracks
 
 ```
@@ -194,7 +226,50 @@ Both forms describe the same physics; the regression form is a reparameterisatio
 
 > **Confidence label: Working estimates from published literature.** The activation energy Ea = 0.7 eV is used across IEC qualification tests and has been validated in accelerated aging chambers. Field validation for specific site conditions (Hayhurst, West Texas desert) has not been performed. The humidity exponent n = 2.66 comes from Peck's original 1986 paper and is widely cited.
 
-### How SCVR Feeds In
+### How SCVR Feeds Into Peck's — Step-by-Step Pipeline
+
+```
+PECK'S MODEL: FROM SCVR TO EFR (Hayhurst 2040, SSP5-8.5)
+
+  SCVR Report                    Baseline Conditions
+  ┌────────────────┐             ┌──────────────────┐
+  │ SCVR_tas = +0.074│           │ T_ref = 20°C      │
+  │ SCVR_hurs= -0.032│          │ RH_ref = 35%       │
+  └───────┬────────┘             └────────┬──────────┘
+          │                               │
+          ▼                               ▼
+  ┌───────────────────────────────────────────────────┐
+  │ Step 1: Compute stressed conditions               │
+  │   T_stress  = 293.15 K × (1 + 0.074) = 314.8 K  │
+  │   RH_stress = 35% × (1 - 0.032) = 33.9%         │
+  └───────────────────────┬───────────────────────────┘
+                          │
+                          ▼
+  ┌───────────────────────────────────────────────────┐
+  │ Step 2: Compute acceleration factors              │
+  │                                                   │
+  │  AF_temp = 2^(ΔT/10)  where ΔT = 0.074 × 20 = 1.48°C│
+  │         = 2^0.148 = 1.108  (10.8% faster aging)  │
+  │                                                   │
+  │  AF_hum  = (33.9/35)^2.66 = 0.98                 │
+  │           (drying REDUCES aging by ~2%)           │
+  └───────────────────────┬───────────────────────────┘
+                          │
+                          ▼
+  ┌───────────────────────────────────────────────────┐
+  │ Step 3: Combine and extract EFR                   │
+  │                                                   │
+  │  AF_total = 1.108 × 0.98 = 1.086                 │
+  │  EFR_peck = AF_total - 1 = 0.086                 │
+  │                                                   │
+  │  Meaning: equipment ages 8.6% faster than         │
+  │  baseline at year 2040.                           │
+  │                                                   │
+  │  (Linearised "10°C doubles" gives ~0.11;          │
+  │   full Peck's exponential gives ~0.16.            │
+  │   Range: 0.086 to 0.16 depending on method.)     │
+  └───────────────────────────────────────────────────┘
+```
 
 ```
 SCVR provides the shift in temperature and humidity:
@@ -498,6 +573,39 @@ Where:
   ΔT   = daily temperature swing = tasmax − tasmin
   β    = material exponent ≈ 2 for standard Pb-Sn solder
   C    = material constant (cycles)
+```
+
+```
+COFFIN-MANSON FATIGUE CURVE — ΔT vs Cycles to Failure
+
+  Cycles to
+  failure (N_f)
+    ▲
+  10⁶│●
+     │ ●
+  10⁵│  ●
+     │   ●
+  10⁴│    ●●                        β = 2 (Pb-Sn solder)
+     │      ●●
+  10³│        ●●●
+     │           ●●●●
+  10²│               ●●●●●●●●
+     │                        ●●●●●●●●●●●●
+  10¹│
+     └──────┬──────┬──────┬──────┬──────┬──────►
+           5°C   10°C   15°C   20°C   25°C   30°C
+                         ΔT per cycle
+
+  Hayhurst:
+    Baseline ΔT = 18.0°C  ──── ●  N_f = C × (18)^(-2)
+    Future ΔT   = 18.3°C  ──── ●  N_f = C × (18.3)^(-2)
+                                │
+                                │ barely moves on this curve
+                                │ → EFR_coffin ≈ 0.03 (small)
+                                │
+  In freeze-thaw climates (ΔT = 25-30°C per cycle):
+    The curve is STEEPER here → same ΔT change has MORE impact
+    → EFR_coffin can be significant (0.10-0.20)
 ```
 
 ### How SCVR Feeds In
@@ -988,6 +1096,38 @@ WHY EFFECT 2 DOMINATES
   tail-end revenue that was supposed to be pure profit.
 ```
 
+```
+EFFECT 1 vs EFFECT 2 — Two Cash Flow Profiles Side by Side
+
+  BASELINE (no climate change)          CLIMATE-ADJUSTED
+
+  CFADS                                 CFADS
+  ($M/yr)                               ($M/yr)
+  2.0│██████████████████████████     2.0│██████████████████████████
+     │ ████████████████████████         │ █████████████████████████
+  1.5│  ██████████████████████      1.5│   ███████████████████
+     │   ████████████████████           │    █████████████████
+  1.0│    ██████████████████████    1.0│     ████████████████
+     │     ██████████████████           │      █████████████ ┃
+  0.5│      ████████████████        0.5│       ███████████  ┃
+     │       ██████████████             │        █████████  ┃
+  0.0└──────────────────────────    0.0└───────────────────┃──────
+      0   5  10  15  20  25 EUL         0   5  10  15 20 IUL  25
+
+  All 25 years produce revenue          Effect 1: steeper decline
+  Gradual 0.5%/yr standard only           (extra degradation every year)
+                                        Effect 2: years 22-25 = $0
+                                          (asset reaches end-of-life early)
+
+  NAV IMPACT BREAKDOWN:
+  ┌─────────────────────────────────────────────────────────┐
+  │ Effect 1 (steeper slope):  ~$0.5-1.0M NPV  (~14%)      │
+  │ Effect 2 (lost years):     ~$2.8-5.1M NPV  (~86%)  ◄── │
+  │                            ─────────────                │
+  │ Total Channel 2:           ~$3.3-6.1M                   │
+  └─────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ### From EFR to IUL — Impaired Useful Life
@@ -1123,6 +1263,42 @@ Generation (% of rated)
   The gap between curves = cumulative climate impact.
   Starts small (~0.5pp), grows to ~1.5-2pp by year 25.
   If the gap reaches the failure threshold earlier → IUL < EUL.
+```
+
+### Cumulative Climate Degradation Over Time
+
+```
+HOW climate_degrad(t) GROWS OVER THE ASSET LIFE
+
+  Cumulative climate
+  degradation (%)
+    ▲
+ 2.0│                                            ╭──
+    │                                       ╭────╯
+ 1.5│                                  ╭────╯
+    │                            ╭─────╯
+ 1.0│                       ╭────╯
+    │                  ╭────╯          climate_degrad(t)
+ 0.5│            ╭─────╯              = EFR(t) × 0.5% × t
+    │      ╭─────╯
+ 0.0│──────╯                          Grows FASTER than linear
+    └──────────────────────────────── because EFR(t) ALSO increases
+     2026  2030  2035  2040  2045  2050
+
+  Year  │ EFR(t) │ × 0.5%/yr │ × t   │ = climate_degrad(t)
+  ──────┼────────┼───────────┼───────┼───────────────────
+   5    │ 0.04   │ × 0.005   │ × 5   │ = 0.10%
+  10    │ 0.07   │ × 0.005   │ × 10  │ = 0.35%
+  15    │ 0.10   │ × 0.005   │ × 15  │ = 0.75%
+  20    │ 0.12   │ × 0.005   │ × 20  │ = 1.20%
+  25    │ 0.14   │ × 0.005   │ × 25  │ = 1.75%
+
+  At year 25: panels have lost 1.75% MORE than standard degradation.
+  Standard alone: 12.5% total (0.5% × 25)
+  Standard + climate: 14.25% total (12.5% + 1.75%)
+
+  This is why IUL < EUL: the climate-adjusted curve reaches the
+  failure threshold (12.5% total loss) at year ~23, not year 25.
 ```
 
 ---

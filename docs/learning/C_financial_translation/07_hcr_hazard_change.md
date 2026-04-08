@@ -734,7 +734,46 @@ Where:
 ```
  
 This is a **linear approximation** — Phase 1 of the implementation. Future phases may use power-law or lookup-table HCR functions.
- 
+
+### Pathway A — Computation Flow
+
+```
+PATHWAY A: SCVR-BASED SCALING (parametric)
+
+  SCVR Report (from NB03)
+  ┌──────────────────────────────┐
+  │ tasmax: +0.074 (2040, SSP585)│
+  │ tasmin: +0.148               │
+  │ pr:     -0.001 (DIVERGENT)   │  ← Pathway A EXCLUDED for pr
+  │ hurs:   -0.032               │
+  │ sfcWind:-0.011               │
+  └──────────┬───────────────────┘
+             │ select variable per hazard
+             ▼
+  ┌──────────────────────────────┐
+  │ Hazard          Input    SF  │
+  │ ─────────────── ──────  ──── │
+  │ Heat wave       tasmax  2.5  │
+  │ Frost days      tasmin  -0.3 │
+  │ Freeze-thaw     tasmin  1.0  │
+  │ Fire weather    tasmax  1.5  │
+  │ Wind extreme    sfcWind 1.0  │
+  └──────────┬───────────────────┘
+             │ multiply: HCR = SCVR × SF
+             ▼
+  ┌──────────────────────────────┐
+  │ HCR_heat(2040)  = 0.074×2.5 │
+  │                 = +0.185     │
+  │ HCR_frost(2040) = 0.148×-0.3│
+  │                 = -0.044     │
+  │ HCR_fire(2040)  = 0.074×1.5 │
+  │                 = +0.111     │
+  └──────────────────────────────┘
+
+  Fast. One multiplication per hazard per year.
+  But depends entirely on the scaling factor estimate.
+```
+
 ### Why Scaling ≠ 1.0
  
 Three physical reasons justify amplification:
@@ -752,6 +791,39 @@ The further into the tail, the larger the amplification.
  
 This is why heat scaling > 1: a small mean temperature shift
 causes a disproportionate increase in extreme heat days.
+```
+
+```
+WHY A SMALL SHIFT CAUSES A LARGE TAIL CHANGE
+
+  Probability
+  density
+    ▲
+    │         Baseline         Future (shifted right)
+    │          ╭──╮              ╭──╮
+    │        ╭─╯  ╰─╮         ╭─╯  ╰─╮
+    │      ╭─╯      ╰─╮     ╭─╯      ╰─╮
+    │    ╭─╯    ░░░░   ╰─╮╭─╯   ▓▓▓▓▓▓  ╰─╮
+    │  ╭─╯      ░░░░░░   ╰╯     ▓▓▓▓▓▓▓▓   ╰─╮
+    │──╯        ░░░░░░░░║        ▓▓▓▓▓▓▓▓▓▓    ╰──
+    └───────────────────║────────────────────────────► Temperature
+                        ║
+                   THRESHOLD (fixed)
+
+    ░░░ = baseline days above threshold (small area)
+    ▓▓▓ = future days above threshold (much larger area)
+
+    The distributions overlap heavily in the body — but at the
+    THRESHOLD, the future curve sits much higher because the
+    threshold cuts through the steep part of the bell curve.
+
+    Mean shift:           +8%  (SCVR = 0.074)
+    Tail exceedance shift: ~180% (HCR ≈ 0.185 at 2.5× scaling)
+    Amplification:         ~2.5×
+
+    This is NOT a modeling choice — it's physics.
+    The exponential tail of the normal distribution means
+    small location shifts produce large exceedance changes.
 ```
  
 **2. Clausius-Clapeyron for precipitation**
@@ -894,6 +966,58 @@ If baseline heat-related BI = $35K/yr:
  
   Over asset life (NPV at 8%): feeds into total NAV impairment
   See doc 09 for the complete financial chain.
+```
+
+### HCR → BI_loss → CFADS: The Financial Chain
+
+```
+HOW HCR BECOMES A DOLLAR DEDUCTION IN THE CASH FLOW
+
+Step 1: HCR per hazard (from Pathway A or B)
+┌────────────────────────────────────────────────────┐
+│ HCR_heat(2040)     = +0.185  (19% more heat days)  │
+│ HCR_flood(2040)    = +0.020  (2% more flood events) │
+│ HCR_fire(2040)     = +0.111  (11% more fire days)  │
+│ HCR_frost(2040)    = -0.044  (fewer frost days)    │
+└───────────┬────────────────────────────────────────┘
+            │
+            ▼ Step 2: Multiply by baseline BI fraction
+┌────────────────────────────────────────────────────┐
+│ baseline_BI_heat  = 1.5% of revenue ($35K/yr)      │
+│ baseline_BI_flood = 0.3% of revenue ($7K/yr)       │
+│ baseline_BI_fire  = 0.2% of revenue ($5K/yr)       │
+│ (from insurance benchmarks / O&M records)           │
+└───────────┬────────────────────────────────────────┘
+            │
+            ▼ Step 3: Compute additional BI loss per hazard
+┌────────────────────────────────────────────────────┐
+│ add_BI_heat  = $35K × 0.185 = $6,475              │
+│ add_BI_flood = $7K × 0.020  = $140                 │
+│ add_BI_fire  = $5K × 0.111  = $555                 │
+│ add_BI_frost = (negative → benefit, not deducted)  │
+└───────────┬────────────────────────────────────────┘
+            │
+            ▼ Step 4: Sum all hazards → BI_loss(t)
+┌────────────────────────────────────────────────────┐
+│ BI_loss(2040) = $6,475 + $140 + $555 = $7,170/yr  │
+└───────────┬────────────────────────────────────────┘
+            │
+            ▼ Step 5: Subtract from CFADS
+┌────────────────────────────────────────────────────┐
+│ CFADS(2040) = Revenue(2040) × (1-EFR)             │
+│              - BI_loss(2040)                        │
+│              - OpEx(2040)                           │
+│                                                    │
+│             = $2.07M × 0.993                       │
+│              - $7,170          ← THIS IS HCR's     │
+│              - $704K              contribution      │
+│             = $1.34M                                │
+└────────────────────────────────────────────────────┘
+
+  HCR's Channel 1 contribution: ~$7K/yr at year 2040
+  Compare to EFR's Channel 2: ~$41K/yr at year 2040
+  Channel 2 (EFR) is ~6× larger than Channel 1 (HCR) per year
+  But EFR also truncates asset life (IUL) → additional ~$5M impact
 ```
 
 ### NB04 Empirical Check — Threshold Sensitivity (2026-03-19)
@@ -1088,7 +1212,46 @@ SCVR values are moderate (<0.15).
 ---
  
 ## 8. HCR Output Format
- 
+
+### Annual HCR Interpolation — 3-Anchor Fit
+
+Like SCVR annual values, HCR uses a 3-anchor fit for temperature-based
+hazards (Pathway A) and a separate 3-anchor fit for Pathway B hazards:
+
+```
+HOW WE GET FROM 3 DECADE VALUES TO 30 ANNUAL VALUES
+
+  HCR (%)
+    25 │                                             * Anchor 3
+       │                                        ····   (2046-2055)
+    20 │                                   ·····
+       │                              ·····
+    15 │                         *····       ← Linear fit through
+       │                    ····   Anchor 2    3 non-overlapping
+    10 │               ····        (2036-2045)  decade anchors
+       │          *····
+     5 │     ····   Anchor 1                    R² > 0.95 for
+       │····        (2026-2035)                 temperature hazards
+     0 └──────────────────────────────────────────────
+        2026   2030   2035   2040   2045   2050  2055
+                              Year
+
+  Pathway A (temperature hazards):
+    Step 1: Compute SCVR at 3 decade midpoints (from NB03)
+    Step 2: HCR_anchor = SCVR_anchor × scaling_factor
+    Step 3: Fit linear trend: HCR(t) = slope × t + intercept
+    Step 4: Evaluate at each year 2026-2055
+
+  Pathway B (precipitation hazards):
+    Step 1: Count hazard days per decade window directly
+    Step 2: Compute HCR per window vs baseline
+    Step 3: Fit linear trend through 3 window HCRs
+    Step 4: Evaluate at each year 2026-2055
+
+  Special case: dry_spell uses epoch-average (max metric,
+  can't interpolate linearly — held constant across years)
+```
+
 The HCR output is an **annual table per hazard per scenario**, matching the team framework format:
  
 ```
@@ -1224,6 +1387,55 @@ PATHWAY B: Direct Index Comparison (empirical)
 RECOMMENDED: Use both. Cross-validate Pathway A against Pathway B.
 Where they agree, confidence is high.
 Where they disagree, investigate the scaling factor.
+```
+
+### Pathway B — Computation Flow
+
+```
+PATHWAY B: DIRECT DAILY COUNTING (empirical)
+
+  CMIP6 Daily Cache (28 models × 30 years × 365 days)
+  ┌──────────────────────────────────────────────────┐
+  │ tasmax: 306,600 daily values (baseline)           │
+  │ tasmin: 306,600 daily values (baseline)           │
+  │ pr:     306,600 daily values (baseline)           │
+  │ + same for future (2026-2055)                     │
+  └──────────────────┬───────────────────────────────┘
+                     │
+                     ▼ Step 1: Compute baseline thresholds
+  ┌──────────────────────────────────────────────────┐
+  │ Per-DOY P90 (±15-day window smoothing):           │
+  │   Jan 15: P90_tasmax = 18.2°C, P90_tasmin = 3.1°C│
+  │   Jul 15: P90_tasmax = 42.5°C, P90_tasmin = 25.8°C│
+  │   (365 thresholds per variable)                   │
+  └──────────────────┬───────────────────────────────┘
+                     │
+                     ▼ Step 2: Flag each day
+  ┌──────────────────────────────────────────────────┐
+  │ For each day d in baseline AND future:            │
+  │   HW_flag(d) = 1 if:                              │
+  │     tasmax(d) > P90_tasmax(doy) AND               │
+  │     tasmin(d) > P90_tasmin(doy)                   │
+  │   Then: count runs of ≥3 consecutive flagged days │
+  └──────────────────┬───────────────────────────────┘
+                     │
+                     ▼ Step 3: Count events per period
+  ┌──────────────────────────────────────────────────┐
+  │ Baseline: 15 compound heat wave days/yr (avg)     │
+  │ Future:   18 compound heat wave days/yr (avg)     │
+  └──────────────────┬───────────────────────────────┘
+                     │
+                     ▼ Step 4: Compute HCR
+  ┌──────────────────────────────────────────────────┐
+  │ HCR_heat = (18 - 15) / 15 = +0.20 (+20%)         │
+  │                                                    │
+  │ Cross-check: Pathway A gives +0.185 (from 2.5×)  │
+  │ Agreement: within 8% → HIGH confidence             │
+  └──────────────────────────────────────────────────┘
+
+  Slower (loads all daily data), but no scaling factor needed.
+  Mandatory for precipitation (Pathway A gives wrong sign).
+```
 ```
 
 **Deep dives:**
