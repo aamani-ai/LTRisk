@@ -688,6 +688,52 @@ In climates where freeze-thaw cycles are significant:
   warming reduces some thermal cycling hazards.
 ```
 
+### Mode A vs Mode B for Coffin-Manson
+
+The analysis above uses **Mode A** (SCVR mean approximation). But just like
+HCR's Pathway A can give the wrong answer for precipitation, Mode A can give
+the wrong answer for Coffin-Manson. Here's why:
+
+```
+MODE A (SCVR-based — current):
+  Input:   SCVR_tasmax, SCVR_tasmin → estimate ΔT change
+  Result:  ΔT goes from 18.0 → 18.3°C → EFR_coffin = +0.03 (MORE damage)
+  Problem: Uses mean temperature shifts to estimate swing change.
+           Misses what's happening at the 0°C threshold.
+
+MODE B (Direct daily counting — proposed):
+  Input:   Daily tasmax and tasmin from 28 CMIP6 models
+  Count:   Freeze-thaw days (tasmin < 0°C AND tasmax > 0°C)
+           Baseline: 45.71 days/yr
+           Future:   34.31 days/yr (SSP245), 31.55 days/yr (SSP585)
+  Result:  25-31% FEWER high-amplitude cycles → EFR_coffin is NEGATIVE
+
+           +0.03 (Mode A)  vs  -0.25 (Mode B direction)
+           ─────────────       ────────────────────────
+           Wrong direction     Correct direction
+```
+
+**Why they disagree:** Mode A estimates that the AVERAGE daily swing
+increases slightly (18.0 → 18.3°C). But the most DAMAGING cycles are the
+freeze-thaw ones (ΔT = 15-25°C, crossing 0°C = maximum material stress).
+Warming REDUCES these. Mode A misses this because it works with means,
+not with the actual 0°C threshold crossings.
+
+**This is the same Jensen's inequality problem** that makes HCR Pathway A
+fail for precipitation. The threshold-crossing function is non-linear, so
+applying it to the mean gives a different answer than counting actual events.
+See [efr_two_modes.md](../../discussion/efr_degradation/efr_two_modes.md)
+for the full analysis.
+
+```
+RECOMMENDED:
+  Phase 1: Use Mode B for Coffin-Manson (mandatory — Mode A gives wrong sign)
+           Use Mode A for Peck's (acceptable — ~5-15% conservative)
+           Use Mode A for Palmgren-Miner (SCVR ≈ 0, both modes give ~0)
+
+  Phase 2: Upgrade Peck's to Mode B (integrate Arrhenius over daily temps)
+```
+
 ---
 
 ## 6. Palmgren-Miner — Wind Structural Fatigue (DEEP DIVE)
@@ -853,33 +899,46 @@ Before diving into the combining formula, here's the complete chain from
 SCVR inputs to financial impact in one diagram:
 
 ```
-SCVR INPUTS                 PHYSICS MODELS              EFR OUTPUT
+INPUTS                      PHYSICS MODELS              EFR OUTPUT
 ──────────────              ──────────────              ──────────
 
-SCVR_tas(t) ────────────►  Peck's Thermal Aging  ────► EFR_peck(t)
-SCVR_hurs(t) ───────────►  (Arrhenius equation)        e.g., 0.11
-                            AF = exp(Ea/k × ΔT)
+MODE A (SCVR-based):
+  SCVR_tas(t) ──────────►  Peck's Thermal Aging  ────► EFR_peck(t)
+  SCVR_hurs(t) ─────────►  (Arrhenius equation)        e.g., 0.11
+                            AF = exp(Ea/k × ΔT)        (Phase 1)
                             EFR = AF_ratio - 1
 
-SCVR_tasmax(t) ──────────► Coffin-Manson         ────► EFR_coffin(t)
-SCVR_tasmin(t) ──────────► (Thermal cycling)            e.g., 0.03
-  OR (proposed):            N_f = C × (ΔT)^(-β)
-  Direct freeze-thaw ─────► EFR = 1-(base/fut)^β
-  cycle counts from
-  Pathway B daily data
-
-SCVR_sfcWind(t) ─────────► Palmgren-Miner        ────► EFR_palmgren(t)
+  SCVR_sfcWind(t) ───────► Palmgren-Miner        ────► EFR_palmgren(t)
                             (Structural fatigue)        e.g., ≈ 0
                             D = Σ(n_i / N_i)
+
+MODE B (Daily-data-based):
+  Daily freeze-thaw ─────► Coffin-Manson          ────► EFR_coffin(t)
+  cycle counts from         (Thermal cycling)           e.g., NEGATIVE
+  Pathway B (28 models      N_f = C × (ΔT)^(-β)        at Hayhurst
+  × 30 years daily data)   Count actual cycles         (fewer cycles
+                                                        = LESS damage)
+
+  Why Mode B for Coffin-Manson:
+    Mode A (SCVR mean) says: +0.03 (more damage)  ← WRONG DIRECTION
+    Mode B (daily counts) says: -25% fewer cycles  ← CORRECT
+    Same Jensen's inequality problem as HCR precipitation.
 
 
 COMBINE:     EFR_combined(t) = w₁ × EFR_peck + w₂ × EFR_coffin + w₃ × EFR_palmgren
              Solar weights:    0.80              0.20              0.00
-             Wind weights:     small             small             main
+
+  With Mode B Coffin-Manson (negative at Hayhurst):
+    EFR_combined ≈ 0.80 × 0.11 + 0.20 × (-0.05) + 0 = 0.088 - 0.010 = 0.078
+    vs Mode A everywhere: 0.80 × 0.11 + 0.20 × 0.03 = 0.094
+
+    Mode B reduces combined EFR slightly because fewer freeze-thaw
+    cycles partially OFFSET Peck's thermal aging. Peck's still dominates.
 
 
                           EFR_combined(t)
-                          e.g., 0.094
+                          e.g., 0.078 (Mode B C-M)
+                          or    0.094 (Mode A C-M)
                                │
                 ┌──────────────┴──────────────┐
                 │                             │
@@ -1536,7 +1595,13 @@ rates from operational PV systems in West Texas.
 ## Next
 
 - [09 - NAV Impairment Chain](09_nav_impairment_chain.md) — How EFR feeds into the complete annual financial pipeline
-- [07 - HCR: Hazard Change Ratio](07_hcr_hazard_change.md) — Where HCR values come from (feeds Channel 1 BI, parallel to EFR)
+- [07 - HCR: Hazard Change Ratio](07_hcr_hazard_change.md) — Where HCR values come from (feeds Channel 1 BI, parallel to EFR). Note: freeze-thaw, frost, cold wave counts from HCR's Pathway B now feed Coffin-Manson here via Mode B.
 - [04 - SCVR Methodology](04_scvr_methodology.md) — How SCVR is computed (the foundation)
+
+## Discussion Docs (Architectural Decisions)
+
+- [EFR two modes](../../discussion/efr_degradation/efr_two_modes.md) — Why EFR has Mode A (SCVR-based) and Mode B (daily data), mirroring HCR's Pathway A/B. Jensen's inequality analysis for Peck's and Coffin-Manson.
+- [HCR/EFR boundary](../../discussion/hcr_financial/hcr_efr_boundary.md) — Why freeze-thaw, frost, cold wave move from HCR to EFR (they cause degradation, not BI)
+- [Jensen's inequality](../../discussion/hcr_financial/jensen_inequality_hcr_scvr.md) — The same math that breaks HCR Pathway A for precipitation also breaks EFR Mode A for Coffin-Manson
 
 Return to [Index](00_index.md) for the full learning guide table of contents.

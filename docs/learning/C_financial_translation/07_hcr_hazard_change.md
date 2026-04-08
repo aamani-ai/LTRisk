@@ -717,7 +717,18 @@ modelled by site-specific seismic hazard analysis (PSHA) independent of climate 
 | Hurricane | ❌ Not computable | SST, upper-air (not in NEX-GDDP) | Non-linear with SST | N/A | ↑ More intense, fewer |
 | Tornado | ❌ Not computable | CAPE, SRH (not in NEX-GDDP) | Uncertain | Unknown | Unknown |
 | Earthquake | ❌ Not applicable | None | None | HCR = 0 | None |
- 
+
+> **Important: Not all hazards flow through HCR → BI_loss.** The table above
+> lists all 12 company hazards. However, only those that cause **operational
+> shutdown or curtailment** (Category 1: BI events) flow through the HCR →
+> BI_loss → Channel 1 financial formula. Hazards that cause **cumulative
+> equipment stress** (freeze-thaw, frost, cold wave) are reclassified as
+> EFR inputs (Category 2) and feed Coffin-Manson directly. Hazards that are
+> **probabilistic risk indicators** (fire weather, dry spell) are flagged
+> without deterministic $ conversion. See [hcr_efr_boundary.md](../../discussion/hcr_financial/hcr_efr_boundary.md) for the
+> full reclassification analysis and [efr_two_modes.md](../../discussion/efr_degradation/efr_two_modes.md) for how EFR
+> absorbs the degradation inputs via Mode B.
+
 ---
  
 ## 3. HCR Formula — Annual Computation
@@ -855,20 +866,30 @@ Fire = f(high T, low RH, wind, dry fuel)
   - The combined effect exceeds the sum of individual effects
 ```
  
-### Current Scaling Factors
- 
+### Current Scaling Factors (Category 1 — BI Events Only)
+
+These scaling factors apply only to hazards that remain in HCR (Category 1 BI events). Hazards reclassified to EFR or Risk Indicators no longer use these factors.
+
 | Hazard | Scaling Factor | Input Variable(s) | Status | Basis |
 |--------|---------------|-------------------|--------|-------|
 | Heat stress (compound HW: 3+ consec. days, tasmax+tasmin > P90) | 2.0–3.0 (base: 2.5) | tasmax SCVR | Working estimate | Tail amplification; NB01 cross-check gives ~2.9 |
 | Heat stress (P90 per-DOY single-day exceedance, tasmax only) | ~26 | tasmax SCVR | NB04 empirical | Per-DOY P90 counting on pooled daily data — see §4 NB04 check |
-| Flood (extreme precip) | 1.5–2.0 | pr SCVR (high tail) | Preliminary range | Clausius-Clapeyron ~7%/°C |
-| Hail | ~~1.0~~ **NOT COMPUTABLE** | ~~pr SCVR + sfcWind SCVR~~ | ~~Placeholder~~ **Superseded — merged into SCS bucket; pr+sfcWind has no physical basis for hail (requires CAPE, S06, freezing level — not in NEX-GDDP)** | See Section 2B SCS |
-| Soiling/dust | 0.8 | pr SCVR (dry days) | Preliminary | Indirect: fewer rain days → more dust |
-| Fire weather | Complex | tasmax + pr + hurs + sfcWind | Framework only | Multi-variable FWI interaction |
-| Freeze-thaw | 1.0–1.5 | tasmin SCVR (inverse) | Working estimate | Linear threshold crossing |
-| Icing | Compound | tasmin + hurs (RH > **90%**) | Working estimate — *threshold corrected from 75%* | Dual-threshold logic; IEC 61400-1 |
- 
-> **Confidence note:** These scaling factors are the **largest source of uncertainty** in the entire SCVR→NAV chain. The physics (Peck's, Coffin-Manson) are well-established, but the climate-to-hazard amplification factors are working estimates that need validation against observed hazard frequency data. See Section 9.
+| Flood (extreme precip) | N/A (Pathway B) | pr daily data | Mandatory Pathway B | Clausius-Clapeyron ~7%/°C; Pathway A gives wrong sign |
+| Hail | **NOT COMPUTABLE** | — | Documented gap | Requires CAPE, S06, freezing level — not in NEX-GDDP |
+| Wind extreme | 1.0 | sfcWind SCVR | Low confidence | Daily mean, not gusts. 0 baseline days at Hayhurst. |
+| Icing shutdown | N/A (Pathway B) | tasmin + hurs (RH > **90%**) | Working estimate | Dual-threshold; BI component only. IEC 61400-1. |
+
+**Reclassified — no longer in HCR scaling table:**
+
+| Former Hazard | Now In | Reason |
+|---------------|--------|--------|
+| Freeze-thaw | EFR Mode B (Coffin-Manson) | Not BI — cumulative solder fatigue. See [hcr_efr_boundary.md](../../discussion/hcr_financial/hcr_efr_boundary.md) |
+| Frost days | EFR Mode B (Coffin-Manson) | Not BI — sub-zero material stress |
+| Cold wave | EFR Mode B (Coffin-Manson) | Primarily degradation (thermal shock) |
+| Soiling/dust | Risk indicator (performance) | Dry spell → soiling is gradual performance loss, not BI event |
+| Fire weather | Risk indicator (probabilistic) | High FWI ≠ fire. Needs P(fire\|FWI) × E[loss\|fire] |
+
+> **Confidence note:** These scaling factors are the **largest source of uncertainty** in the SCVR→NAV chain for Channel 1. The reclassification reduces false precision by removing hazards that don't cause BI from the deterministic BI formula. See Section 9 for sensitivity analysis.
  
 ### Linear vs Non-Linear HCR
  
@@ -1472,26 +1493,46 @@ NB04 cross-validation (simple P90 per-DOY exceedance):
 
 ## 11. Resolved Decisions + Remaining Open Questions
 
-### Per-Hazard Routing Decision — RESOLVED (2026-03-19)
+### Per-Hazard Routing Decision — RESOLVED (2026-03-19, updated 2026-04)
 
-> **Decision:** Pathway A (SCVR × scaling) is primary for temperature hazards; Pathway B (direct counting) is primary for precipitation hazards. Pathway B remains available as cross-validation for all hazards.
+> **Original decision (2026-03-19):** Pathway A for temperature hazards; Pathway B for precipitation hazards.
 
-**Why:** NB04 Part B (2026-03-19) revealed that routing temperature hazards through Pathway B with per-DOY P90 compound thresholds produces HCR values of +1,549% (SSP2-4.5) — technically correct but financially misleading. The per-DOY P90 definition creates a tiny baseline denominator (~1 compound HW day/year), so even modest warming produces huge ratios. Meanwhile, Pathway A's 2.5× scaling factor was calibrated against absolute thresholds (~15 HW days/year baseline) and produces a more interpretable +17% HCR. Both are mathematically valid for their threshold definitions, but the absolute-threshold framing is what the BI loss model expects.
+> **Updated (2026-04):** Hazards reclassified into 3 categories based on their **financial mechanism** (not just their climate definition). Only BI events remain in HCR. Degradation inputs move to EFR. Risk indicators are flagged separately. See [hcr_efr_boundary.md](../../discussion/hcr_financial/hcr_efr_boundary.md) for the full analysis.
 
-For precipitation, Pathway A gives the wrong sign (SCVR ≈ 0 → HCR ≈ 0, but actual extreme rain days increase). Pathway B is mandatory — see [Jensen's inequality discussion](../../discussion/hcr_financial/jensen_inequality_hcr_scvr.md).
+**Why the update:** The original routing put all 10 hazards through HCR → BI_loss. But freeze-thaw doesn't cause business interruption (panels operate normally during freeze-thaw days — the damage is cumulative solder fatigue, which is Coffin-Manson territory in EFR). Fire weather days don't deterministically cause BI either (high FWI ≠ actual fire). Routing these through `HCR × baseline_BI_pct × Revenue` produces either $0 (baseline_BI_pct ≈ 0 for freeze-thaw) or false precision (deterministic $ for probabilistic fire risk).
+
+#### Category 1 — BI Events (remain in HCR → Channel 1)
+
+These cause operational shutdown or curtailment. The plant could produce but doesn't because of the event. The BI conversion formula works correctly.
 
 | Hazard | Input Var | Primary Pathway | Rationale |
 |--------|-----------|-----------------|-----------|
-| heat_wave | tasmax | **A** (×2.5) | Absolute threshold scaling well-calibrated; per-DOY P90 creates tiny denominator |
-| cold_wave | tasmin | **A** (×-0.3) | Same reasoning as heat |
-| frost_days | tasmin | **A** (×-0.3) | Simple threshold, stable baseline count |
-| freeze_thaw | tasmin | **A** (×1.0) | Linear threshold crossing |
-| extreme_precip | pr | **B** | Mandatory — SCVR ≈ 0, Pathway A gives wrong sign |
+| heat_wave | tasmax | **A** (×2.5) | Absolute threshold scaling well-calibrated; validated by Pathway B cross-check |
+| extreme_precip | pr | **B** | Mandatory — SCVR ≈ 0, Pathway A gives wrong sign (Jensen's inequality) |
 | flood_rx5day | pr | **B** | Mandatory — same Jensen's inequality issue |
-| dry_spell | pr | **B** | Mandatory — same issue |
-| fire_weather | tasmax | **A** (×1.5) | FWI proxy has sign-flip under SSP5-8.5; B unreliable for proxy variables |
-| ice_storm | tasmin | **A** (×-0.3) | Multi-variable proxy, B noisy |
-| wind_extreme | sfcWind | **A** (×1.0) | Small signal, near-linear |
+| wind_extreme | sfcWind | **A** (×1.0) | Small signal, near-linear. 0 baseline days at Hayhurst. |
+| icing_shutdown | tasmin+hurs | **B** | Compound threshold, BI component (forced shutdown from blade/panel icing) |
+
+#### Category 2 — Degradation Inputs (moved to EFR → Channel 2)
+
+These cause cumulative material stress, not operational downtime. The daily counting infrastructure (Pathway B) still computes them, but the outputs feed EFR's Coffin-Manson model (Mode B) rather than BI_loss. See [efr_two_modes.md](../../discussion/efr_degradation/efr_two_modes.md).
+
+| Hazard | Destination | Rationale |
+|--------|-------------|-----------|
+| freeze_thaw | EFR Mode B → Coffin-Manson (direct cycle count) | Panels don't shut down during freeze-thaw. Damage is solder joint fatigue. Mode A gives wrong direction (+3% vs actual -25% fewer cycles). |
+| frost_days | EFR Mode B → Coffin-Manson (cold stress) | Sub-zero thermal stress on materials. Not a BI event. |
+| cold_wave | EFR Mode B → Coffin-Manson (sustained cold) | Extended cold causes thermal shock. Primarily degradation, minor BI (access issues). |
+
+#### Category 3 — Risk Indicators (flagged, not deterministic BI)
+
+These modify the probability of rare, high-impact events rather than causing deterministic daily BI. The formula `HCR × baseline_BI_pct × Revenue` doesn't work because the relationship between indicator days and actual events is non-linear and probabilistic.
+
+| Hazard | Treatment | Rationale |
+|--------|-----------|-----------|
+| fire_weather (FWI) | Flag with direction + magnitude. Phase 2: probabilistic P(fire\|FWI) × E[loss\|fire]. | High FWI day ≠ fire. Low-frequency, high-severity. Deterministic $ formula gives false precision. |
+| dry_spell | Flag. Soiling component → performance channel. Fire component → risk indicator. | Contributes to fire risk + dust/soiling buildup. Not direct BI. |
+
+For precipitation, Pathway A gives the wrong sign (SCVR ≈ 0 → HCR ≈ 0, but actual extreme rain days increase). Pathway B is mandatory — see [Jensen's inequality discussion](../../discussion/hcr_financial/jensen_inequality_hcr_scvr.md).
 
 ### Remaining Open Questions
 
@@ -1529,13 +1570,22 @@ For precipitation, Pathway A gives the wrong sign (SCVR ≈ 0 → HCR ≈ 0, but
 | sfcWind SCVR ≈ 0 means wind farms have no climate risk | Not exactly — wind farms still face heat stress, icing changes, and flood risk through other variables. But the dominant structural fatigue pathway is unaffected |
 | Heat wave SCVR is a valid concept | No — SCVR is computed on raw variable distributions (tasmax, tasmin), not on hazard event counts. "SCVR for heatwave" conflates the variable level with the hazard level |
 | Hail can be computed as pr + sfcWind proxy | No — hail requires CAPE, wind shear (S06), and freezing level height. These are not available in NEX-GDDP. Hail is merged into the SCS bucket |
- 
+| All 10 hazards belong in HCR | No — only BI events (operational shutdown) belong in HCR. Freeze-thaw, frost, cold wave are degradation inputs → EFR. Fire weather and dry spell are risk indicators → flagged separately. See [hcr_efr_boundary.md](../../discussion/hcr_financial/hcr_efr_boundary.md) |
+
 ---
 
 ## Next
 
-- [08 - EFR: Equipment Failure & Degradation](08_efr_equipment_degradation.md) — The engineering models that translate climate stress (SCVR) into physical equipment degradation (parallel to HCR)
+- [08 - EFR: Equipment Failure & Degradation](08_efr_equipment_degradation.md) — The engineering models that translate climate stress (SCVR) into physical equipment degradation (parallel to HCR). Note: freeze-thaw, frost, cold wave counts from this doc's Pathway B now feed EFR's Coffin-Manson model via Mode B.
 - [09 - NAV Impairment Chain](09_nav_impairment_chain.md) — The complete annual pipeline from SCVR to dollar impairment
 - [04 - SCVR Methodology](04_scvr_methodology.md) — How SCVR is computed (the input to this doc)
+
+## Discussion Docs (Architectural Decisions)
+
+- [HCR/EFR boundary reclassification](../../discussion/hcr_financial/hcr_efr_boundary.md) — Why only BI events stay in HCR; degradation inputs move to EFR; risk indicators flagged separately
+- [EFR two modes](../../discussion/efr_degradation/efr_two_modes.md) — How EFR mirrors HCR's Pathway A/B with Mode A (SCVR-based) and Mode B (daily data)
+- [Pathway A vs B](../../discussion/hcr_financial/hcr_pathway_a_vs_b.md) — When SCVR-based HCR fails and direct counting is needed
+- [Jensen's inequality](../../discussion/hcr_financial/jensen_inequality_hcr_scvr.md) — The mathematical foundation for why Pathway A fails for precipitation (and Mode A fails for Coffin-Manson)
+- [Top-down meets bottom-up](../../discussion/architecture/top_down_meets_bottom_up.md) — Why HCR covers only part of the asset's risk profile
 
 Return to [Index](00_index.md) for the full learning guide table of contents.
