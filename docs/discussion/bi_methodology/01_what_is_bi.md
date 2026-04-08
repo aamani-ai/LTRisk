@@ -22,25 +22,148 @@ relates-to:
 
 ---
 
-## 1. Definition
+## 1. Definition — Three Ways to Define BI
 
-Business Interruption (BI) is **revenue lost because the asset produced
-less electricity than it would have without the event.**
+The core idea of BI is simple: **revenue lost because of an event.** But
+"what would revenue have been without the event?" is not straightforward —
+expected production is itself uncertain (weather varies, prices fluctuate,
+equipment has good and bad days).
 
-BI is NOT a binary on/off. A hail-damaged solar farm doesn't go to zero —
-78% of panels may be fine while 22% are being replaced. The plant produces
-at reduced capacity during recovery. BI is the GAP between expected and
-actual production over time:
+This gives us three possible definitions, each with different assumptions
+about the counterfactual ("what would have happened"):
+
+### Definition A: Deterministic Counterfactual (Simplest)
+
+```
+BI = [capacity_rated × CF × price_avg] - [capacity_actual × price_avg]
+   = lost_capacity × hours × avg_price
+
+  "Expected" = rated capacity × long-term capacity factor
+  Assumes: the plant would have produced at its average rate
+  
+  Example (hail on solar, 22% damage):
+    Expected:  24.8 MW × 25% CF × $40/MWh × 475 hrs = $117,800
+    Actual:    24.8 MW × 25% CF × 78% × $40/MWh × 475 hrs = $91,884
+    BI = $117,800 - $91,884 = $25,916
+
+PROS:
+  + Simplest to compute
+  + No weather data needed for the counterfactual
+  + Deterministic — one number, easy to report
+  
+CONS:
+  - Ignores that some events happen during LOW production periods
+    (hail at night = less BI than hail at noon)
+  - Ignores weather variability entirely
+  - Overestimates BI for events during cloudy/low-wind periods
+  - Underestimates BI for events during peak production
+```
+
+### Definition B: Weather-Conditional Counterfactual (Moderate)
 
 ```
 BI = ∫ [capacity_expected(t) - capacity_actual(t)] × price(t) dt
 
-  capacity_expected(t) = what the plant WOULD produce (no event)
-  capacity_actual(t)   = what the plant DOES produce (during/after event)
-  price(t)             = revenue per MWh at time t
+  "Expected" = what the plant WOULD have produced given the ACTUAL WEATHER
+               on that day, minus the hazard event
+  Uses: a generation model (PVLib/PyWake) run on the same weather
+        but without the event (no shutdown, no damage)
   
-  BI = the area between the two curves, converted to dollars.
+  Example (hail on a sunny July day vs cloudy December day):
+    July:  expected 18 MWh/hr, actual 14 MWh/hr → BI = 4 MWh/hr
+    Dec:   expected 5 MWh/hr, actual 3.9 MWh/hr → BI = 1.1 MWh/hr
+    Same damage %, very different BI (3.6× difference)
+
+PROS:
+  + Accounts for WHEN the event occurs (season, time of day)
+  + More accurate — reflects real revenue loss
+  + Natural integration with existing generation models
+  
+CONS:
+  - Requires weather data for the counterfactual period
+  - More complex (need to run generation model twice: with and without event)
+  - Still deterministic about weather — uses actual weather, not distribution
 ```
+
+### Definition C: Probabilistic Counterfactual (Most Rigorous)
+
+```
+BI = E[Revenue_no_event] - E[Revenue_with_event]
+
+  "Expected" = the DISTRIBUTION of revenue that would have occurred
+  Revenue_no_event ~ distribution from historical weather patterns
+  Revenue_with_event ~ same distribution but with hazard impact applied
+  
+  BI = difference in expected values (or difference in P50, or difference
+       in P10 for downside risk)
+  
+  Example (hail on solar):
+    Revenue distribution (no event):  P10=$1.8M, P50=$2.1M, P90=$2.4M
+    Revenue distribution (with hail): P10=$1.4M, P50=$1.6M, P90=$1.9M
+    BI at P50 = $2.1M - $1.6M = $500K
+    BI at P10 = $1.8M - $1.4M = $400K (downside: less BI because
+                base revenue was already low)
+
+PROS:
+  + Most physically correct — acknowledges revenue is uncertain
+  + Produces a DISTRIBUTION of BI, not just a point estimate
+  + Can compute P10/P50/P90 of BI losses
+  + Naturally handles correlation (events during high-production periods
+    cause more BI, which is captured in the joint distribution)
+  + Aligns with how project_finance already models revenue (P10-P90)
+  
+CONS:
+  - Most complex (need full revenue distribution with and without events)
+  - Requires probabilistic generation model (already exists in project_finance)
+  - Harder to explain to stakeholders ("your BI is $400K-$500K" vs "$450K")
+  - May be overkill for Gen.1 when the BI magnitude is small relative to EFR
+```
+
+### Comparison
+
+```
+                     Definition A        Definition B        Definition C
+                     (Deterministic)     (Weather-Cond.)     (Probabilistic)
+─────────────────    ────────────────    ────────────────    ────────────────
+Counterfactual       Rated × avg CF      Actual weather      Weather distribution
+Complexity           Low                 Medium              High
+Data needed          Capacity, CF,       + weather data      + generation model
+                     avg price           + gen model           with distributions
+Seasonality          ❌ Ignored           ✅ Captured         ✅ Captured
+Weather correlation  ❌ Ignored           ✅ Captured         ✅ Captured
+Output               Single $ value      Single $ value      Distribution of $
+Accuracy for         ±30-50%             ±10-20%             ±5-10%
+  annual BI
+
+WHICH TO USE:
+  Gen.1 (screening):   Definition A
+    Simple. Fast. Gets the order of magnitude right.
+    Acceptable when BI << EFR (as at Hayhurst).
+    
+  Gen.1 (production):  Definition B
+    Uses weather data we already have (ERA5 in project_finance).
+    Seasonal BI differences are captured.
+    Natural fit with existing PVLib/PyWake infrastructure.
+    
+  Gen.2:               Definition C
+    Full probabilistic integration.
+    BI has a distribution, not just a point estimate.
+    Aligns with project_finance's 1000-path Monte Carlo.
+    Requires: connecting LTRisk events to revenue model paths.
+
+NOTE: The choice between A, B, and C matters MOST for Category B
+(curtailment) where seasonality is critical. A heat shutdown in
+July costs 3-4× more than the same shutdown in December.
+For Category A (damage), the recovery period spans weeks/months
+so seasonal averaging is less distorting.
+```
+
+### The Production-Loss Curve (Applies to All Three Definitions)
+
+Regardless of which definition we use, BI is NOT binary on/off. A
+hail-damaged solar farm doesn't go to zero — 78% of panels may be fine
+while 22% are being replaced. BI is the GAP between expected and actual
+over time:
 
 ```
 PRODUCTION DURING A HAIL RECOVERY (22% damage)
