@@ -1,370 +1,418 @@
 ---
-title: "Discussion — LTRisk Framework Architecture"
+title: "LTRisk Framework Architecture"
 type: discussion
 domain: climate-risk / project-finance / architecture
 created: 2026-03-19
-status: proposed framework — structure is established, dollar estimates are theoretical pending NB04/NB05
+updated: 2026-04-09
+status: >
+  Architecture established. SCVR pipeline and dashboard are production.
+  Orchestrator, HCR reclassification, and EFR two-mode architecture are
+  documented. Financial channel calculations are defined with open
+  questions on BI parameters. NB04 implementation pending.
 context: >
-  This doc consolidates the high-level LTRisk framework into one place.
-  The two-channel structure, variable routing, notebook pipeline, and NAV
-  rollup are documented in detail across learning docs 07-09, several
-  discussion docs, and the whitepaper. This is the architectural overview
-  that ties them together — the "system map" you hand someone so they
-  immediately understand how the pieces connect.
+  This doc is the "system map" — the one document you hand someone so they
+  immediately understand how the LTRisk pieces connect. It consolidates
+  the two-channel structure, the orchestrator routing layer, variable
+  routing, the notebook pipeline, and how LTRisk complements InfraSure's
+  hazards repo pipeline.
 relates-to:
+  - docs/learning/B_scvr_methodology/04_scvr_methodology.md
+  - docs/learning/C_financial_translation/06b_climate_risk_orchestrator.md
   - docs/learning/C_financial_translation/07_hcr_hazard_change.md
   - docs/learning/C_financial_translation/08_efr_equipment_degradation.md
   - docs/learning/C_financial_translation/09_nav_impairment_chain.md
-  - docs/discussion/hcr_financial/cashflow_integration.md
-  - docs/discussion/scvr_methodology/scvr_performance_adjustment.md
-  - docs/discussion/hcr_financial/hcr_pathway_a_vs_b.md
-  - docs/discussion/scvr_methodology/scvr_method_equivalence.md
+  - docs/discussion/hcr_financial/hcr_efr_boundary.md
+  - docs/discussion/hcr_financial/channel_1_bi_calculation.md
+  - docs/discussion/efr_degradation/efr_two_modes.md
+  - docs/discussion/efr_degradation/channel_2_efr_financial.md
+  - docs/discussion/architecture/pipeline_complementarity.md
+  - docs/discussion/architecture/top_down_meets_bottom_up.md
+  - docs/discussion/bi_methodology/01_what_is_bi.md
+  - docs/discussion/uncertainty/FIDUCEO-Style Uncertainty Mapping_ LTRisk.md
 ---
 
 # LTRisk Framework Architecture
 
-> **Purpose:** One-page system map. Shows the two financial channels, how
-> SCVR feeds each, which variables matter, and how everything rolls into NAV.
-> For deep dives, follow the cross-references to specific docs.
+> **Purpose:** One-page system map. Shows how SCVR feeds the orchestrator,
+> how the orchestrator routes signals to two financial channels, how each
+> channel translates climate to dollars, and where open questions remain.
 
 ---
 
 ## 1. The Core Insight
 
-Climate change for renewable assets affects two things: **equipment degradation
-under heat stress** and **hazard event frequency**. Our initial SCVR results
-also show that the resource itself (sun, wind) is largely stable at these sites
-— but the relative importance of each channel is an open question that NB04/NB05
-will quantify.
+Climate change for renewable assets affects two things: **equipment degrades
+faster under heat stress** (Channel 2) and **hazard events become more
+frequent** (Channel 1). The resource itself (sun, wind) is largely stable.
 
 ```
-  WHAT CLIMATE CHANGE DOES               WHERE IT DOESN'T ACT DIRECTLY
-  ──────────────────────────             ─────────────────────────────
-  Temperatures rise (strong signal)       Solar irradiance: ~stable (SCVR ≈ 0)
-  Extreme events intensify               Wind speeds: ~stable (SCVR ≈ 0)
-  Equipment ages faster under stress      The "fuel supply" itself stays put
-  More heat waves, floods, hail
+WHAT CLIMATE CHANGE DOES                WHAT IT DOESN'T DO
+──────────────────────────              ──────────────────
+Temperatures rise (strong SCVR)         Solar irradiance: stable (SCVR ≈ 0)
+Extreme events intensify                Wind speeds: stable (SCVR ≈ 0)
+Equipment ages faster under stress      The "fuel supply" stays put
+More heat waves, floods
 
-  BUT: generation DOES decline — through equipment aging (Channel 2),
-  not through resource change (Channel 3). The sun keeps arriving;
-  the panels receiving it degrade faster under heat stress.
+FINDING (confirmed):
+  Channel 2 (equipment degradation) >> Channel 1 (business interruption)
+  by roughly 50-250× at our pilot sites.
 
-  There are also small secondary performance effects from temperature:
-    Solar thermal derating: ~0.3% by 2050 (panels less efficient when hot)
-    Wind air density loss:  ~0.5% (warmer air is less dense)
-    Wind icing reduction:   ~0.5% (fewer shutdowns — nearly cancels density)
-  Initial estimates suggest these are much smaller than EFR life-shortening,
-  but actual ratios will come from NB04/NB05 computation.
-  See: ../scvr_methodology/scvr_performance_adjustment.md for the full analysis.
-
-  Year-to-year weather VARIABILITY (which drives DSCR P10/P90 spread)
-  is handled separately by the bootstrap in project_finance (40yr ERA5
-  through PVLib/PyWake). SCVR measures distribution SHIFT, not WIDTH.
+  The dominant risk is NOT more shutdowns.
+  The dominant risk IS that panels die 2-4 years early.
+  IUL shortening accounts for ~86% of total NAV impairment.
 ```
 
-This shapes the framework: climate risk is expected to enter the financial
-model through **equipment degradation** (Channel 2) and **business interruption**
-(Channel 1). Direct resource change (Channel 3) appears negligible at these
-sites based on SCVR results. The relative weight of Channel 1 vs Channel 2
-is a key question for NB04/NB05 to answer — initial theoretical estimates
-(doc 09) suggest Channel 2 may be larger, but this needs validation with
-actual computed HCR and EFR values.
+The framework also recognises that LTRisk covers only PART of the risk
+picture. InfraSure's hazards repo covers historical acute events (hail,
+tornado, strong wind) that LTRisk cannot project from CMIP6. Together,
+the two pipelines cover more than either alone. See
+[pipeline_complementarity.md](pipeline_complementarity.md).
 
 ---
 
-## 2. The Two Channels
-
-Climate risk flows to asset value through two independent financial channels,
-each with its own mechanism and driver metric:
+## 2. The Architecture — SCVR → Orchestrator → Channels
 
 ```
-                      ┌─────────────────────────────────────────────────────┐
-                      │          CHANNEL 1: BUSINESS INTERRUPTION            │
-                      │                                                     │
-                      │  Mechanism:  Hazard events cause shutdowns/downtime │
-                      │  Driver:     HCR (Hazard Change Ratio)              │
-                      │  Math:       CFADS -= BI_loss(t)    [additive]      │
-                      │  Examples:   Heat wave curtailment, flood downtime, │
-                      │              hail damage, icing                     │
-                      │  Variables:  pr, hurs, tasmax (via thresholds)      │
-                      │  Character:  Per-year loss, not cumulative          │
-                      └─────────────────────────────────────────────────────┘
-
-                      ┌─────────────────────────────────────────────────────┐
-                      │          CHANNEL 2: EQUIPMENT DEGRADATION            │
-                      │                                                     │
-                      │  Mechanism:  Climate stress accelerates aging       │
-                      │  Driver:     EFR (Equipment Failure Ratio)          │
-                      │  Math:       CFADS *= (1 - degrad(t)) [multiplicat.]│
-                      │              + truncation at IUL      [life cut]    │
-                      │  Models:     Peck's thermal aging                   │
-                      │              Coffin-Manson thermal cycling           │
-                      │              Palmgren-Miner wind fatigue             │
-                      │  Variables:  tasmax, tasmin, tas, hurs              │
-                      │  Character:  Cumulative + life-shortening           │
-                      └─────────────────────────────────────────────────────┘
+                        SCVR Report
+                        (7 variables, 6+ metrics each,
+                         Tail Confidence per variable)
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │   ORCHESTRATOR    │
+                    │                   │
+                    │ Hazard Taxonomy   │  ← What climate events exist
+                    │ Metric Selector   │  ← Which SCVR metric to trust
+                    │ Channel Router    │  ← Where output flows
+                    │ Coverage Map      │  ← What we cover vs gaps
+                    │                   │
+                    │ Routing rule:     │
+                    │  Tail Conf. HIGH  │  → Mode/Pathway A (SCVR-based)
+                    │  Tail Conf. DIV   │  → Mode/Pathway B (daily data)
+                    └────────┬──────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              │              │              │
+              ▼              ▼              ▼
+        CHANNEL 1      CHANNEL 2      RISK FLAGS
+        (BI / HCR)     (EFR)          + GAPS
+              │              │              │
+         ┌────┴────┐   ┌────┴────┐         │
+         │         │   │         │         │
+       Path A   Path B Mode A  Mode B     Flagged
+       SCVR×    Daily  SCVR→   Daily      (no det.
+       scaling  count  physics integr.    $ yet)
+         │         │   │         │         │
+         ▼         ▼   ▼         ▼         ▼
+      BI_loss(t)   climate_degrad(t)    Direction
+      (additive)   + IUL truncation    + magnitude
+                   (multiplicative)
+              │              │
+              └──────┬───────┘
+                     ▼
+             CFADS_adjusted(t) = Revenue × (1-EFR) - BI_loss - OpEx
+             If t > IUL: CFADS = 0
+                     │
+                     ▼
+             NAV impairment = Σ [CFADS_base - CFADS_adj] / (1+r)^t
 ```
 
-**Why Channel 2 may be the larger driver (hypothesis — to be validated in NB04/NB05):**
-1. Degradation **compounds** year-over-year (each year's loss cascades)
-2. Life shortening **eliminates tail-year revenue** entirely
-3. Peck's model doubles degradation rate every 10°C — small warming has large effects
-4. Post-debt years are highest-value (after amortization) — losing them hurts most
-
-Initial theoretical estimates (doc 09) suggest Channel 2 could account for the
-majority of NAV impairment, but this is based on illustrative worked examples,
-not computed results. The actual split will come from NB04 (HCR/EFR computation)
-and NB05 (financial integration).
-
-There is also a **Channel 3** (resource change — rsds/sfcWind SCVR), which
-appears negligible at these sites based on near-zero SCVR values. See
-[scvr_performance_adjustment.md](../scvr_methodology/scvr_performance_adjustment.md) for the analysis.
+See [06b_climate_risk_orchestrator.md](../../learning/C_financial_translation/06b_climate_risk_orchestrator.md) for the full routing matrix, hazard taxonomy, and YAML schema.
 
 ---
 
-## 3. End-to-End Pipeline
+## 3. Channel 1 — Business Interruption (HCR)
+
+### What It Captures
+
+Revenue lost because the asset could not produce electricity during a
+period when it otherwise would have. Caused by operational shutdowns,
+curtailment, or site inaccessibility from hazard events.
+
+### Three Categories of Hazard Events
+
+Not all hazards flow through Channel 1. The framework classifies hazards
+into three categories based on financial mechanism (see [hcr_efr_boundary.md](../hcr_financial/hcr_efr_boundary.md)):
 
 ```
-PHASE A — Parameter Computation (LTRisk, once per scenario)
-═══════════════════════════════════════════════════════════════════════
+CATEGORY 1 — BI Events (Channel 1):
+  Heat wave curtailment    → Pathway A (SCVR × 2.5)
+  Extreme precipitation    → Pathway B (daily counting, mandatory)
+  Flood (Rx5day)           → Pathway B (mandatory)
+  Wind cut-out             → Pathway A (SCVR × 1.0)
+  Icing shutdown           → Pathway B (compound threshold)
 
-  CMIP6 daily ──► SCVR(t) ──┬──► HCR(t) → BI_loss(t)      (Channel 1)
-  (NB02+NB03)     (NB03)    │    (NB04)
-                             └──► EFR(t) → IUL              (Channel 2)
-                                  (NB04)
+CATEGORY 2 — Degradation (→ Channel 2 instead):
+  Freeze-thaw cycles       → EFR Mode B (Coffin-Manson)
+  Frost days               → EFR Mode B (cold stress)
+  Cold wave                → EFR Mode B (thermal shock)
+  These do NOT cause BI — the plant operates normally.
+  They cause cumulative material fatigue.
 
-  SCVR must be computed first. Then HCR and EFR are computed
-  in PARALLEL from SCVR — they are independent channels.
-
-
-PHASE B — Cash Flow Adjustment (project_finance, simultaneous per year)
-═══════════════════════════════════════════════════════════════════════
-
-  For each year t in project life:
-
-    CFADS_adjusted(t) = Revenue(t)
-                        × (1 - EFR(t))        ← Channel 2: degradation
-                        - BI_loss(t)           ← Channel 1: hazard shutdowns
-                        - OpEx(t)
-
-    If t > IUL: CFADS_adjusted = 0             ← Channel 2b: life truncation
-
-    DSCR(t) = CFADS_adjusted(t) / DebtService(t)
+CATEGORY 3 — Risk Indicators (flagged, no $ formula):
+  Fire weather (FWI)       → Direction + magnitude flagged
+  Dry spell                → Soiling risk flagged
+  High FWI day ≠ actual fire. Deterministic $ formula
+  gives false precision for probabilistic events.
 ```
 
-### Illustrative Dollar Breakdown — Hayhurst Solar SSP5-8.5
-
-> **Note:** These figures are from theoretical worked examples in doc 09
-> (learning/09_nav_impairment_chain.md), not from computed NB04/NB05 results.
-> They illustrate the *structure* of how the channels combine, not final
-> numbers. Actual values will come from NB04 (HCR/EFR) and NB05 (NAV).
+### Two Computation Pathways
 
 ```
-  ┌──────────────────────────────────────────────────────┐
-  │  HAYHURST SOLAR SSP5-8.5  (illustrative estimates)    │
-  │  Asset value: $60M                                     │
-  │                                                        │
-  │  Channel 2 (IUL shortening):  ~$5.1M                  │
-  │  Channel 1 (Hazard BI):      ~$1.2M                  │
-  │  Channel 3 (rsds upside):   ~-$0.4M                  │
-  │  ─────────────────────────────────────────             │
-  │  Total NAV impairment:       ~$5.9M  (~10%)           │
-  │                                                        │
-  │  These are initial estimates. The channel split and    │
-  │  absolute values need validation through NB04/NB05.    │
-  └──────────────────────────────────────────────────────┘
+Pathway A: HCR = SCVR × scaling_factor (fast, parametric)
+  Used when: Tail Confidence HIGH (temperature hazards)
+  Example:   HCR_heat = 0.080 × 2.5 = +0.200 (+20% more heat days)
+
+Pathway B: HCR = (count_future - count_baseline) / count_baseline
+  Used when: Tail Confidence DIVERGENT (precipitation) or compound thresholds
+  Example:   HCR_flood from Rx5day daily counting = +0.020
+  Mandatory for pr because Pathway A gives wrong sign (Jensen's inequality)
 ```
 
----
-
-## 4. Variable → Channel Routing
-
-Not all 7 climate variables feed both channels equally. The SCVR Report Card
-(Tail Confidence flag) determines how each variable's SCVR is routed:
+### Financial Translation (Open Questions)
 
 ```
-  Variable    SCVR Signal    Report Card    Primary Channel   Routing
-  ────────    ───────────    ───────────    ───────────────   ────────────────
-  tasmax      +0.069/+0.080  HIGH           Channel 2 (EFR)   SCVR → Peck's
-  tasmin      +0.144/+0.174  MODERATE       Channel 2 (EFR)   SCVR → Peck's + caveat
-  tas         +0.088/+0.104  HIGH           Channel 2 (EFR)   SCVR → Peck's
-  pr          -0.001/-0.007  DIVERGENT      Channel 1 (HCR)   Pathway B only
-  sfcWind     -0.022/-0.026  MODERATE/HIGH  Channel 1 (HCR)   SCVR → HCR scale
-  hurs        -0.031/-0.036  MODERATE       Both               SCVR + P95 flagged
-  rsds        +0.005/+0.003  MODERATE       Channel 3 (tiny)   Document, don't adjust
-```
+BI_loss(t) = Σ_hazards [HCR_h(t) × baseline_BI_h × Revenue(t)]
 
-### How Report Card Confidence Affects Routing
+OPEN: baseline_BI_h is the critical unknown.
+  Three approaches documented (see channel_1_bi_calculation.md):
+    A. Top-down: % of revenue (assumed, 0.5-2.0%)
+    B. Bottom-up: shutdown hours × capacity × price (needs O&M data)
+    C. Benchmarks: industry-reported rates
+  
+  Hazards repo EAL may provide baseline for hail/tornado/wind.
+  Heat/flood/icing baseline not yet available from either pipeline.
 
-```
-  Confidence   Channel 2 (EFR/IUL)              Channel 1 (HCR)
-  ──────────   ──────────────────────           ──────────────────────
-  HIGH         Use SCVR directly in Peck's      Pathway A (SCVR × scale)
-               Full trust                       + Pathway B cross-validate
+OPEN: BI definition (three options in 01_what_is_bi.md):
+    A. Deterministic counterfactual (simplest)
+    B. Weather-conditional (captures seasonality)
+    C. Probabilistic (produces distribution of BI)
 
-  MODERATE     Use SCVR but flag uncertainty     Prefer Pathway B
-               Range: SCVR ± model IQR          Pathway A as secondary
-
-  LOW          Do not use SCVR alone             Pathway B mandatory
-               Report P95 alongside             P95 alongside SCVR
-
-  DIVERGENT    SCVR excluded from Channel 2      Pathway B only
-               Mean gives wrong direction        SCVR is misleading
-```
-
-**Critical example:** Precipitation (pr) is DIVERGENT — mean SCVR says "no
-change" but P95 says "extreme rainfall increasing." Using mean SCVR for flood
-HCR would miss the tail risk entirely. Pathway B (count actual hazard days)
-is mandatory.
-
----
-
-## 5. Notebook Pipeline
-
-```
-  NB 01 ──► NB 02 ──► NB 03 ──► NB 04 ──► NB 05+
-  Climate    THREDDS    SCVR       HCR+EFR   Financial
-  Indices    Pipeline   Compute    Compute    Model
-                                               │
-                                               ▼
-                                          NAV impairment
-                                          DSCR trajectory
-
-  ┌──────────────────────────────────────────────────────────────────┐
-  │ NB 01: Climate Indices (annual hazard counts)                    │
-  │   heat_wave_days(t), frost_days(t), rx5day(t), fwi_mean(t)     │
-  │   → Used for HCR cross-validation in NB04                       │
-  │                                                                  │
-  │ NB 02: NEX-GDDP THREDDS Pipeline                                │
-  │   Daily CMIP6 data from THREDDS, cached as NetCDF                │
-  │   → Input to NB03                                                │
-  │                                                                  │
-  │ NB 03: SCVR Computation  ✅ BUILT                                │
-  │   7 variables × 2 scenarios × 28-31 models                      │
-  │   Epoch + decade SCVR, Report Card, decomposition                │
-  │   → Output: scvr_summary_<var>.json per variable                 │
-  │                                                                  │
-  │ NB 04: HCR + EFR Computation  ✅ HCR DONE (Part A)               │
-  │   SCVR(t) → HCR(t) per hazard (scaling or Pathway B)            │
-  │   SCVR(t) → EFR(t) per mechanism (Peck's, Coffin-Manson, P-M)  │
-  │   Cross-validate HCR against NB01 climate indices                │
-  │   → Output: annual HCR + EFR tables per site per scenario        │
-  │                                                                  │
-  │ NB 05+: Financial Model / NAV Impairment  ◻ FUTURE              │
-  │   Apply HCR + EFR to CFADS cash flow model                      │
-  │   NAV impairment, DSCR trajectory, IRR adjustment                │
-  │   Bridge to project_finance repo                                 │
-  └──────────────────────────────────────────────────────────────────┘
-```
-
-### Data Flow
-
-```
-  THREDDS → daily NetCDF → SCVR(t) ──┬──► HCR(t) ──┐
-  (NB02)    (cache)        (NB03)     │    (NB04)    ├──► CFADS_adj(t) → NAV
-                             ↑        └──► EFR(t) ──┘    (NB05)         (NB05)
-                             │             (NB04)
-                    NB01 climate indices (cross-validation for HCR)
+CONFIRMED: Channel 1 BI is ~50-250× smaller than Channel 2 EFR
+  at Hayhurst Solar. Equipment degradation dominates.
 ```
 
 ---
 
-## 6. Key Metrics — Compact Glossary
+## 4. Channel 2 — Equipment Degradation (EFR)
+
+### What It Captures
+
+Revenue lost because equipment ages faster under climate stress, leading
+to (a) reduced annual generation and (b) shortened asset life (IUL).
+
+### Three Physics Models
+
+```
+Peck's Thermal Aging (dominant for solar):
+  AF = exp(Ea/k × (1/T_ref - 1/T_stress))
+  INPUT: SCVR_tas, SCVR_hurs → Mode A (SCVR-based)
+  OUTPUT: EFR_peck ≈ 0.11 (11% faster aging)
+  Mechanism: Arrhenius — chemical degradation doubles every 10°C
+
+Coffin-Manson Thermal Cycling:
+  N_f = C × (ΔT)^(-β)
+  INPUT: Daily freeze-thaw counts → Mode B (mandatory)
+  OUTPUT: EFR_coffin ≈ NEGATIVE at Hayhurst (fewer cycles = benefit)
+  Mechanism: Each 0°C crossing fatigues solder joints
+  NOTE: Mode A gives WRONG DIRECTION (+3%). Mode B gives correct (-25%).
+
+Palmgren-Miner Wind Fatigue:
+  D = Σ(n_i / N_i)
+  INPUT: SCVR_sfcWind → Mode A (SCVR ≈ 0 at pilot sites)
+  OUTPUT: EFR_palmgren ≈ 0 (wind distribution unchanged)
+```
+
+### Two Computation Modes
+
+```
+Mode A: Apply physics model to SCVR mean-shifted conditions (fast)
+  Used when: Tail Confidence HIGH and function is ~linear locally
+  Phase 1 default for Peck's and Palmgren-Miner
+
+Mode B: Integrate physics model over actual daily data (exact)
+  Used when: Mode A gives wrong direction (Coffin-Manson)
+  Mandatory for Coffin-Manson — same Jensen's inequality as HCR Pathway B
+  Phase 2 upgrade for Peck's (~10% more accurate)
+```
+
+### Two Financial Effects
+
+```
+EFFECT 1: Annual Generation Reduction (gradual, every year)
+  climate_degrad(t) = EFR_combined(t) × std_degrad_rate × t
+  Impact: ~$0.5-1.0M NPV (~14% of Channel 2)
+
+EFFECT 2: Life Truncation via IUL (terminal, at the NAV level)
+  If t > IUL: CFADS = 0 (asset reaches end-of-life early)
+  Impact: ~$2.8-5.1M NPV (~86% of Channel 2)
+  This is the DOMINANT driver of total NAV impairment.
+
+OPEN: IUL computation method
+  Option A (Phase 1): IUL = EUL × (1 - avg_EFR)
+  Option B (Phase 2): Cumulative degradation until threshold
+  Threshold: 80% capacity (IEC)? 85%? 12.5% cumulative loss?
+```
+
+---
+
+## 5. The Unified Routing Logic
+
+The Report Card's Tail Confidence flag drives routing for BOTH channels
+using the SAME decision criteria:
+
+```
+Tail Confidence    Channel 1 (HCR)        Channel 2 (EFR)
+──────────────     ──────────────         ──────────────
+HIGH               Pathway A preferred    Mode A preferred
+                   (cross-validate B)     (Peck's from SCVR)
+
+MODERATE           Pathway A + B          Mode A + B
+                   (compare, flag)        (report range)
+
+LOW                Pathway B preferred    Mode B preferred
+                   (A unreliable)         (A underestimates)
+
+DIVERGENT          Pathway B only         Mode B only
+                   (A wrong sign)         (A wrong direction)
+```
+
+### Variable → Channel Routing
+
+```
+Variable    SCVR Signal    Tail Conf.   Primary Channel    Mode/Pathway
+────────    ───────────    ──────────   ───────────────    ────────────
+tasmax      +0.080         HIGH         Ch2 (Peck's)       Mode A
+tasmin      +0.173         MODERATE     Ch2 (Peck's+C-M)   A(Peck) + B(C-M)
+tas         +0.105         HIGH         Ch2 (Peck's)       Mode A
+pr          -0.007         DIVERGENT    Ch1 (flood BI)      Pathway B only
+sfcWind     -0.026         MOD/HIGH     Ch1 (wind BI)       Pathway A
+hurs        -0.036         MODERATE     Both (Peck's+BI)    Mode A + flag
+rsds        +0.003         MODERATE     Ch3 (negligible)    Document only
+```
+
+---
+
+## 6. Pipeline Complementarity — LTRisk + Hazards Repo
+
+InfraSure has TWO risk pipelines that cover DIFFERENT hazards:
+
+```
+                    Hazards Repo              LTRisk
+                    (NOAA 1996-2024)          (CMIP6 2026-2055)
+                    ────────────────          ──────────────────
+Question:           "What hurts today?"       "What hurts MORE tomorrow?"
+Hazards:            Hail, tornado, wind       Heat, flood, degradation
+Data:               NOAA storm events         28 CMIP6 models daily
+Output:             Annual BI ($)             HCR (% change), EFR (ratio)
+Financial:          Damage curves → $         HCR×baseline → $, EFR→IUL
+
+COMPLEMENTARITY:
+  Hail:          Hazards repo FULL    │  LTRisk GAP (no CAPE in CMIP6)
+  Heat wave:     Hazards repo GAP     │  LTRisk FULL (HCR + Peck's)
+  Tornado:       Hazards repo FULL    │  LTRisk GAP
+  Flooding:      Both (partial)       │  Cross-validate
+  Degradation:   Hazards repo N/A     │  LTRisk FULL (Peck's, C-M, P-M)
+
+COMBINED: climate-adjusted risk = baseline_EAL × (1 + HCR)
+  For hazards both cover: cross-validate
+  For hazards only A covers: use historical EAL (no climate delta)
+  For hazards only B covers: use LTRisk projection (need baseline)
+```
+
+See [pipeline_complementarity.md](pipeline_complementarity.md) for the full analysis.
+
+---
+
+## 7. Notebook Pipeline
+
+```
+NB 01 ──► NB 02 ──► NB 03 ──► NB 04 ──► NB 05+
+Climate    THREDDS    SCVR       HCR+EFR   Financial
+Indices    Pipeline   Compute    Compute    Model
+
+┌──────────────────────────────────────────────────────────┐
+│ NB 01: Climate Indices (annual hazard counts)  ✅ BUILT  │
+│   heat_wave_days, frost_days, rx5day, fwi_mean           │
+│   → Used for HCR Pathway B cross-validation              │
+│                                                          │
+│ NB 02: NEX-GDDP THREDDS Pipeline  ✅ BUILT               │
+│   Daily CMIP6 data from NASA, cached as NetCDF           │
+│                                                          │
+│ NB 03: SCVR Computation  ✅ BUILT + DASHBOARD LIVE        │
+│   7 variables × 2 scenarios × 28-31 models               │
+│   Report Card with Tail Confidence, companion metrics    │
+│   Dashboard: ltrisk-*.streamlit.app                      │
+│                                                          │
+│ NB 04: HCR + EFR Computation  ✅ HCR Part A DONE          │
+│   Pending: 3-category reclassification                   │
+│   Pending: EFR Mode B for Coffin-Manson                  │
+│   Pending: Regenerate outputs with corrected routing     │
+│                                                          │
+│ NB 05+: Financial Model / NAV Impairment  ◻ FUTURE       │
+│   Apply HCR + EFR to CFADS cash flow model               │
+│   Bridge to project_finance repo                         │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 8. Key Metrics — Compact Glossary
 
 | Metric | What It Is | Computed In | Feeds Into |
 |--------|-----------|-------------|------------|
-| **SCVR** | Fractional shift in exceedance curve area (baseline → future) | NB03 | HCR, EFR |
-| **HCR** | % increase in hazard events (SCVR × scaling factor or direct count) | NB04 | BI_loss → Channel 1 |
-| **EFR** | Fractional acceleration of equipment degradation (Peck's, C-M, P-M) | NB04 | Generation deduction → Channel 2 |
-| **IUL** | Impaired Useful Life — shortened operational lifetime | NB04 | CFADS truncation → Channel 2b |
-| **BI** | Business Interruption — revenue lost to hazard downtime | NB04/05 | CFADS deduction → Channel 1 |
-| **NAV** | Net Asset Value — dollar impairment from all channels combined | NB05 | Final output |
+| **SCVR** | Fractional mean shift in climate variable distribution | NB03 | Orchestrator |
+| **Report Card** | 6 companion metrics + Tail Confidence flag per variable | NB03 | Orchestrator (routing) |
+| **HCR** | % change in BI hazard event frequency | NB04 | BI_loss → Channel 1 |
+| **EFR** | Fractional acceleration of equipment degradation | NB04 | Generation decline → Channel 2 |
+| **IUL** | Impaired Useful Life — shortened operational lifetime | NB04 | CFADS truncation → Channel 2 |
+| **BI** | Business Interruption — revenue lost to hazard events | NB04/05 | CFADS deduction → Channel 1 |
+| **NAV** | Net Asset Value impairment from all channels combined | NB05 | Final output |
 | **DSCR** | Debt Service Coverage Ratio (CFADS / debt service) | Financial model | Covenant testing |
 | **CFADS** | Cash Flow Available for Debt Service | Financial model | DSCR computation |
 
 ---
 
-## 7. The Report Card as Router
+## 9. Open Questions
 
-The SCVR Report Card is the "intelligence layer" that makes the framework
-variable-specific rather than one-size-fits-all:
+These are documented in detail across discussion docs but collected here
+for visibility:
 
-```
-                    ┌──────────────┐
-                    │  SCVR(var)   │
-                    │  7 variables │
-                    └──────┬───────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │ Report Card   │  Tail Confidence: HIGH / MODERATE /
-                    │ (decompose)   │  LOW / DIVERGENT
-                    └──────┬───────┘
-                           │
-              ┌────────────┼────────────┐
-              │            │            │
-              ▼            ▼            ▼
-        HIGH/MODERATE     LOW        DIVERGENT
-              │            │            │
-              ▼            ▼            ▼
-        Use SCVR in     Pathway B    Pathway B only
-        Channel 2       mandatory    SCVR excluded
-        (EFR/IUL)       Flag P95    from Channel 2
-        + Pathway A     alongside
-        cross-validate
-```
-
-Without the report card, you'd either trust all SCVR values equally (wrong —
-pr DIVERGENT would give misleading EFR) or distrust all of them (wasteful —
-tasmax HIGH is perfectly reliable). The report card enables **per-variable
-routing** so each variable enters the pipeline through the right door.
-
----
-
-## 8. Projected Scenario Comparison (Theoretical)
-
-> **These are projections from initial theoretical modeling (doc 09), not
-> computed results.** They represent our current hypothesis about the
-> magnitude and direction of climate impacts. NB04/NB05 will produce
-> the actual numbers — which may differ significantly.
-
-### What the initial estimates suggest
-
-```
-                    No Climate    SSP2-4.5        SSP5-8.5
-                    ──────────    ────────        ────────
-  HAYHURST SOLAR
-  NAV impairment:    $0           ~$3M (est.)     ~$6M (est.)
-  IUL:               25 years     ~22-23 years    ~20-22 years
-
-  MAVERICK WIND
-  NAV impairment:    $0           ~$0 (est.)      ~$0.5M (est.)
-  IUL:               25 years     ~24-25 years    ~24 years
-```
-
-**Directional expectations** (high confidence, even before NB04):
-- Solar will be more impaired than wind (temperature is the dominant SCVR signal)
-- SSP5-8.5 will produce larger impairment than SSP2-4.5
-- Channel 2 (degradation) will likely be material for solar assets
-
-**Open questions** (requires NB04/NB05 to answer):
-- Exact channel split — how much is Channel 1 vs Channel 2?
-- Absolute dollar amounts — the estimates above could be off by 2-3x
-- Whether DSCR covenant breaches are real or artifacts of simplified assumptions
-- Sensitivity to BI conversion approach (top-down vs bottom-up vs benchmarks)
+| Question | Impact | Where Documented | Status |
+|----------|--------|-----------------|--------|
+| baseline_BI_pct per hazard | HIGH — drives all of Channel 1 | channel_1_bi_calculation.md | Open: need O&M data or hazards repo EAL |
+| BI definition (deterministic vs probabilistic) | MEDIUM | 01_what_is_bi.md | Open: three options, Gen.1 recommendation pending |
+| Heat wave BI parameters (forced/recovery hours) | HIGH — connects both pipelines | pipeline_complementarity.md, 01_what_is_bi.md | Open: not defined in either pipeline |
+| IUL failure threshold (80%? 85%? 12.5% cumul?) | MEDIUM | channel_2_efr_financial.md | Open: Option A for Phase 1 |
+| EFR weights (Peck's vs Coffin-Manson) | LOW-MED | 08_efr §13 | Open: 80/20 working estimate |
+| DSCR debt re-sculpting under climate | LOW (Phase 2) | channel_2_efr_financial.md | Open: use fixed DS for Phase 1 |
+| Compound hazard confidence rules | LOW (Phase 2) | 06b orchestrator §10 | Open: use lower confidence (conservative) |
+| Hazards repo EAL as baseline_BI_pct source | HIGH | pipeline_complementarity.md §8 | Open: would solve Channel 1's biggest unknown |
 
 ---
 
 ## Cross-References
 
-| Topic | Doc | What it covers |
-|-------|-----|---------------|
-| HCR deep dive | [07_hcr_hazard_change.md](../learning/C_financial_translation/07_hcr_hazard_change.md) | Scaling factors, annual HCR, Pathway A vs B, cross-validation |
-| EFR deep dive | [08_efr_equipment_degradation.md](../learning/C_financial_translation/08_efr_equipment_degradation.md) | Peck's, Coffin-Manson, Palmgren-Miner with worked examples |
-| NAV chain | [09_nav_impairment_chain.md](../learning/C_financial_translation/09_nav_impairment_chain.md) | SCVR → (HCR + EFR) → CFADS → NAV two-channel walkthrough |
-| Cash flow integration | [cashflow_integration.md](../hcr_financial/cashflow_integration.md) | How LTRisk connects to project_finance, BI conversion approaches |
-| Performance assessment | [scvr_performance_adjustment.md](../scvr_methodology/scvr_performance_adjustment.md) | Why Channel 3 is negligible — the resource is stable |
-| HCR pathways | [hcr_pathway_a_vs_b.md](../hcr_financial/hcr_pathway_a_vs_b.md) | When SCVR-based HCR (Pathway A) fails and Pathway B is needed |
-| Report Card algorithm | [03_integrated_scvr_cmip6.md §3b.F](../implementation/03_integrated_scvr_cmip6.md) | Tail Confidence decision tree, guard thresholds, actual results |
-| SCVR methodology | [04_scvr_methodology.md](../learning/B_scvr_methodology/04_scvr_methodology.md) | SCVR formula, exceedance curve area, empirical computation |
-| Companion metrics | [scvr_method_equivalence.md §13](../scvr_methodology/scvr_method_equivalence.md) | Why mean SCVR alone isn't enough, Tail Confidence design rationale |
+### Learning Docs (Methodology)
+| Topic | Doc |
+|-------|-----|
+| SCVR Report methodology | [04_scvr_methodology.md](../../learning/B_scvr_methodology/04_scvr_methodology.md) |
+| Climate Risk Orchestrator | [06b_climate_risk_orchestrator.md](../../learning/C_financial_translation/06b_climate_risk_orchestrator.md) |
+| HCR: Hazard Change Ratio | [07_hcr_hazard_change.md](../../learning/C_financial_translation/07_hcr_hazard_change.md) |
+| EFR: Equipment Degradation | [08_efr_equipment_degradation.md](../../learning/C_financial_translation/08_efr_equipment_degradation.md) |
+| NAV Impairment Chain | [09_nav_impairment_chain.md](../../learning/C_financial_translation/09_nav_impairment_chain.md) |
+
+### Discussion Docs (Design Decisions)
+| Topic | Doc |
+|-------|-----|
+| HCR/EFR boundary (3-category) | [hcr_efr_boundary.md](../hcr_financial/hcr_efr_boundary.md) |
+| EFR two modes (Mode A/B) | [efr_two_modes.md](../efr_degradation/efr_two_modes.md) |
+| Channel 1 BI calculation | [channel_1_bi_calculation.md](../hcr_financial/channel_1_bi_calculation.md) |
+| Channel 2 EFR financial | [channel_2_efr_financial.md](../efr_degradation/channel_2_efr_financial.md) |
+| Pipeline complementarity | [pipeline_complementarity.md](pipeline_complementarity.md) |
+| Top-down meets bottom-up | [top_down_meets_bottom_up.md](top_down_meets_bottom_up.md) |
+| BI methodology foundations | [01_what_is_bi.md](../bi_methodology/01_what_is_bi.md) |
+| FIDUCEO uncertainty mapping | [FIDUCEO uncertainty mapping](../uncertainty/FIDUCEO-Style%20Uncertainty%20Mapping_%20LTRisk.md) |
+| SCVR performance adjustment | [scvr_performance_adjustment.md](../scvr_methodology/scvr_performance_adjustment.md) |
+| HCR Pathway A vs B | [hcr_pathway_a_vs_b.md](../hcr_financial/hcr_pathway_a_vs_b.md) |
+| Jensen's inequality | [jensen_inequality_hcr_scvr.md](../hcr_financial/jensen_inequality_hcr_scvr.md) |
