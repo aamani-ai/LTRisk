@@ -1,6 +1,6 @@
 {
   "site_id": "Hayhurst Texas Solar",
-  "generated": "2026-03-20T08:54:38.101934",
+  "generated": "2026-04-09T15:00:32.228385",
   "baseline_years": [
     1985,
     2014
@@ -9,222 +9,122 @@
     2026,
     2055
   ],
-  "n_models": 31,
-  "routing_decision": "temperature/proxy \u2192 Pathway A | precipitation \u2192 Pathway B (doc 07 \u00a711)",
-  "annual_interpolation": "Pathway A: SCVR \u00d7 scaling | Pathway B: 3-anchor linear fit (same as SCVR anchor_3_linear)",
+  "n_models": 20,
+  "classification": "3-category (BI events / degradation / risk indicators)",
+  "routing_decision": "BI events: Pathway A (heat, wind) or B (precip, icing) | Degradation: \u2192 EFR | Indicators: flagged",
   "hazard_config": {
-    "heat_wave": {
-      "input_var": "tasmax",
-      "scaling": 2.5,
-      "confidence": "working_estimate"
-    },
-    "cold_wave": {
-      "input_var": "tasmin",
-      "scaling": -0.3,
-      "confidence": "working_estimate"
-    },
-    "frost_days": {
-      "input_var": "tasmin",
-      "scaling": -0.3,
-      "confidence": "working_estimate"
-    },
-    "freeze_thaw": {
-      "input_var": "tasmin",
-      "scaling": 1.0,
-      "confidence": "working_estimate"
+    "extreme_precip": {
+      "category": "bi_event",
+      "channel": 1,
+      "pathway": "B",
+      "scaling": null,
+      "input_var": "pr",
+      "confidence": "preliminary"
     },
     "flood_rx5day": {
+      "category": "bi_event",
+      "channel": 1,
+      "pathway": "B",
+      "scaling": null,
       "input_var": "pr",
-      "scaling": 1.75,
       "confidence": "preliminary"
     },
-    "extreme_precip": {
-      "input_var": "pr",
-      "scaling": 1.75,
-      "confidence": "preliminary"
-    },
-    "dry_spell": {
-      "input_var": "pr",
-      "scaling": -0.8,
-      "confidence": "preliminary"
-    },
-    "fire_weather": {
+    "heat_wave": {
+      "category": "bi_event",
+      "channel": 1,
+      "pathway": "A",
+      "scaling": 2.5,
       "input_var": "tasmax",
-      "scaling": 1.5,
-      "confidence": "preliminary"
+      "confidence": "working_estimate"
     },
-    "ice_storm": {
+    "icing_shutdown": {
+      "category": "bi_event",
+      "channel": 1,
+      "pathway": "B",
+      "scaling": null,
       "input_var": "tasmin",
-      "scaling": -0.3,
       "confidence": "preliminary"
     },
     "wind_extreme": {
-      "input_var": "sfcWind",
+      "category": "bi_event",
+      "channel": 1,
+      "pathway": "A",
       "scaling": 1.0,
+      "input_var": "sfcWind",
       "confidence": "low"
     }
   },
   "epoch_summary": {
+    "extreme_precip": {
+      "ssp245": {
+        "mean_hcr": 0.025342,
+        "min_hcr": -0.001473,
+        "max_hcr": 0.052158,
+        "pathway": "B",
+        "baseline_days_per_year": 2.43,
+        "future_days_per_year": 2.49
+      },
+      "ssp585": {
+        "mean_hcr": 0.055479,
+        "min_hcr": 0.031644,
+        "max_hcr": 0.079315,
+        "pathway": "B",
+        "baseline_days_per_year": 2.43,
+        "future_days_per_year": 2.57
+      }
+    },
+    "flood_rx5day": {
+      "ssp245": {
+        "mean_hcr": 2.024816,
+        "min_hcr": 1.963291,
+        "max_hcr": 2.086341,
+        "pathway": "B",
+        "baseline_days_per_year": 2.01,
+        "future_days_per_year": 2.02
+      },
+      "ssp585": {
+        "mean_hcr": 2.077459,
+        "min_hcr": 2.029507,
+        "max_hcr": 2.12541,
+        "pathway": "B",
+        "baseline_days_per_year": 2.01,
+        "future_days_per_year": 2.06
+      }
+    },
     "heat_wave": {
       "ssp245": {
         "mean_hcr": 0.172242,
         "min_hcr": 0.117947,
         "max_hcr": 0.226538,
         "pathway": "A",
-        "baseline_days_per_year": 1.45,
-        "future_days_per_year": 14.03
+        "baseline_days_per_year": 1.52,
+        "future_days_per_year": 14.01
       },
       "ssp585": {
         "mean_hcr": 0.199702,
         "min_hcr": 0.113559,
         "max_hcr": 0.285845,
         "pathway": "A",
-        "baseline_days_per_year": 1.45,
-        "future_days_per_year": 20.27
+        "baseline_days_per_year": 1.52,
+        "future_days_per_year": 19.62
       }
     },
-    "cold_wave": {
+    "icing_shutdown": {
       "ssp245": {
-        "mean_hcr": -0.043243,
-        "min_hcr": -0.057706,
-        "max_hcr": -0.028779,
-        "pathway": "A",
-        "baseline_days_per_year": 2.27,
-        "future_days_per_year": 0.79
-      },
-      "ssp585": {
-        "mean_hcr": -0.05207,
-        "min_hcr": -0.074071,
-        "max_hcr": -0.030069,
-        "pathway": "A",
-        "baseline_days_per_year": 2.27,
-        "future_days_per_year": 0.6
-      }
-    },
-    "frost_days": {
-      "ssp245": {
-        "mean_hcr": -0.043243,
-        "min_hcr": -0.057706,
-        "max_hcr": -0.028779,
-        "pathway": "A",
-        "baseline_days_per_year": 45.89,
-        "future_days_per_year": 34.44
-      },
-      "ssp585": {
-        "mean_hcr": -0.05207,
-        "min_hcr": -0.074071,
-        "max_hcr": -0.030069,
-        "pathway": "A",
-        "baseline_days_per_year": 45.89,
-        "future_days_per_year": 31.63
-      }
-    },
-    "freeze_thaw": {
-      "ssp245": {
-        "mean_hcr": 0.144143,
-        "min_hcr": 0.095931,
-        "max_hcr": 0.192355,
-        "pathway": "A",
-        "baseline_days_per_year": 45.71,
-        "future_days_per_year": 34.31
-      },
-      "ssp585": {
-        "mean_hcr": 0.173567,
-        "min_hcr": 0.100231,
-        "max_hcr": 0.246903,
-        "pathway": "A",
-        "baseline_days_per_year": 45.71,
-        "future_days_per_year": 31.55
-      }
-    },
-    "flood_rx5day": {
-      "ssp245": {
-        "mean_hcr": 0.010811,
-        "min_hcr": 0.002313,
-        "max_hcr": 0.01931,
+        "mean_hcr": -0.396226,
+        "min_hcr": -0.413814,
+        "max_hcr": -0.378639,
         "pathway": "B",
-        "baseline_days_per_year": 1.98,
-        "future_days_per_year": 2.0
+        "baseline_days_per_year": 0.62,
+        "future_days_per_year": 0.37
       },
       "ssp585": {
-        "mean_hcr": 0.025168,
-        "min_hcr": 0.022431,
-        "max_hcr": 0.027905,
+        "mean_hcr": -0.444744,
+        "min_hcr": -0.69097,
+        "max_hcr": -0.198518,
         "pathway": "B",
-        "baseline_days_per_year": 1.98,
-        "future_days_per_year": 2.03
-      }
-    },
-    "extreme_precip": {
-      "ssp245": {
-        "mean_hcr": 0.027603,
-        "min_hcr": -0.002942,
-        "max_hcr": 0.058148,
-        "pathway": "B",
-        "baseline_days_per_year": 2.46,
-        "future_days_per_year": 2.53
-      },
-      "ssp585": {
-        "mean_hcr": 0.053269,
-        "min_hcr": 0.03431,
-        "max_hcr": 0.072228,
-        "pathway": "B",
-        "baseline_days_per_year": 2.46,
-        "future_days_per_year": 2.59
-      }
-    },
-    "dry_spell": {
-      "ssp245": {
-        "mean_hcr": 0.099565,
-        "min_hcr": 0.099565,
-        "max_hcr": 0.099565,
-        "pathway": "B",
-        "baseline_days_per_year": 4.18,
-        "future_days_per_year": 4.44
-      },
-      "ssp585": {
-        "mean_hcr": 0.069713,
-        "min_hcr": 0.069713,
-        "max_hcr": 0.069713,
-        "pathway": "B",
-        "baseline_days_per_year": 4.18,
-        "future_days_per_year": 4.33
-      }
-    },
-    "fire_weather": {
-      "ssp245": {
-        "mean_hcr": 0.103345,
-        "min_hcr": 0.070768,
-        "max_hcr": 0.135923,
-        "pathway": "A",
-        "baseline_days_per_year": 33.81,
-        "future_days_per_year": 34.1
-      },
-      "ssp585": {
-        "mean_hcr": 0.119821,
-        "min_hcr": 0.068135,
-        "max_hcr": 0.171507,
-        "pathway": "A",
-        "baseline_days_per_year": 33.81,
-        "future_days_per_year": 33.37
-      }
-    },
-    "ice_storm": {
-      "ssp245": {
-        "mean_hcr": -0.043243,
-        "min_hcr": -0.057706,
-        "max_hcr": -0.028779,
-        "pathway": "A",
-        "baseline_days_per_year": 0.57,
+        "baseline_days_per_year": 0.62,
         "future_days_per_year": 0.34
-      },
-      "ssp585": {
-        "mean_hcr": -0.05207,
-        "min_hcr": -0.074071,
-        "max_hcr": -0.030069,
-        "pathway": "A",
-        "baseline_days_per_year": 0.57,
-        "future_days_per_year": 0.3
       }
     },
     "wind_extreme": {
@@ -245,5 +145,36 @@
         "future_days_per_year": 0.0
       }
     }
-  }
+  },
+  "risk_indicators": {
+    "dry_spell": {
+      "ssp245": {
+        "direction": "increasing",
+        "magnitude_pct": 12.1,
+        "n_models": 20
+      },
+      "ssp585": {
+        "direction": "increasing",
+        "magnitude_pct": 10.6,
+        "n_models": 20
+      }
+    },
+    "fire_weather": {
+      "ssp245": {
+        "direction": "increasing",
+        "magnitude_pct": 0.6,
+        "n_models": 20
+      },
+      "ssp585": {
+        "direction": "decreasing",
+        "magnitude_pct": -0.5,
+        "n_models": 20
+      }
+    }
+  },
+  "degradation_hazards_moved_to_efr": [
+    "cold_wave",
+    "freeze_thaw",
+    "frost_days"
+  ]
 }

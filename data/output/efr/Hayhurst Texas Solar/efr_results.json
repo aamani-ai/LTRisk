@@ -1,0 +1,70 @@
+{
+  "site_id": "Hayhurst Texas Solar",
+  "generated": "2026-04-09T15:00:32.255729",
+  "baseline_years": [
+    1985,
+    2014
+  ],
+  "future_years": [
+    2026,
+    2055
+  ],
+  "n_models": 20,
+  "models": {
+    "peck": {
+      "mode": "A",
+      "input_vars": [
+        "tas",
+        "hurs"
+      ],
+      "note": "Linearised 10\u00b0C doubles"
+    },
+    "coffin_manson": {
+      "mode": "B",
+      "input_vars": [
+        "tasmax",
+        "tasmin"
+      ],
+      "note": "Direct freeze-thaw cycle counts from daily data"
+    },
+    "palmgren_miner": {
+      "mode": "A",
+      "input_vars": [
+        "sfcWind"
+      ],
+      "note": "SCVR\u22480 at this site \u2192 EFR\u22480"
+    }
+  },
+  "parameters": {
+    "T_ref_C": 20.0,
+    "RH_ref_pct": 35.0,
+    "Ea_eV": 0.7,
+    "humidity_exponent_n": 2.66,
+    "beta_coffin_manson": 2.0,
+    "std_degrad_rate": 0.005,
+    "weights": {
+      "peck": 0.8,
+      "coffin_manson": 0.2,
+      "palmgren_miner": 0.0
+    },
+    "eul_years": 25
+  },
+  "epoch_summary": {
+    "ssp245": {
+      "efr_peck_mean": 0.130041,
+      "efr_coffin_mean": -0.240309,
+      "efr_palmgren_mean": 0.022011,
+      "efr_combined_mean": 0.055971,
+      "iul_years": 23.6,
+      "years_lost": 1.4
+    },
+    "ssp585": {
+      "efr_peck_mean": 0.156201,
+      "efr_coffin_mean": -0.301347,
+      "efr_palmgren_mean": 0.025834,
+      "efr_combined_mean": 0.064691,
+      "iul_years": 23.4,
+      "years_lost": 1.6
+    }
+  }
+}
