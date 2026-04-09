@@ -746,10 +746,18 @@ Where:
  
 This is a **linear approximation** — Phase 1 of the implementation. Future phases may use power-law or lookup-table HCR functions.
 
-### Pathway A — Computation Flow
+**Note:** Pathway A reuses published empirical scaling factors from
+peer-reviewed studies. The 2.5× for heat waves comes from Diffenbaugh
+et al. (2017, PNAS) and Cowan et al. (2017), who derived it by counting
+events in climate model output — essentially doing Pathway B themselves
+and publishing the result. Using their scaling is standard scientific
+practice: we reuse established empirical work rather than re-deriving it.
+See [pathway_defensibility.md](../../discussion/hcr_financial/pathway_defensibility.md).
+
+### Pathway A — Computation Flow (Published Scaling)
 
 ```
-PATHWAY A: SCVR-BASED SCALING (parametric)
+PATHWAY A: PUBLISHED EMPIRICAL SCALING
 
   SCVR Report (from NB03)
   ┌──────────────────────────────┐
@@ -870,14 +878,14 @@ Fire = f(high T, low RH, wind, dry fuel)
 
 These scaling factors apply only to hazards that remain in HCR (Category 1 BI events). Hazards reclassified to EFR or Risk Indicators no longer use these factors.
 
-| Hazard | Scaling Factor | Input Variable(s) | Status | Basis |
-|--------|---------------|-------------------|--------|-------|
-| Heat stress (compound HW: 3+ consec. days, tasmax+tasmin > P90) | 2.0–3.0 (base: 2.5) | tasmax SCVR | Working estimate | Tail amplification; NB01 cross-check gives ~2.9 |
-| Heat stress (P90 per-DOY single-day exceedance, tasmax only) | ~26 | tasmax SCVR | NB04 empirical | Per-DOY P90 counting on pooled daily data — see §4 NB04 check |
-| Flood (extreme precip) | N/A (Pathway B) | pr daily data | Mandatory Pathway B | Clausius-Clapeyron ~7%/°C; Pathway A gives wrong sign |
-| Hail | **NOT COMPUTABLE** | — | Documented gap | Requires CAPE, S06, freezing level — not in NEX-GDDP |
-| Wind extreme | 1.0 | sfcWind SCVR | Low confidence | Daily mean, not gusts. 0 baseline days at Hayhurst. |
-| Icing shutdown | N/A (Pathway B) | tasmin + hurs (RH > **90%**) | Working estimate | Dual-threshold; BI component only. IEC 61400-1. |
+| Hazard | Scaling | Computation | Published Source | Cross-Validation |
+|--------|---------|-------------|-----------------|------------------|
+| Heat stress (compound HW) | 2.5 (range 2.0–3.0) | Published scaling | Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017 (Sci. Reports) | NB04a implied scaling = 2.7× (within 8%) |
+| Flood (extreme precip) | N/A | Direct counting | None — no published site-level scaling; C-C ~7%/°C is for moisture, not flood frequency | Mandatory: published scaling gives wrong sign (Jensen's) |
+| Flood (Rx5day) | N/A | Direct counting | None — same Jensen's issue | Mandatory |
+| Wind extreme | 1.0 | Published (trivial) | None — assumed linear, 0 baseline days at Hayhurst | Signal ≈ 0; computation choice irrelevant |
+| Icing shutdown | N/A | Direct counting | None — no published compound icing scaling | Compound threshold (tasmin<0, hurs>90%) requires direct counting |
+| Hail | — | **NOT COMPUTABLE** | Documented gap (no CAPE in NEX-GDDP) | Hazards repo covers via NOAA events |
 
 **Reclassified — no longer in HCR scaling table:**
 
@@ -1505,13 +1513,13 @@ NB04 cross-validation (simple P90 per-DOY exceedance):
 
 These cause operational shutdown or curtailment. The plant could produce but doesn't because of the event. The BI conversion formula works correctly.
 
-| Hazard | Input Var | Primary Pathway | Rationale |
-|--------|-----------|-----------------|-----------|
-| heat_wave | tasmax | **A** (×2.5) | Absolute threshold scaling well-calibrated; validated by Pathway B cross-check |
-| extreme_precip | pr | **B** | Mandatory — SCVR ≈ 0, Pathway A gives wrong sign (Jensen's inequality) |
-| flood_rx5day | pr | **B** | Mandatory — same Jensen's inequality issue |
-| wind_extreme | sfcWind | **A** (×1.0) | Small signal, near-linear. 0 baseline days at Hayhurst. |
-| icing_shutdown | tasmin+hurs | **B** | Compound threshold, BI component (forced shutdown from blade/panel icing) |
+| Hazard | Input Var | Computation | Rationale |
+|--------|-----------|-------------|-----------|
+| heat_wave | tasmax | **Published scaling** (×2.5, Diffenbaugh/Cowan) | Peer-reviewed scaling exists; cross-validated (implied 2.7×) |
+| extreme_precip | pr | **Direct counting** | No published scaling; mean SCVR ≈ 0 but extremes increase (Jensen's) |
+| flood_rx5day | pr | **Direct counting** | No published scaling; same Jensen's issue |
+| wind_extreme | sfcWind | **Published** (×1.0, linear) | No amplification published; SCVR ≈ 0, choice is irrelevant |
+| icing_shutdown | tasmin+hurs | **Direct counting** | No published compound icing scaling; requires multi-variable threshold |
 
 #### Category 2 — Degradation Inputs (moved to EFR → Channel 2)
 

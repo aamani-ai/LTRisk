@@ -1,16 +1,18 @@
 ---
-title: "Discussion — Why Pathway A Is Preferred: Defensibility of Computation Approaches"
+title: "Discussion — Published Scaling vs Direct Computation: Why Two Pathways Exist"
 type: discussion
 domain: climate-risk / methodology / defensibility
 created: 2026-04-09
-status: final — documents the rationale for the two-pathway architecture
+updated: 2026-04-09
+status: revised — reframed from "A preferred / B fallback" to "published scaling where available, direct computation where necessary"
 context: >
-  A reviewer asked why the framework uses two computation pathways rather
-  than standardising on one. This doc explains that Pathway A (SCVR-based
-  scaling) is preferred when defensible because it avoids subjective
-  threshold definitions, while Pathway B (direct daily counting) is the
-  mandatory fallback when A gives mathematically wrong answers. The same
-  logic applies to EFR's Mode A/B distinction.
+  A reviewer asked why the framework uses two computation pathways. This doc
+  explains that both pathways are grounded in the same empirical method
+  (counting threshold exceedances from climate model output). Pathway A
+  reuses published scaling factors from peer-reviewed literature. Pathway B
+  computes directly from our own daily data. The choice depends on whether
+  a reliable published scaling factor exists for the hazard — not on a
+  preference hierarchy.
 relates-to:
   - docs/learning/C_financial_translation/07_hcr_hazard_change.md
   - docs/discussion/hcr_financial/hcr_pathway_a_vs_b.md
@@ -19,371 +21,258 @@ relates-to:
   - docs/learning/C_financial_translation/06b_climate_risk_orchestrator.md
 ---
 
-# Why Pathway A Is Preferred
+# Published Scaling vs Direct Computation
 
-> **The question:** "Why not just use Pathway B for everything? It counts
-> actual events from daily data — isn't that always more accurate?"
+> **The question:** "Why does the framework use two computation pathways
+> instead of standardising on one?"
 
-> **The answer:** Pathway B requires you to DEFINE what counts as an event
-> — which thresholds, which variable combinations, which durations. Each
-> definition choice is subjective, changes the answer by 2-10×, and
-> needs its own justification. Pathway A avoids all of this by working
-> with the mean shift directly. We prefer A when it works, and fall back
-> to B only when A gives wrong answers.
-
----
-
-## 1. The Two Approaches — What Each Requires From You
-
-### Pathway A: SCVR × Scaling Factor
-
-```
-INPUT YOU PROVIDE:
-  1. SCVR (computed, not a choice — comes from data)
-  2. Scaling factor (from published literature)
-
-EXAMPLE:
-  SCVR_tasmax = +0.074 (computed from 28 CMIP6 models, proven = mean ratio)
-  Scaling factor = 2.5 (from Diffenbaugh et al. 2017, Cowan et al. 2017)
-  HCR_heat = 0.074 × 2.5 = +0.185
-
-WHAT A REVIEWER CAN CHALLENGE:
-  "Why 2.5 and not 2.0 or 3.0?"
-  → Answer: published range is 2.0-3.0, we use midpoint,
-    cross-validated against Pathway B (implied scaling = 2.7, within range)
-
-WHAT A REVIEWER CANNOT CHALLENGE:
-  - The SCVR value (it's a mathematical fact from the data)
-  - The multiplication (it's arithmetic)
-  - The concept (mean shift × amplification = hazard change)
-
-DEFENSIBILITY: HIGH
-  Every step traces to data or published literature.
-  No subjective threshold definitions.
-```
-
-### Pathway B: Direct Threshold Counting
-
-```
-INPUT YOU PROVIDE:
-  1. Threshold definition (YOUR CHOICE — subjective)
-  2. Compound logic (YOUR CHOICE — subjective)
-  3. Duration requirement (YOUR CHOICE — subjective)
-  4. Daily data (computed, not a choice)
-
-EXAMPLE (heat wave):
-  Which threshold?
-    Option 1: tasmax > 40°C absolute           → X heat days/year
-    Option 2: tasmax > per-DOY P90              → Y heat days/year
-    Option 3: tasmax > per-DOY P90 AND
-              tasmin > per-DOY P90              → Z heat days/year
-    Option 4: same as 3 but require 3+
-              consecutive days                  → W heat days/year
-  
-  At Hayhurst (SSP245):
-    Option 1: HCR ≈ +45%    (many days cross 40°C)
-    Option 2: HCR ≈ +177%   (P90 exceedance amplification)
-    Option 3: HCR ≈ +120%   (compound reduces count)
-    Option 4: HCR ≈ +17%    (consecutive requirement reduces further)
-
-  THE SAME DATA GIVES 4 DIFFERENT ANSWERS (4× to 45× range)
-  depending on which threshold you define.
-
-WHAT A REVIEWER CAN CHALLENGE:
-  "Why P90 and not P95? Why 3 consecutive days and not 5?
-   Why per-DOY and not fixed? Why compound and not single?"
-  → Each choice needs its own justification.
-  → Each justification is debatable.
-
-DEFENSIBILITY: MODERATE
-  The counting itself is correct (no math errors).
-  But the DEFINITION of what you're counting is a design choice
-  that significantly affects the answer.
-```
+> **The answer:** Both pathways compute the same thing — how many more
+> hazard events does climate change produce. Pathway A reuses a published,
+> peer-reviewed scaling factor (someone else's empirical result). Pathway B
+> computes directly from our own daily data. We use A where a reliable
+> published factor exists because it's traceable and defensible. We use B
+> where no published factor exists because we have no choice. Both are
+> grounded in the same empirical method.
 
 ---
 
-## 2. Why Pathway A Is Preferred When It Works
+## 1. The Key Insight: A IS Borrowed B
 
-### 2A. No Threshold Subjectivity
-
-```
-Pathway A says: "The mean shifted +7.4%. Literature says heat events
-amplify by ~2.5× per unit of mean shift. Therefore +18.5% more events."
-
-This doesn't require defining:
-  - What temperature is "hot enough" to count
-  - Whether to use per-DOY or absolute thresholds
-  - How many consecutive days matter
-  - Which variables must co-occur
-
-The amplification factor (2.5×) absorbs all of this — it was derived
-from studies that already made those threshold choices and measured
-the empirical amplification.
-```
-
-### 2B. Published, Peer-Reviewed Scaling Factors
+Pathway A looks different from B, but scientifically they're the same thing:
 
 ```
-The scaling factors come from specific papers:
-  Heat: 2.0-3.0× (Diffenbaugh et al. 2017; Cowan et al. 2017)
-  Flood: ~7%/°C (Clausius-Clapeyron, IPCC AR6 Chapter 11)
+WHAT DIFFENBAUGH ET AL. (2017, PNAS) DID:
+  1. Took CMIP5 daily temperature data
+  2. Defined heat wave thresholds
+  3. Counted heat wave events in baseline and future
+  4. Compared to mean temperature shift
+  5. Found: ~2.5× amplification per unit of mean shift
+  → They did PATHWAY B and published the result.
 
-These were published in PNAS, Scientific Reports, and IPCC.
-A reviewer can look them up and verify.
+WHAT WE DO WITH PATHWAY A:
+  1. Take their published result (2.5×)
+  2. Multiply by our SCVR (our mean shift)
+  3. Get HCR
+  → We REUSE their Pathway B result as a scaling factor.
 
-By contrast, Pathway B's thresholds are OUR choices.
-"We defined a heat wave as 3+ consecutive days where both tasmax
-and tasmin exceed per-DOY P90 with ±15-day smoothing."
-  → This is defensible but not published.
-  → Every term (3+, both, P90, ±15) is a parameter choice.
+WHAT WE DO WITH PATHWAY B:
+  1. Take our own CMIP6 daily data (28 models)
+  2. Define thresholds (per-DOY P90, compound, 3+ consecutive days)
+  3. Count events in baseline and future
+  4. Compare
+  → We do the SAME empirical work ourselves.
+
+WHEN WE CROSS-VALIDATE A vs B:
+  We're comparing: literature's empirical result vs our empirical result
+  Hayhurst: A gives 2.5×, B gives implied 2.7×
+  → They agree. This validates both the published scaling AND our counting.
 ```
 
-### 2C. Pathway B Validates A (Cross-Check)
-
-```
-The strongest position is: use A as primary, validate against B.
-
-NB04 cross-validation:
-  Pathway A (heat_wave): HCR = 0.074 × 2.5 = +0.185
-  Pathway B (compound heat wave, 3+ days): implied scaling = 2.7
-  
-  Agreement: within 8%. Scaling 2.5 is validated.
-  
-This gives you BOTH:
-  1. A simple, traceable primary answer (A)
-  2. Empirical validation that it's in the right ballpark (B)
-
-If someone challenges the 2.5× scaling, you can point to B:
-  "Our direct counting gives implied scaling of 2.7 — consistent."
-```
+**Pathway A is not a different method. It's a shortcut that reuses someone
+else's empirical work.** This is standard scientific practice — you don't
+re-derive every result yourself if a peer-reviewed study already established it.
 
 ---
 
-## 3. When Pathway A Fails — And Why B Becomes Mandatory
+## 2. When Published Scaling Is Available — Use It
 
-### 3A. Jensen's Inequality (Precipitation)
-
-```
-The fatal case:
-
-  SCVR_pr = -0.001 (mean precipitation barely changed)
-  Pathway A: HCR_flood = -0.001 × 1.75 = -0.002 (NEGATIVE)
-  
-  But Pathway B (count actual Rx5day events): HCR_flood = +0.04 (POSITIVE)
-  
-  Pathway A gives the WRONG SIGN.
-  
-Why: The mean doesn't capture what's happening in the tail.
-  Mean precipitation is flat, but extreme events intensify.
-  Scaling the mean by any constant cannot fix a sign error.
-  No scaling factor makes -0.001 × X = +0.04 (would need X < 0).
-
-This is Jensen's inequality: for non-linear functions,
-  f(E[X]) ≠ E[f(X)]
-  
-The threshold-crossing function is non-linear.
-Applying it to the mean gives a different answer than
-applying it to each day and averaging.
-```
-
-### 3B. The Report Card Tells You When A Fails
+Currently, only **heat wave** has a peer-reviewed, site-validated scaling factor:
 
 ```
-The SCVR Report Card's Tail Confidence flag:
-
-  HIGH:      Mean and tail agree → A is safe
-  MODERATE:  Some disagreement → A with caution, prefer B alongside
-  LOW:       Weak linkage → B preferred
-  DIVERGENT: Mean and tail point OPPOSITE DIRECTIONS → A gives wrong answer
-
-For precipitation: Tail Confidence = DIVERGENT
-  → Pathway B is MANDATORY (not a preference — a requirement)
-
-For tasmax: Tail Confidence = HIGH
-  → Pathway A is safe (validated by B cross-check)
-
-The routing is DATA-DRIVEN, not arbitrary.
+HEAT WAVE:
+  Published scaling: 2.5× (Diffenbaugh et al. 2017, PNAS; Cowan et al. 2017, Sci. Reports)
+  Our cross-validation: implied scaling 2.7× (from NB04a Pathway B)
+  Agreement: within 8%
+  
+  → Use published scaling (Pathway A). It's:
+    - Peer-reviewed (PNAS)
+    - Validated by our own data (2.7× matches 2.5×)
+    - Traceable (SCVR × 2.5 = HCR)
+    - No threshold subjectivity on our part
 ```
+
+**Why this is more defensible than Pathway B alone:**
+
+Pathway A: "We use the 2.5× amplification factor from Diffenbaugh et al.
+(2017, PNAS), validated against our direct computation which gives 2.7×."
+
+Pathway B alone: "We defined a heat wave as 3+ consecutive days where
+both tasmax and tasmin exceed per-DOY P90 with ±15-day smoothing, and
+counted events directly."
+
+The first statement cites a published source. The second requires
+justifying every parameter choice (why P90? why 3 days? why ±15?).
 
 ---
 
-## 4. The Threshold Problem — Why B Is Hard to Defend
+## 3. When No Published Scaling Exists — Compute Directly
 
-### 4A. The 2.5× vs 26× Example
-
-NB04 revealed this dramatically:
+For most of our hazards, no reliable published scaling factor exists:
 
 ```
-SAME DATA, TWO THRESHOLD DEFINITIONS:
+EXTREME PRECIPITATION:
+  Published: Clausius-Clapeyron ~7%/°C for moisture, but this is NOT
+  a site-level flood event frequency scaling factor.
+  Problem: mean precipitation SCVR ≈ 0 at Hayhurst, but extreme events
+  increase. No constant × 0 = positive number (Jensen's inequality).
+  → Must compute directly (Pathway B). No published shortcut available.
+
+FLOODING (Rx5day):
+  Published: No site-specific Rx5day scaling factor.
+  Same Jensen's issue as extreme precipitation.
+  → Must compute directly (Pathway B).
+
+ICING SHUTDOWN:
+  Published: No published scaling for compound icing events
+  (requires tasmin < 0 AND hurs > 90% simultaneously).
+  → Must compute directly (Pathway B).
+
+WIND EXTREME:
+  Published: No reliable scaling (daily mean ≠ gusts).
+  SCVR_sfcWind ≈ 0 anyway — the choice doesn't matter.
+  → Use Pathway A with 1.0× (linear, essentially zero signal).
+```
+
+**This is not "falling back" to B. It's the only option.** You can't use
+a published scaling factor that doesn't exist. Pathway B is the necessary
+computation when the scientific literature hasn't done the work for you.
+
+---
+
+## 4. The Threshold Subjectivity Problem (When We Must Use B)
+
+When we compute directly (Pathway B), every threshold definition is a
+design choice that affects the answer:
+
+```
+THE 2.5× vs 26× EXAMPLE (from NB04a):
+
+  Same data, two threshold definitions:
 
   Definition 1 (compound heat wave):
-    tasmax > per-DOY P90 AND tasmin > per-DOY P90
-    3+ consecutive days
-    Baseline: ~1.5 compound heat wave days/year
-    Future:   ~14 days/year
-    Implied scaling from SCVR: ~2.5×
+    tasmax > per-DOY P90 AND tasmin > per-DOY P90, 3+ consecutive days
+    Implied scaling: ~2.5×
 
   Definition 2 (simple P90 exceedance):
     tasmax > per-DOY P90 (any single day)
-    Baseline: ~36.5 days/year (10% by construction)
-    Future:   ~101 days/year
-    Implied scaling from SCVR: ~26×
+    Implied scaling: ~26×
 
-  BOTH ARE CORRECT for their threshold definition.
-  But 2.5× vs 26× is a 10× difference in the HCR number.
-  
-  Which one feeds the BI model? That's a design choice:
-    - Compound (2.5×) = meaningful for inverter shutdown BI
-    - Simple P90 (26×) = meaningful for derating BI
-    
-  The threshold definition determines what financial mechanism
-  you're modeling. This is a CONCEPTUAL choice, not a math error.
+  10× difference from the SAME DATA.
+  Both are correct for their definition.
+
+  This is why published scaling is preferred where it exists —
+  it avoids this subjectivity entirely. Diffenbaugh et al. already
+  made these choices, published them, and had them peer-reviewed.
 ```
 
-### 4B. Every Threshold Parameter Is Debatable
+When we must use B (precipitation, icing), we accept this subjectivity
+as the cost of computing something no one has published yet. We document
+our threshold choices and their justification.
+
+---
+
+## 5. The Same Pattern for EFR
+
+The EFR channel has the identical structure:
 
 ```
-"Why per-DOY P90 and not absolute 40°C?"
-  Per-DOY adapts to seasonality (a hot March day ≠ a hot July day)
-  Absolute is simpler but ignores acclimatisation
-  → Both are defensible. Choice changes the count.
+PECK'S THERMAL AGING (Mode A — published physics):
+  Published: Arrhenius equation with Ea = 0.7 eV (IEC 61215)
+  "10°C doubles degradation" linearisation (standard reliability engineering)
+  → Use published physics (Mode A). Traceable, peer-reviewed.
 
-"Why 3 consecutive days and not 5?"
-  3 days is the Copernicus EDO standard for European heat waves
-  5 days is more conservative (fewer events, larger per-event impact)
-  → Both are defensible. 3-day count is ~3× higher than 5-day.
+COFFIN-MANSON CYCLING (Mode B — direct computation):
+  Published: The formula N_f = C × (ΔT)^(-β) is published.
+  But: applying it via SCVR mean approximation gives WRONG DIRECTION.
+  Mode A says +3% (more damage). Actual daily counts say -25% (fewer cycles).
+  → Must compute directly from daily data (Mode B).
+  Threshold choice: 0°C for freeze-thaw (physics-based, defensible).
 
-"Why ±15-day smoothing window for per-DOY thresholds?"
-  ±15 prevents sharp day-to-day jumps in the threshold
-  ±7 would be more localized, ±30 would blur seasonality
-  → All are defensible. Changes threshold by ~0.5°C.
-
-"Why compound (both tasmax AND tasmin)?"
-  Compound captures nighttime heat stress (no recovery)
-  Single-variable captures daytime shutdown only
-  → Both are defensible. Compound count is ~10× lower.
-
-EACH of these is reasonable. But the COMBINATION of all four choices
-produces a specific number that is very sensitive to the combination.
-Pathway A sidesteps ALL of them.
+PALMGREN-MINER (Mode A — published physics):
+  Published: S-N curve framework (IEC 61400)
+  SCVR_sfcWind ≈ 0 → effectively zero regardless of mode.
+  → Use published framework (Mode A).
 ```
 
 ---
 
-## 5. The Same Logic Applies to EFR
-
-### Mode A (Peck's — preferred)
+## 6. The Decision Logic
 
 ```
-SCVR_tas → ΔT → AF = 2^(ΔT/10) → EFR_peck
+FOR EACH HAZARD OR DEGRADATION MODEL:
 
-No thresholds needed:
-  - Temperature goes into the Arrhenius equation directly
-  - The equation is published physics (IEC 61215)
-  - The "10°C doubles" linearisation is standard in reliability engineering
-  - Each step is traceable: SCVR → °C → acceleration factor → EFR
+  Does a reliable, peer-reviewed scaling factor or physics model exist?
+  ├── YES: Use it (Pathway A / Mode A)
+  │        - Cite the source
+  │        - Cross-validate against our direct computation (B)
+  │        - If A and B agree: confidence is high
+  │        - If A and B disagree: investigate, report both
+  │
+  └── NO: Compute directly from daily data (Pathway B / Mode B)
+           - Document threshold definitions and their justification
+           - Acknowledge the subjectivity
+           - This is necessary, not a compromise
 
-DEFENSIBILITY: HIGH
-```
+  Does the SCVR Report Card flag the variable as DIVERGENT?
+  ├── YES: Published scaling (A) gives wrong sign
+  │        → Direct computation (B) is mandatory
+  │        → Even if a scaling factor existed, it wouldn't work
+  │
+  └── NO: Published scaling (A) is mathematically valid
+          → Use it if available, compute directly if not
 
-### Mode B (Coffin-Manson — mandatory fallback)
-
-```
-Count freeze-thaw cycles: days where tasmin < 0°C AND tasmax > 0°C
-
-Threshold choices:
-  - Why 0°C? (physics: water freezes at 0°C — this one IS defensible)
-  - But: does it count days where tasmin = -0.1°C and tasmax = +0.1°C?
-    That's a 0.2°C swing — not a real freeze-thaw cycle.
-  - Should there be a minimum ΔT per cycle? (e.g., ΔT > 5°C)
-  - What about multi-day freeze events (stays below 0 for 3 days)?
-
-Mode B is mandatory here because Mode A gives wrong direction:
-  Mode A: SCVR says tasmin warming → ΔT change → EFR = +0.03 (more damage)
-  Mode B: Actual cycle count → 25% fewer 0°C crossings → EFR = -0.25 (benefit)
-  
-  Mode A gets the SIGN wrong (same problem as precipitation).
-  So we accept Mode B's threshold dependency as the lesser evil.
-
-DEFENSIBILITY: MODERATE (but necessary)
-```
-
----
-
-## 6. The Decision Hierarchy
-
-```
-FOR EACH HAZARD / DEGRADATION MODEL:
-
-  Step 1: Check Tail Confidence for the input variable
-  
-  Step 2: If HIGH → Use Pathway/Mode A (preferred)
-           Reason: defensible, no thresholds, literature-backed
-           Cross-validate against B for extra confidence
-           
-  Step 3: If DIVERGENT or A gives wrong sign → Use Pathway/Mode B (mandatory)
-           Reason: A is mathematically wrong, B is the only option
-           Accept B's threshold dependency as necessary
-           Document threshold choices and their justification
-           
-  Step 4: If MODERATE → Use A as primary, report B alongside
-           Flag the gap between A and B
-           Let the reviewer decide which to trust
-           
-
-THIS IS NOT "A is always better" — it's:
-  "A is preferred when it works, because it's more defensible.
-   B is mandatory when A fails, even though B has threshold subjectivity.
-   The Report Card tells you which case you're in."
-```
-
-### How NB04 Implements This
-
-```
-HAZARD              Pathway  Reason
-──────────────────  ───────  ──────────────────────────────────
-heat_wave           A (2.5×) Tail Confidence HIGH, scaling validated
-extreme_precip      B        Tail Confidence DIVERGENT, A gives wrong sign
-flood_rx5day        B        Same — mandatory for all pr-based hazards
-wind_extreme        A (1.0×) Small signal, linear approximation OK
-icing_shutdown      B        Compound threshold, B more physical
-
-Peck's (EFR)        Mode A   Tail Confidence HIGH for tas, no thresholds needed
-Coffin-Manson (EFR) Mode B   Mode A gives wrong direction at Hayhurst
-Palmgren-Miner      Mode A   SCVR_sfcWind ≈ 0, both modes give ≈ 0
+CURRENT STATE (Hayhurst Solar):
+  Hazard          Published scaling?   Tail Conf.   Computation
+  ──────────────  ──────────────────   ──────────   ──────────────
+  heat_wave       YES (2.5×, PNAS)     HIGH         Published scaling
+  extreme_precip  NO                   DIVERGENT    Direct counting
+  flood_rx5day    NO                   DIVERGENT    Direct counting
+  wind_extreme    NO (1.0× assumed)    MOD          Published (trivial)
+  icing_shutdown  NO                   MOD          Direct counting
+  Peck's          YES (Arrhenius,IEC)  HIGH         Published physics
+  Coffin-Manson   NO (A gives wrong)   HIGH(temp)   Direct counting
+  Palmgren-Miner  YES (S-N, IEC)       MOD          Published physics
 ```
 
 ---
 
 ## 7. What to Say When Asked
 
+### "Why two pathways instead of one?"
+
+> "Both pathways compute the same thing — hazard frequency change from
+> climate data. Pathway A reuses published, peer-reviewed scaling factors
+> from studies that already did the empirical work. Pathway B computes
+> directly from our own daily CMIP6 data. We use published scaling where
+> it exists (heat wave: 2.5× from Diffenbaugh et al., PNAS) and compute
+> directly where it doesn't (precipitation, icing). Our cross-validation
+> shows the published scaling agrees with our direct computation within 8%."
+
 ### "Why not just use Pathway B everywhere?"
 
-> "Pathway B requires defining what counts as a hazard event — which
-> thresholds, which variable combinations, which durations. Each choice
-> is debatable and changes the answer by up to 10×. We showed that two
-> reasonable heat wave definitions give 2.5× vs 26× scaling — same data,
-> different answer. Pathway A avoids this subjectivity by working with
-> the mean shift and published amplification factors. We use B only where
-> A is mathematically wrong, which the SCVR Report Card identifies
-> automatically."
+> "We could — and we do compute B for all hazards as a cross-check. But
+> citing a peer-reviewed scaling factor is more defensible than presenting
+> our own threshold definitions. When we say 'HCR = SCVR × 2.5', a reviewer
+> can look up the 2.5 in PNAS. When we say 'we defined a heat wave as 3+
+> consecutive days with both temperatures above per-DOY P90 with ±15-day
+> smoothing', every term is a parameter choice that invites challenge.
+> For precipitation, no published scaling exists, so direct computation
+> is the only option."
 
 ### "Why not just use Pathway A everywhere?"
 
 > "For precipitation, Pathway A gives the wrong sign. Mean precipitation
-> barely changes (SCVR ≈ 0) but extreme rainfall events increase
-> significantly. No scaling factor can fix a sign error. This is Jensen's
-> inequality — the mean-based approximation fails for non-linear threshold
-> functions. The Report Card flags this as DIVERGENT confidence, and
-> Pathway B becomes mandatory."
+> barely changes (SCVR ≈ 0) but extreme rainfall events increase. No
+> scaling factor can fix a sign error — this is Jensen's inequality.
+> And for icing and Coffin-Manson, no published scaling factor exists
+> that captures the compound threshold behaviour correctly."
 
-### "How do you know when A fails?"
+### "How do you know when published scaling is reliable?"
 
-> "The SCVR Report Card computes 6 companion metrics including P95 SCVR
-> and Mean-Tail Ratio. When the mean and tail point in opposite directions
-> (mean negative, tail positive), the Tail Confidence flag is set to
-> DIVERGENT. This is a data-driven signal, not a judgment call."
+> "The SCVR Report Card computes Tail Confidence — when the mean and tail
+> agree (HIGH), the mean-based scaling is reliable. When they disagree
+> (DIVERGENT), the scaling would give wrong answers regardless of what
+> factor you multiply by. This is a data-driven signal, not a judgment."
 
 ---
 
@@ -396,4 +285,4 @@ Palmgren-Miner      Mode A   SCVR_sfcWind ≈ 0, both modes give ≈ 0
 | EFR Mode A vs B | [efr_two_modes.md](../efr_degradation/efr_two_modes.md) |
 | Report Card routing | [04_scvr_methodology.md §4](../../learning/B_scvr_methodology/04_scvr_methodology.md) |
 | Orchestrator routing table | [06b_climate_risk_orchestrator.md §5](../../learning/C_financial_translation/06b_climate_risk_orchestrator.md) |
-| NB04 implementation | [04_hcr_hazard_change_ratio.ipynb](../../notebook_analysis/04_hcr_hazard_change_ratio.ipynb) |
+| NB04a implementation | [04a_hcr_hazard_change_ratio.ipynb](../../notebook_analysis/04a_hcr_hazard_change_ratio.ipynb) |
