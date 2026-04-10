@@ -1,394 +1,478 @@
 ---
-title: "Discussion — From HCR to CIR: Capturing Both Frequency and Severity"
+title: "Discussion — Redefining HCR: From Frequency-Only to Expected Damage Ratio"
 type: discussion
 domain: climate-risk / methodology / first-principles
 created: 2026-04-09
+updated: 2026-04-10
 status: draft — foundational rethink, pending team decision
 context: >
-  HCR (Hazard Change Ratio) only captures FREQUENCY change — how many more
-  events cross a threshold. But climate change also changes SEVERITY — each
-  event may be more intense. For some hazards (hurricane, hail, wildfire),
-  severity change dominates frequency change, making frequency-only metrics
-  misleading. This doc proposes evolving toward a Climate Impact Ratio (CIR)
-  that captures both, grounded in how the insurance industry actually
-  quantifies climate-adjusted risk.
+  HCR currently measures frequency change only. This doc proposes
+  redefining it to capture both frequency AND severity change. It also
+  maps out honestly which hazards have baseline BI data (from the hazards
+  repo) vs which only have EAL (from NRI), and documents the linearity
+  assumption required when applying a damage-level ratio to BI.
 relates-to:
   - docs/discussion/hcr_financial/hcr_top_down_reframe.md
   - docs/discussion/hcr_financial/pathway_defensibility.md
   - docs/discussion/architecture/pipeline_complementarity.md
+  - docs/discussion/bi_methodology/01_what_is_bi.md
   - docs/learning/C_financial_translation/07_hcr_hazard_change.md
 ---
 
-# From HCR to CIR: Capturing Both Frequency and Severity
+# Redefining HCR: From Frequency-Only to Expected Damage Ratio
 
-> **The problem:** HCR counts how many more events cross a threshold.
-> It misses that each event may also be MORE INTENSE. For hurricane,
-> a frequency-only metric says "7.5% fewer storms" when actual damage
-> INCREASES 7-43% because storms are fiercer.
+> **The problem:** HCR currently counts how many more events cross a threshold.
+> It misses that each event may also be MORE INTENSE. For hurricane, a
+> frequency-only metric says "7.5% fewer" when actual damage INCREASES
+> 7-43%.
 
-> **The proposal:** Evolve from HCR (frequency-only) toward CIR
-> (Climate Impact Ratio) — the ratio of future-to-baseline expected
-> annual damage. This naturally captures both frequency and severity.
-
----
-
-## 1. The Gap: What HCR Misses
-
-### What Climate Change Does to Annual Loss
-
-```
-Annual_loss = how_often × how_bad_each_time
-            = frequency × severity_per_event
-
-Climate change can:
-  1. Change FREQUENCY (more/fewer events)        ← HCR captures this
-  2. Change SEVERITY (each event more/less bad)   ← HCR misses this
-  3. Change BOTH simultaneously
-  4. Change them in OPPOSITE directions           ← HCR gets this WRONG
-```
-
-### Where Frequency-Only Fails
-
-```
-HAZARD          HCR SAYS           ACTUAL DAMAGE IMPACT
-──────────────  ──────────────     ─────────────────────
-Hurricane       -7.5% (fewer)      +7% to +43% (fiercer storms,
-                                    damage scales as wind^3 to wind^9)
-
-Hail            -25% (fewer small)  LIKELY INCREASING (fewer small stones
-                                    but +15-75% more large ones, which
-                                    cause disproportionate damage)
-
-Wildfire        ~flat (count)       UP TO 6× (area burned per fire
-                                    increasing dramatically)
-
-Heat Wave       +150% (more)        +200-300% (events also HOTTER
-                                    and LONGER — cumulative heat doubles)
-```
-
-**For 4 of 10 canonical hazards, HCR tells the wrong financial story.**
+> **The proposal:** Keep the HCR name but redefine what it measures — from
+> "change in event count" to "change in expected annual damage." Then
+> connect it to the hazards repo's baseline BI to compute climate-driven
+> additional losses — with honest acknowledgment of where data exists,
+> where it doesn't, and what assumptions are required.
 
 ---
 
-## 2. How the Insurance Industry Handles This
+## 1. Important Definitions — BI vs EAL
 
-### They Don't Separate Frequency and Severity
-
-The CAT modeling industry (Verisk, RMS, Munich Re) computes
-**climate-adjusted Expected Annual Loss (AAL)** from the full future
-loss distribution — not "frequency × average severity."
+These are different things. Mixing them up leads to wrong formulas.
 
 ```
-AAL_future = ∫ loss × f_future(loss) d(loss)
+BI (Business Interruption):
+  Revenue lost because the plant could not produce during downtime.
+  Computed from: forced_outage_hours + (damage% × recovery_hours) × hourly_revenue
+  The hazards repo computes this for: Hail, Tornado, Strong Wind (3 hazards)
 
-The ratio AAL_future / AAL_baseline automatically captures BOTH
-frequency and severity changes because it integrates over the
-entire loss distribution.
+EAL (Expected Annual Loss):
+  TOTAL economic loss from a hazard — includes property damage, BI,
+  indirect costs, and everything else.
+  FEMA NRI computes this for: all 18 hazard types at county level.
+
+  EAL ≠ BI.
+  EAL includes BI but also includes property damage (often the larger part).
+  BI is a FRACTION of EAL.
+
+  For hail on solar: the panel replacement cost (property damage) may be
+  $200K. The lost revenue during 3-month repair (BI) may be $50K.
+  EAL ≈ $250K. BI ≈ $50K. BI/EAL ≈ 20%.
 ```
 
-This is the methodological template we should follow.
+**Throughout this doc, BI means BI and EAL means EAL. Never interchanged.**
+
+---
+
+## 2. What HCR Should Measure (Redefined)
+
+### Old Definition (frequency only)
+
+```
+HCR = (future_event_count - baseline_event_count) / baseline_event_count
+
+  "20% more heat wave days"
+  Step-function damage assumption: every event above threshold is equally bad.
+```
+
+### New Definition (expected damage ratio)
+
+```
+HCR = (future_expected_damage - baseline_expected_damage) / baseline_expected_damage
+
+  "20% more expected annual damage from heat"
+  Uses a realistic damage function D(intensity).
+  Captures BOTH more events AND worse events.
+```
+
+### Same Name, Same Structure
+
+```
+                    OLD HCR              NEW HCR
+                    ──────────           ──────────
+Name:               HCR                  HCR (unchanged)
+Structure:          Fractional change    Fractional change
+Captures frequency: YES                  YES
+Captures severity:  NO                   YES
+What it measures:   Event count change   Expected damage change
+```
+
+### Why Severity Matters
+
+```
+HAZARD          OLD HCR (freq)   WHAT OLD HCR MISSES         CORRECTED ESTIMATE
+Heat Wave       +20%             Events also hotter/longer   +30 to +50%
+Hurricane       -7.5%            Wind +5% → damage +16-55%  +7% to +43%
+Wildfire        ~0% (count flat) Area per fire up to 6×      +100 to +600%
+Hail            -25% (fewer)     Large stones +15-75%        0% to +50%?
+Riverine Flood  +3%              Intensity +7-14%/°C         +10 to +30%
+```
+
+For 4 of 10 canonical hazards, frequency-only HCR tells the wrong
+financial story. The redefined HCR fixes this.
+
+---
+
+## 3. How Redefined HCR Connects to BI — Three Scenarios
+
+The clean formula everyone wants is:
+
+```
+Additional_climate_BI = baseline_BI × HCR
+```
+
+But this requires TWO things for the SAME hazard:
+1. **baseline_BI** from the hazards repo (historical BI in $/yr)
+2. **HCR** from LTRisk (the climate change multiplier)
+
+For most hazards, we have ONE but not BOTH.
+
+### Scenario A: Both Exist (IDEAL — but currently NO hazard has this)
+
+```
+Hazards repo has baseline_BI + LTRisk has HCR for the SAME hazard.
+
+  Additional_BI = baseline_BI × HCR
+  future_BI = baseline_BI × (1 + HCR)
+
+  This is clean, defensible, and uses known inputs.
+  
+  CURRENT STATUS: No hazard has both pieces today.
+    - Hail/Tornado/Strong Wind: hazards repo has BI, but LTRisk CANNOT compute HCR
+    - Heat/Flood/Ice/Wildfire: LTRisk can compute HCR, but hazards repo has NO BI
+```
+
+### Scenario B: Hazards Repo Has BI, LTRisk Cannot Compute HCR
+
+```
+Hazards: Hail, Tornado, Strong Wind
+
+  We have: baseline_BI from hazards repo (computed, known)
+  We lack: HCR from LTRisk (CMIP6 cannot project these hazards)
+
+  What to report:
+    "Historical BI: $24K/yr (from 29 years of NOAA data)"
+    "Climate change projection: NOT AVAILABLE"
+    "Assume: historical frequency persists (HCR = 0)"
+    
+  future_BI = baseline_BI × (1 + 0) = baseline_BI
+  
+  This is honest. We report what we have and flag what we can't project.
+  
+  For hail: literature suggests damage LIKELY INCREASES (larger stones)
+  but we cannot quantify from CMIP6. Flag as directional estimate.
+```
+
+### Scenario C: LTRisk Has HCR, No Baseline BI Exists
+
+```
+Hazards: Heat Wave, Riverine Flood, Ice Storm, Wildfire, etc.
+
+  We have: HCR from LTRisk (climate change ratio, computed)
+  We lack: baseline_BI from hazards repo (not computed for these hazards)
+  We have: NRI EAL (total economic loss, not BI specifically)
+  
+  THREE OPTIONS:
+  
+  Option C1: Use NRI EAL as a proxy for BI
+    Additional_BI ≈ NRI_EAL × (BI_fraction) × HCR
+    
+    Requires: estimating what fraction of EAL is BI (not property damage)
+    Assumption: BI/EAL ratio is stable under climate change (LINEARITY)
+    Defensibility: WEAK — BI_fraction is unknown for most hazards
+    
+  Option C2: Develop BI methodology for these hazards in the hazards repo
+    Add forced_outage_hours and recovery_hours for heat wave, flood, etc.
+    Then: baseline_BI computed from NOAA events, just like hail/tornado/wind
+    This closes the gap and enables Scenario A.
+    Defensibility: STRONG — but requires hazards team work
+    
+  Option C3: Compute BI directly in LTRisk using damage functions
+    Define D(intensity) → BI for each hazard (e.g., heat derating curve)
+    Compute both baseline_BI AND future_BI from CMIP6 daily data
+    HCR = (future_BI - baseline_BI) / baseline_BI
+    Additional_BI = baseline_BI_from_LTRisk × HCR
+    Defensibility: MODERATE — self-consistent but not cross-validated
+    against historical NOAA data
+```
+
+### The Coverage Gap — Honest Table
+
+```
+HAZARD          HAS BASELINE BI?        HAS HCR?         CAN COMPUTE
+                (hazards repo)          (LTRisk)          Additional_BI?
+═══════════════ ═══════════════════     ═══════════════   ═══════════════
+Hail            YES (full BI calc)      NO (blocked)      NO (no HCR)
+Tornado         YES (full BI calc)      NO (blocked)      NO (no HCR)
+Strong Wind     YES (full BI calc)      ~0 (trivial)      YES (~$0)
+Heat Wave       NO                      YES               NO (no baseline BI)
+Riverine Flood  NO (NRI EAL only)       YES               PARTIAL (see C1-C3)
+Ice Storm       NO (NRI EAL only)       YES               PARTIAL
+Wildfire        NO (NRI EAL only)       YES               PARTIAL
+Hurricane       NO (NRI EAL only)       YES (published)   PARTIAL
+Coastal Flood   NO (NRI EAL only)       YES (SLR)         PARTIAL
+Winter Weather  NO (NRI EAL only)       YES               PARTIAL
+
+HONEST SUMMARY:
+  Clean Additional_BI (Scenario A):  0 out of 10 hazards
+  Baseline BI known but no HCR:     3 (hail, tornado, strong wind)
+  HCR computable but no baseline BI: 7 (heat, flood, ice, wildfire, etc.)
+
+  THE TWO PIPELINES COVER DIFFERENT HAZARDS.
+  The clean formula works when BOTH pieces exist for the same hazard.
+  Currently: they don't overlap.
+```
+
+---
+
+## 4. The Linearity Assumption
+
+If we use NRI EAL as a proxy for BI (Option C1), or if we apply a
+damage-level HCR to BI, we're assuming:
+
+```
+ASSUMPTION: BI changes proportionally to total damage.
+
+  If total damage increases 30%, BI also increases 30%.
+  This means: BI/EAL ratio stays constant under climate change.
+
+WHY THIS MAY NOT HOLD:
+
+  Heat wave:
+    BI component: shutdown hours (INCREASES with hotter events)
+    Property damage: near-zero (heat doesn't break panels)
+    → BI grows FASTER than EAL → linearity assumption UNDERESTIMATES BI change
+  
+  Hail:
+    BI component: recovery downtime (proportional to damage%)
+    Property damage: panel replacement cost (grows with stone size)
+    → Property damage may grow faster than BI → linearity OVERESTIMATES BI change
+  
+  Flood:
+    BI component: site inaccessibility (days, depends on depth)
+    Property damage: equipment submersion (depends on depth)
+    → Both grow together → linearity roughly holds
+  
+  Hurricane:
+    BI component: cleanup + repair downtime
+    Property damage: wind + surge structural damage
+    → Damage grows as V^3 to V^9, BI grows more linearly
+    → linearity OVERESTIMATES BI change
+
+DOCUMENTING THIS:
+  Gen.1: Apply HCR uniformly to BI, noting the linearity assumption.
+  Gen.2: Decompose HCR into frequency component and severity component,
+         apply the frequency ratio to BI directly (since each additional
+         event causes its own BI) and the severity ratio separately
+         (since severity affects property damage and BI differently).
+```
+
+---
+
+## 5. The Path to Closing the Gap
+
+### Short-Term: Expand Hazards Repo BI Coverage
+
+The most defensible path is to add BI computation to the hazards repo
+for the hazards LTRisk can project:
+
+```
+Add to hazards repo:
+  Heat Wave:      forced_outage_hours (from inverter specs),
+                  recovery_hours = 0 (no physical damage)
+  Riverine Flood: already has EAL, add BI decomposition
+  Ice Storm:      already has EAL + damage curve, add BI decomposition
+  Wildfire:       already has EAL, add BI decomposition
+
+Once hazards repo has baseline_BI for these:
+  Additional_BI = baseline_BI × HCR (Scenario A, clean)
+```
+
+### Medium-Term: Redefine HCR to Compute BI Directly
+
+For hazards where we have daily CMIP6 data, LTRisk can compute
+BI-specific damage functions:
+
+```
+For heat wave:
+  D_BI(tasmax) = lost_generation(tasmax) × hourly_revenue
+  
+  This gives baseline_BI AND future_BI from the same CMIP6 data.
+  HCR = (future_BI - baseline_BI) / baseline_BI
+  Additional_BI = baseline_BI × HCR
+  
+  Self-consistent: both baseline and delta come from the same framework.
+  Cross-validate against hazards repo BI when it becomes available.
+```
+
+### Long-Term: Full Pipeline Integration
+
+```
+For each canonical hazard:
+
+  1. Hazards repo provides: baseline_BI (historical, from NOAA events)
+  2. LTRisk provides: HCR (climate change damage ratio, captures freq+severity)
+  3. Combined: future_BI = baseline_BI × (1 + HCR)
+  4. Additional_climate_BI = baseline_BI × HCR
+  5. Feed into CFADS: subtract Additional_climate_BI from cash flow
+  
+  For hazards where LTRisk can't compute HCR (hail, tornado):
+    future_BI = baseline_BI (assume no climate change, document gap)
+  
+  For hazards where hazards repo doesn't have BI yet:
+    Option C2 (expand hazards repo) or C3 (compute BI in LTRisk)
+```
+
+---
+
+## 6. How HCR Is Computed (Redefined)
 
 ### The Damage Convolution
 
-The fundamental risk equation:
-
 ```
-Expected Annual Damage = ∫ P(intensity) × D(intensity) d(intensity)
+For each canonical hazard, with damage function D(intensity):
 
-Where:
-  P(intensity) = probability density of hazard intensity
-  D(intensity) = damage function (intensity → loss)
-
-When climate shifts P(intensity):
-  - More values exceed a threshold (frequency ↑)
-  - Values that exceed are further above (severity ↑)
-  - D(intensity) amplifies the severity change nonlinearly
-```
-
-### Why Damage Function Shape Matters
-
-```
-HURRICANE WIND DAMAGE:
-  D(V) ∝ V^n, where n = 3 to 9
-
-  If V increases 5%:
-    n=3 (engineering cube law):   damage increases 15.8%
-    n=9 (empirical, Mendelsohn): damage increases 55%
-
-  This is why "5% more wind" doesn't mean "5% more damage."
-  The damage function AMPLIFIES the severity change.
-  A frequency-only metric misses this entirely.
-```
-
----
-
-## 3. The Proposal: Climate Impact Ratio (CIR)
-
-### Definition
-
-```
-CIR(hazard, t) = E[annual_damage(hazard, t)] / E[annual_damage(hazard, baseline)]
-
-Where:
-  annual_damage(hazard, t) = Σ_days D(intensity(day))
-  D(intensity) = damage function mapping hazard intensity to loss
-
-  CIR > 1.0: climate change INCREASES expected damage
-  CIR < 1.0: climate change DECREASES expected damage
-  CIR = 1.0: no change
-```
-
-### CIR Decomposes Cleanly
-
-```
-CIR = frequency_ratio × severity_ratio
-
-Where:
-  frequency_ratio = N_future_events / N_baseline_events = (1 + HCR)
-  severity_ratio  = E[D | event, future] / E[D | event, baseline]
-
-This decomposition is exact. You can report both components
-for transparency while using CIR as the primary metric.
-```
-
-### CIR vs HCR Comparison
-
-```
-              HCR                         CIR
-              ─────────────               ─────────────
-Measures:     Threshold crossing count    Expected damage ratio
-Captures:     Frequency only              Frequency + severity
-Requires:     Threshold definition        Threshold + damage function
-Nonlinear     
-damage:       NO (step function)          YES (arbitrary D(intensity))
-Hurricane:    -7.5% (wrong story)         +7% to +43% (correct)
-Hail:         -25% (wrong story)          Likely positive (correct)
-Wildfire:     ~0% (wrong story)           +100-600% (correct)
-Heat wave:    +20% (understates)          +30-50% (better estimate)
-```
-
----
-
-## 4. What This Means for Each Canonical Hazard
-
-### Heat Wave — CIR > HCR
-
-```
-HCR says:  +20% (more events)
-CIR adds:  Each event is HOTTER and LONGER
-  - Peak temperature: +1:1 with mean warming
-  - Duration: increases super-linearly (1.5-2× rate of frequency)
-  - Cumulative heat: roughly doubles
+  annual_damage = Σ_days D(intensity(day))
   
-For solar BI:
-  D(tasmax) = derating_curve(tasmax) × hours_above_threshold
-  A hotter heat wave causes MORE derating for MORE hours
-  CIR ≈ 1.3-1.5 (vs HCR ≈ 1.2)
-
-Published: Kirchengast et al. 2026 — 10× increase in heat "extremity"
-  (a combined intensity-duration metric, not just frequency)
-```
-
-### Hurricane — CIR ≠ HCR direction
-
-```
-HCR says:  -7.5% (fewer storms — financial IMPROVEMENT?)
-CIR says:  +7% to +43% (fiercer storms — financial WORSENING)
-
-The damage function flips the story:
-  D(V) ∝ V^3 to V^9
-  Fewer storms × (much higher damage per storm) = more total damage
-
-Published: Mendelsohn et al. 2012 — climate change roughly DOUBLES
-  global TC damage despite frequency decrease
-Published: Knutson et al. 2020 — wind +5%, rain +14%, Cat4-5 +13%
-```
-
-### Hail — CIR captures the dichotomy
-
-```
-HCR says:  -25% (fewer events — financial IMPROVEMENT?)
-CIR says:  LIKELY POSITIVE (larger stones cause disproportionate damage)
-
-The "hailstone size dichotomy" (npj CAS 2024):
-  Small stones (<4cm): -25% frequency
-  Large stones (>4cm): +15-75% frequency
+  baseline_damage = mean across baseline years
+  future_damage   = mean across future years
   
-Since D(hail_diameter) is highly nonlinear (a 5cm stone shatters
-a panel that a 3cm stone merely dents), the increase in large stones
-more than compensates for the decrease in small stones.
-
-Published: Raupach et al. 2021 — severity increase in North America
+  HCR = (future_damage - baseline_damage) / baseline_damage
 ```
 
-### Wildfire — CIR >> HCR
+### Where Do Damage Functions Come From?
 
 ```
-HCR says:  ~0% (fire COUNT flat)
-CIR says:  +100-600% (area burned per fire dramatically increases)
+The hazards repo already has damage functions for most hazards:
 
-"The amount of land burned each year has increased as wildfires have
-grown larger, while the number of fires each year has remained fairly
-constant." — NOAA
+  Hail (solar):     Thirza et al. 2024 — hail diameter → loss ratio
+  Tornado:          Feuerstein et al. 2010 — wind speed → loss ratio
+  Strong Wind:      Unanwa et al. — wind speed → loss ratio
+  Ice Storm:        PNNL-33587 — ice accumulation → loss ratio
+  Wildfire:         First Street 2023 — flame length → loss ratio
+  Hurricane:        PNNL/Climada — wind speed → loss ratio
+  Riverine Flood:   HAZUS/JRC — flood depth → loss ratio
+  Winter Weather:   Ederen et al. 2024 — severity index → loss ratio
+  
+  IMPORTANT: These are TOTAL DAMAGE functions (property + BI + indirect).
+  They are NOT BI-specific damage functions.
+  
+  To compute HCR for BI specifically, we would need:
+    D_BI(intensity) = BI portion of total damage at that intensity
+    
+  Gen.1: Use total damage functions. Apply resulting HCR to BI.
+         Document the linearity assumption (Section 4).
+  Gen.2: Develop BI-specific damage functions per hazard.
 
-Abatzoglou & Williams 2016: anthropogenic warming nearly DOUBLED
-western US forest fire area 1984-2015.
-
-For infrastructure: a fire that burns 100 acres vs 10,000 acres
-has radically different financial impact, even if both are "one fire."
+  For heat wave: NO damage function exists in the hazards repo.
+    LTRisk can define D_BI(tasmax) from inverter derating/shutdown curves.
+    This is BI-specific by nature (heat doesn't cause property damage).
 ```
 
-### Riverine Flood — CIR amplifies HCR
+### Implementation Phases
 
 ```
-HCR says:  +2.6% (based on Rx5day counting)
-CIR adds:  Each flood event is MORE intense (super-Clausius-Clapeyron)
-  - Extreme rainfall: +7-14%/°C
-  - Flood damage: nonlinear in depth (USACE depth-damage curves)
-  - A 10% increase in rainfall depth can mean 30%+ increase in damage
+PHASE 1 — Diagnostic (zero code change):
+  Alongside current HCR (event count), compute from daily data:
+    Mean Excess: E[X - T | X > T] baseline vs future
+    "Events are 2.3°C hotter above the threshold on average"
+  Report both for comparison. Does not replace HCR yet.
 
-CIR ≈ 1.1-1.3 (vs HCR ≈ 1.03)
-```
+PHASE 2 — Redefined HCR:
+  Apply D(intensity) to daily data:
+    HCR = (mean future_damage - mean baseline_damage) / mean baseline_damage
+  Uses hazards repo damage functions where available.
+  Defines new D_BI(tasmax) for heat wave.
 
-### Ice Storm — CIR ≈ HCR (decreasing)
-
-```
-HCR says:  -44.5% (fewer icing events)
-CIR says:  ~-40-50% (severity per event unclear, but frequency dominates)
-
-This is a case where frequency-only is probably adequate — 
-the financial story is "fewer icing events = benefit."
-```
-
----
-
-## 5. Implementation Path
-
-### Phase 1 — Minimal Change, Maximum Insight
-
-**Add two severity diagnostics alongside existing HCR.** Zero architecture
-change. Same Pathway B loop, just compute two extra numbers:
-
-```
-For each hazard, in addition to counting threshold exceedances:
-
-  1. MEAN EXCESS ABOVE THRESHOLD
-     E[X - T | X > T] for baseline vs future
-     = "how far above the threshold are events, on average?"
-     = the severity component
-
-  2. EXPECTED EXCESS
-     E[max(0, X - T)] for baseline vs future
-     = frequency × mean_excess
-     = combined frequency + severity metric
-     = CIR with a LINEAR damage function above threshold
-
-These require ZERO additional data — computed from the same
-daily values already being processed in Pathway B.
-```
-
-**What this gives us:** For heat wave, instead of just "+20% more events,"
-we can say "+20% more events AND each event exceeds the threshold by 15%
-more on average, giving +38% expected excess above threshold."
-
-### Phase 2 — CIR with Damage Functions
-
-```
-For each canonical hazard, define D(intensity):
-  Heat wave:   D(tasmax) = derating_loss_curve(tasmax)
-  Flood:       D(precip) = depth_damage_curve(precip)
-  Wind:        D(sfcWind) = wind_damage_cube_law(sfcWind)
-  Wildfire:    D(FWI) = P(fire|FWI) × E[damage|fire]
-  Hurricane:   D(V) = V^3 × exposure (from Knutson/Mendelsohn)
-
-Compute CIR from daily data:
-  CIR = mean(Σ_days D(intensity_future)) / mean(Σ_days D(intensity_baseline))
-```
-
-### Phase 3 — Full Integration
-
-```
-Replace HCR in the financial model:
-  BEFORE: BI_loss = HCR × baseline_BI_pct × Revenue
-  AFTER:  BI_loss = (CIR - 1) × baseline_EAL
-
-Where baseline_EAL comes from the hazards repo.
-This ALSO resolves the baseline_BI_pct calibration problem —
-the damage function replaces the empirical percentage.
+PHASE 3 — Full pipeline:
+  Additional_climate_BI(hazard, t) = baseline_BI(hazard) × HCR(hazard, t)
+  baseline_BI from hazards repo (expanded to cover all 10 hazards)
+  HCR from LTRisk (redefined, captures freq + severity)
 ```
 
 ---
 
-## 6. Naming
-
-The insurance industry uses several terms:
+## 7. The Complete CFADS Formula (Honest Version)
 
 ```
-OPTION                      USED BY                    NOTES
-──────────────────────      ─────────────              ──────
-Climate Adjustment Factor   Verisk, RMS                Industry standard
-Climate Change Factor       CAT modeling literature    Same concept
-Climate Expected Loss       Munich Re                  Product name
-Climate Impact Ratio        Proposed (this doc)        More intuitive
+CFADS_adjusted(t) = Revenue(t) × (1 - EFR(t))
+                    - baseline_BI_total
+                    - Σ_hazards [baseline_BI_h × HCR_h(t)]
+                    - OpEx(t)
 
-RECOMMENDATION:
-  Use "Climate Adjustment Factor (CAF)" externally (industry recognises it)
-  Use "CIR" internally (more descriptive of what we compute)
-  The math is the same: future_EAL / baseline_EAL
-```
+Where:
+  Revenue(t) × (1 - EFR(t))     = generation adjusted for climate degradation
+  baseline_BI_total               = sum of historical BI from hazards repo
+  baseline_BI_h × HCR_h(t)       = ADDITIONAL climate-driven BI per hazard
+  OpEx(t)                         = operating expenses
 
----
+CURRENTLY AVAILABLE:
+  Revenue(t):        Known (from asset model)
+  EFR(t):            Computed (NB04b — Peck's + Coffin-Manson)
+  OpEx(t):           Known (from financial model)
+  
+  baseline_BI_total: PARTIALLY known
+    Hail + Tornado + Strong Wind: computed by hazards repo
+    Heat + Flood + others: NOT YET COMPUTED (gap)
+  
+  HCR_h(t):          PARTIALLY computable
+    Heat + Flood + Ice + Wildfire: from CMIP6 (LTRisk can do)
+    Hail + Tornado: BLOCKED (can't project from CMIP6)
+    Hurricane + Coastal Flood: from published external data
 
-## 7. What This Means for the Top-Down Reframe
-
-The top-down reframe (hcr_top_down_reframe.md) asked: "for each canonical
-hazard, what can LTRisk say about future frequency?" The CIR evolution
-makes this better: "for each canonical hazard, what can LTRisk say about
-future expected damage?"
-
-```
-UPDATED SUMMARY:
-
-HAZARD          FREQ CHANGE   SEVERITY CHANGE    CIR ESTIMATE   CONFIDENCE
-Heat Wave       ↑↑ +150%      ↑ hotter, longer   1.3-1.5×       HIGH
-Wildfire        → flat        ↑↑ area 2-6×       2.0-7.0×       MOD-HIGH
-Riverine Flood  ↑ +7%/°C      ↑ intensity +7-14% 1.1-1.3×       MODERATE
-Hurricane       ↓ -7.5%       ↑↑ wind^3 to wind^9 1.1-1.4×      MODERATE
-Hail            ↓ -25%(small) ↑ large stones      1.0-1.5×?      LOW
-Ice Storm       ↓↓ -40-50%    ? unclear            0.5-0.6×       MODERATE
-Winter Weather  ↓ decreasing  ? may intensify      0.5-0.8×       LOW-MOD
-Coastal Flood   ↑↑↑ exponential ↑ SLR compound    10-1000×       HIGH
-Strong Wind     → flat        → flat               1.0×           MOD
-Tornado         ? uncertain   ? may increase        ?              LOW
+  → The formula is complete IN STRUCTURE.
+  → The data to fill it is PARTIALLY available.
+  → Closing the gap requires expanding hazards repo BI coverage
+    OR computing baseline BI within LTRisk.
 ```
 
 ---
 
-## 8. Open Questions
+## 8. What About EFR?
 
-1. **Damage functions:** Where do they come from? The hazards repo already
-   has some (Thirza for hail, HAZUS for flood, Unanwa for wind). Can we
-   reuse those? They were designed for physical damage, not BI — is that
-   the right D(intensity) for our purpose?
+EFR stays exactly as-is. Unchanged by the HCR redefinition.
 
-2. **Phase 1 vs Phase 2 priority:** Phase 1 (mean excess above threshold)
-   requires zero code changes but gives a crude severity estimate. Phase 2
-   (full CIR with damage functions) is more accurate but needs D(intensity)
-   per hazard. Which first?
+```
+HCR (redefined):  Change in expected DAMAGE from hazard EVENTS
+  Mechanism:      Events cause operational shutdown/curtailment
+  Financial:      Additional_BI = baseline_BI × HCR
 
-3. **How does CIR connect to the hazards repo's EAL?** If the hazards repo
-   computes baseline_EAL and LTRisk computes CIR, then
-   `future_EAL = baseline_EAL × CIR`. This is the pipeline complementarity
-   we've been trying to achieve. Does it work cleanly?
+EFR (unchanged):  Acceleration of equipment DEGRADATION rate
+  Mechanism:      Continuous climate stress ages equipment faster
+  Financial:      climate_degrad = EFR × std_degrad × t + IUL truncation
 
-4. **EFR vs CIR boundary:** CIR captures BI-related damage changes. EFR
-   captures degradation-related damage. Do they overlap? For heat wave:
-   CIR captures the shutdown/derating BI, EFR (Peck's) captures the
-   long-term aging. They're still separate mechanisms.
+THEY DON'T OVERLAP:
+  HCR: "the plant was shut down for 4 hours during a heat event"
+  EFR: "the panels aged 11% faster this year from sustained heat"
+  
+  One is about discrete EVENTS (temporary).
+  The other is about continuous STRESS (permanent).
+```
 
-5. **Naming convention:** Use CIR internally and CAF externally? Or just
-   pick one? The hazards team may prefer "Climate Adjustment Factor" since
-   it's industry standard.
+---
+
+## 9. Open Questions
+
+1. **Heat wave baseline BI:** Neither pipeline computes it today. Should the
+   hazards repo add forced_outage_hours for heat (Option C2)? Or should
+   LTRisk define D_BI(tasmax) independently (Option C3)?
+
+2. **Linearity assumption tolerance:** How wrong is the assumption that
+   BI ∝ total damage? For heat wave, it may dramatically UNDERESTIMATE
+   BI change (since heat BI is mostly shutdown hours, not property damage).
+   For hail, it may OVERESTIMATE. Is this acceptable for Gen.1?
+
+3. **BI-specific damage functions:** Do we need D_BI(intensity) separate
+   from D_total(intensity)? For Gen.1, probably not — the linearity
+   assumption is documented. For Gen.2, yes — especially for heat wave.
+
+4. **Phase 1 timing:** Adding Mean Excess diagnostic requires zero code
+   change. Should we do this immediately in NB04a?
+
+5. **The non-overlap problem:** The two pipelines cover different hazards.
+   The clean formula only works when both pieces (baseline_BI + HCR) exist
+   for the same hazard. What's the fastest path to overlap?
+   a) Expand hazards repo to cover heat/flood/ice BI
+   b) Use NRI EAL proxy with linearity assumption
+   c) Compute baseline_BI in LTRisk from CMIP6 historical data
 
 ---
 
@@ -396,16 +480,14 @@ Tornado         ? uncertain   ? may increase        ?              LOW
 
 | Paper | Finding | DOI |
 |-------|---------|-----|
-| Mendelsohn et al. 2012 | TC damage scales V^9; climate doubles damage | [doi:10.1038/nclimate1357](https://doi.org/10.1038/nclimate1357) |
+| Mendelsohn et al. 2012 | Hurricane damage scales V^3 to V^9 | [doi:10.1038/nclimate1357](https://doi.org/10.1038/nclimate1357) |
 | Prahl et al. 2016 | Damage function framework for climate hazards | [doi:10.5194/nhess-16-1189-2016](https://doi.org/10.5194/nhess-16-1189-2016) |
+| Knutson et al. 2020 | Hurricane: fewer but fiercer | [doi:10.1175/BAMS-D-18-0194.1](https://doi.org/10.1175/BAMS-D-18-0194.1) |
 | WTW 2023 | Freq-severity adjustments underestimate tail risk | [wtwco.com](https://www.wtwco.com/en-us/insights/2023/06/why-relying-on-frequency-severity-adjustments-could-underestimate-your-tail-risk-from-climate-change) |
-| Swiss Re sigma 2025 | NatCat losses: both frequency AND severity rising | [swissre.com](https://www.swissre.com/institute/research/sigma-research/sigma-2025-01-natural-catastrophes-trend.html) |
-| Knutson et al. 2020 | Hurricane: fewer but fiercer consensus | [doi:10.1175/BAMS-D-18-0194.1](https://doi.org/10.1175/BAMS-D-18-0194.1) |
+| Swiss Re sigma 2025 | NatCat: both frequency AND severity rising | [swissre.com](https://www.swissre.com/institute/research/sigma-research/sigma-2025-01-natural-catastrophes-trend.html) |
 | npj CAS 2024 | Hailstone size dichotomy | [doi:10.1038/s41612-024-00728-9](https://doi.org/10.1038/s41612-024-00728-9) |
-| Abatzoglou & Williams 2016 | Wildfire area doubled under warming | [doi:10.1073/pnas.1607171113](https://doi.org/10.1073/pnas.1607171113) |
+| Abatzoglou & Williams 2016 | Wildfire area doubled | [doi:10.1073/pnas.1607171113](https://doi.org/10.1073/pnas.1607171113) |
 | Hsiang et al. 2017 | US climate damage functions by sector | [doi:10.1126/science.aal4369](https://doi.org/10.1126/science.aal4369) |
-| Kirchengast et al. 2026 | 10× heat extremity (intensity × duration) | [doi:10.1016/j.wace.2026.100855](https://doi.org/10.1016/j.wace.2026.100855) |
-| Nature Geoscience 2025 | Super-Clausius-Clapeyron for extreme precip | [doi:10.1038/s41561-025-01686-4](https://doi.org/10.1038/s41561-025-01686-4) |
 
 ## Cross-References
 
@@ -413,6 +495,6 @@ Tornado         ? uncertain   ? may increase        ?              LOW
 |-------|-----|
 | Top-down canonical hazard reframe | [hcr_top_down_reframe.md](hcr_top_down_reframe.md) |
 | Pipeline complementarity | [pipeline_complementarity.md](../architecture/pipeline_complementarity.md) |
-| Published scaling defensibility | [pathway_defensibility.md](pathway_defensibility.md) |
 | BI methodology foundations | [01_what_is_bi.md](../bi_methodology/01_what_is_bi.md) |
 | HCR methodology (current) | [07_hcr_hazard_change.md](../../learning/C_financial_translation/07_hcr_hazard_change.md) |
+| EFR methodology (unchanged) | [08_efr_equipment_degradation.md](../../learning/C_financial_translation/08_efr_equipment_degradation.md) |
