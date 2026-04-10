@@ -185,6 +185,26 @@ strong_wind             MOOT               N/A               Keep ~0%
                         HCR ≈ 0            (no signal)         
 ```
 
+### What Severity Depends On
+
+The severity ratio is NOT a fixed physical constant. It depends on:
+
+1. **Threshold definition** — higher thresholds measure deeper into
+   the tail, where severity ratios are larger. Per-DOY P90 gives ~1.48
+   for heat wave; P95 might give ~1.71. This is the same threshold
+   subjectivity problem as frequency counting.
+
+2. **Data quality** — daily CMIP6 resolution (not hourly) may
+   underestimate sub-daily peaks. Grid smoothing (0.25°) may miss
+   local extremes. More models improve the ensemble mean.
+
+The current estimate (1.48 for heat wave) is our best from 20 CMIP6
+models at per-DOY P90. It will refine as methods improve:
+- **Gen.2:** Decade-varying severity + threshold sensitivity analysis
+- **Gen.3:** Full damage function integration (no separate ratio needed)
+
+See [severity_sensitivity.md](../../discussion/hcr_financial/severity_sensitivity.md) for the full analysis including sensitivity tests.
+
 ---
 
 ## 2. The 10 Canonical Hazards
