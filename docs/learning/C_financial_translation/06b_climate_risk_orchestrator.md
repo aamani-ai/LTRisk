@@ -185,19 +185,37 @@ severity treatment, and whether baseline BI exists for the dollar conversion.
 
 ### The Routing Matrix
 
-| Canonical Hazard | HCR Computable? | Computation Method | Severity | HCR Estimate (SSP585) | Baseline BI? | Additional_BI? |
-|---|---|---|---|---|---|---|
-| **Heat Wave** | YES | Published scaling (2.5×, Diffenbaugh 2017) | RANGE: sev=1.48 (+48%). Published scaling may embed severity. Report +20% to +34% | +20% (freq) to +34% (×sev) | NO (NRI EAL only) | NO — missing baseline BI |
-| **Riverine Flood** (daily P95) | YES | Direct counting | YES: sev=1.07. Frequency counting misses severity — add it | +12.5% (combined) | NO (NRI EAL only) | PARTIAL (NRI proxy) |
-| **Riverine Flood** (Rx5day) | YES | Direct counting (mm) | ALREADY CAPTURED — measures intensity not count | +2.6% | NO (NRI EAL only) | PARTIAL |
-| **Strong Wind** | YES (~0) | Published scaling (1.0×) | MOOT — HCR ≈ 0 | ~0% | YES (full BI) | YES but ≈ $0 |
-| **Ice Storm** | YES | Direct counting (compound) | NO — compound threshold, severity ambiguous | -44.5% (benefit) | NO (NRI EAL only) | PARTIAL |
-| **Wildfire** | YES | Direct counting (FWI) | TBD — FWI is composite | TBD (risk indicator) | NO (NRI EAL only) | PARTIAL |
-| **Hurricane** | YES (published) | Published consensus (Knutson 2020) | PARTIALLY — freq down, intensity up, combined +7-43% | +7% to +43% | NO (NRI EAL only) | PARTIAL |
-| **Coastal Flood** | YES (SLR) | Published SLR × amplification | YES — SLR captures both | 10-1000× | NO (NRI EAL only) | PARTIAL |
-| **Winter Weather** | YES | Direct counting (compound) | TBD | Decreasing | NO (NRI EAL only) | PARTIAL |
-| **Hail** | **BLOCKED** | Needs CAPE, shear — not in CMIP6 | N/A | N/A | YES (full BI, Thirza curve) | NO — missing HCR |
-| **Tornado** | **BLOCKED** | Needs upper-air data | N/A | N/A | YES (full BI, Feuerstein curve) | NO — missing HCR |
+**Part A — HCR Computation: What can LTRisk project for each hazard?**
+
+| Canonical Hazard | CMIP6 Variables | Threshold / Proxy | Method | Severity | HCR (SSP585) |
+|---|---|---|---|---|---|
+| **Heat Wave** | tasmax, tasmin | Compound: 3+ consec. days, both > per-DOY P90 | Published scaling (2.5×, Diffenbaugh 2017) | RANGE: sev=1.48. Published may embed severity | +20% to +34% |
+| **Riverine Flood** (daily) | pr | Daily pr > P95 wet-day threshold | Direct counting | YES: sev=1.07. Combined freq×sev | +12.5% |
+| **Riverine Flood** (Rx5day) | pr | Max rolling 5-day sum (mm) | Direct counting | ALREADY CAPTURED (measures intensity) | +2.6% |
+| **Strong Wind** | sfcWind | Daily mean > 15 m/s (poor — not gusts) | Published scaling (1.0×) | MOOT — HCR ≈ 0 | ~0% |
+| **Ice Storm** | tasmin, tasmax, pr, hurs | Compound: tasmin<0, tasmax>0, pr>0.5mm, hurs>85% | Direct counting | NO — compound, severity ambiguous | -44.5% (benefit) |
+| **Wildfire** | tasmax, hurs, sfcWind, pr | FWI proxy: 0.3×T + 0.3×(1-H) + 0.2×W + 0.2×(1-P) | Direct counting (FWI P90) | TBD — composite index | Risk indicator |
+| **Hurricane** | — (not in NEX-GDDP) | Needs SST, ocean dynamics | Published (Knutson 2020) | PARTIALLY — "fewer but fiercer" | +7% to +43% |
+| **Coastal Flood** | — (not in NEX-GDDP) | Needs SLR + surge models | Published (SLR × amplification) | YES — exponential with SLR | 10-1000× |
+| **Winter Weather** | tasmin, pr | Compound: pr > threshold AND tasmin < 0°C | Direct counting | TBD | Decreasing |
+| **Hail** | — (not in NEX-GDDP) | Needs CAPE, wind shear, freezing level | **BLOCKED** | N/A | N/A |
+| **Tornado** | — (not in NEX-GDDP) | Needs CAPE, SRH, upper-air profiles | **BLOCKED** | N/A | N/A |
+| **Drought / Dry Spell** | pr | Max consecutive days pr < 1mm | Direct counting | TBD | Risk indicator |
+
+**Part B — Baseline BI: What does the hazards repo have?**
+
+| Canonical Hazard | Hazards Repo BI? | Damage Curve | Baseline BI Source | Can Compute Additional_BI? |
+|---|---|---|---|---|
+| Heat Wave | NO | None (gap) | NRI EAL only | NO — missing baseline BI |
+| Riverine Flood | NO | HAZUS flood depth | NRI EAL only | PARTIAL (NRI proxy + linearity) |
+| Strong Wind | YES | Unanwa sustained wind | NOAA events + forced/recovery hours | YES but ≈ $0 (HCR ≈ 0) |
+| Ice Storm | NO | PNNL ice accumulation | NRI EAL only | PARTIAL |
+| Wildfire | NO | FSF flame length | NRI EAL only | PARTIAL |
+| Hurricane | NO | PNNL/Climada wind speed | NRI EAL only | PARTIAL |
+| Coastal Flood | NO | HAZUS flood depth | NRI EAL only | PARTIAL |
+| Winter Weather | NO | Ederen severity index | NRI EAL only | PARTIAL |
+| Hail | YES | Thirza hail diameter | NOAA events + forced/recovery hours | NO — missing HCR |
+| Tornado | YES | Feuerstein wind speed | NOAA events + forced/recovery hours | NO — missing HCR |
 
 **EFR (Equipment Degradation) — separate channel, not event-driven:**
 
@@ -399,74 +417,38 @@ INPUT: Which pipeline(s) cover this hazard?
 
 ### Hayhurst Solar (24.8 MW, West Texas)
 
-```
-HAZARD               │ Priority │ LTRisk    │ Haz. Repo │ Combined  │ Notes
-                     │ (fin.)   │ Coverage  │ Coverage  │           │
-═════════════════════╪══════════╪═══════════╪═══════════╪═══════════╪══════════════════
-Thermal aging        │ #1       │ ██████████│ ░░░░░░░░░░│ LTRisk    │ Peck's from SCVR
-(Peck's)             │          │ FULL      │ N/A       │ only      │ ~$5M NAV impact
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Hail                 │ #2       │ ░░░░░░░░░░│ ██████████│ Haz. repo │ NOAA events +
-                     │          │ GAP       │ FULL      │ only      │ Thirza dmg curve
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Heat wave            │ #3       │ ██████████│ █████░░░░░│ BOTH      │ Cross-validate:
-(BI shutdown)        │          │ FULL      │ NRI EAL   │           │ LTRisk HCR vs
-                     │          │           │           │           │ NOAA trend
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Riverine flood       │ #4       │ █████░░░░░│ ██████████│ BOTH      │ LTRisk: pr Rx5day
-                     │          │ PARTIAL   │ FULL      │           │ Haz repo: HAZUS
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Wildfire             │ #5       │ ███░░░░░░░│ ██████████│ BOTH      │ LTRisk: FWI proxy
-                     │          │ PROXY     │ FULL      │ (compl.)  │ Haz repo: FSF
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Freeze-thaw          │ #6       │ ██████████│ ░░░░░░░░░░│ LTRisk    │ Coffin-Manson
-(Coffin-Manson)      │          │ FULL      │ N/A       │ only      │ Mode B counts
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Tornado              │ #7       │ ░░░░░░░░░░│ ██████████│ Haz. repo │ NOAA + Feuerstein
-                     │          │ GAP       │ FULL      │ only      │ dmg curve
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Strong wind          │ #8       │ ██░░░░░░░░│ ██████████│ BOTH      │ LTRisk: poor proxy
-                     │          │ PROXY     │ FULL      │ (haz dom.)│ Haz repo: NOAA
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Winter weather       │ #9       │ █████░░░░░│ █████░░░░░│ BOTH      │ LTRisk: frost/ice
-                     │          │ PARTIAL   │ NRI EAL   │ (partial) │ proxy. Haz: NRI
-─────────────────────┼──────────┼───────────┼───────────┼───────────┼──────────────────
-Hurricane            │ #10      │ ░░░░░░░░░░│ ██████████│ Haz. repo │ Inland TX: low
-                     │          │ GAP       │ FULL      │ only      │ but non-zero
-═════════════════════╧══════════╧═══════════╧═══════════╧═══════════╧══════════════════
+| Hazard | Priority | LTRisk | Haz. Repo | Combined | Notes |
+|---|---|---|---|---|---|
+| Thermal aging (Peck's) | #1 | FULL | N/A | LTRisk only | EFR ≈ +15.6%, ~$5M NAV impact |
+| Hail | #2 | GAP | FULL (Thirza) | Haz. repo only | #1 financial risk for solar |
+| Heat wave (BI) | #3 | FULL | NRI EAL | BOTH | HCR +20-34%, cross-validate vs NOAA |
+| Riverine flood | #4 | PARTIAL | FULL (HAZUS) | BOTH | LTRisk: Rx5day. Haz repo: depth |
+| Wildfire | #5 | PROXY (FWI) | FULL (FSF) | BOTH | LTRisk: FWI proxy. Haz repo: NOAA |
+| Freeze-thaw (C-M) | #6 | FULL | N/A | LTRisk only | EFR via Mode B cycle counts |
+| Tornado | #7 | GAP | FULL (Feuerstein) | Haz. repo only | NOAA events + damage curve |
+| Strong wind | #8 | PROXY | FULL (Unanwa) | BOTH (haz dom.) | LTRisk: poor proxy (daily mean) |
+| Winter weather | #9 | PARTIAL | NRI EAL | BOTH (partial) | LTRisk: frost/ice proxy |
+| Hurricane | #10 | GAP | FULL (PNNL) | Haz. repo only | Inland TX: low but non-zero |
 
-COVERAGE SUMMARY:
-  LTRisk FULL:       3/10 hazards (thermal aging, heat wave BI, freeze-thaw)
-  LTRisk PARTIAL:    2/10 (flood, winter weather)
-  LTRisk PROXY:      2/10 (wildfire, strong wind)
-  LTRisk GAP:        3/10 (hail, tornado, hurricane — covered by hazards repo)
-
-  Hazards Repo FULL: 7/10 (hail, tornado, strong wind, wildfire, hurricane,
-                           flood, winter weather)
-
-  COMBINED COVERAGE: 9/10 hazards have at least one pipeline quantifying them
-  REMAINING GAP:     Coastal flood (inland site — low priority)
-                     Lightning (planned)
-```
+**Coverage summary:**
+- LTRisk FULL: 3/10 (thermal aging, heat wave, freeze-thaw)
+- LTRisk PARTIAL: 2/10 (flood, winter weather)
+- LTRisk PROXY: 2/10 (wildfire, strong wind)
+- LTRisk GAP: 3/10 (hail, tornado, hurricane — covered by hazards repo)
+- Hazards Repo FULL: 7/10
+- COMBINED: 9/10 hazards covered by at least one pipeline
+- REMAINING GAP: Coastal flood (inland site — low priority), Lightning (planned)
 
 ### Maverick Wind (491.6 MW, Central Texas)
 
-```
-HAZARD               │ Priority │ LTRisk    │ Haz. Repo │ Combined
-═════════════════════╪══════════╪═══════════╪═══════════╪══════════
-Icing shutdown (BI)  │ #1       │ █████░░░░░│ █████░░░░░│ BOTH
-                     │          │ PROXY     │ NRI       │ (partial)
-Wind fatigue (P-M)   │ #2       │ ██████████│ ░░░░░░░░░░│ LTRisk
-                     │          │ FULL(≈0)  │ N/A       │ only
-Hail (blade erosion) │ #3       │ ░░░░░░░░░░│ ██████████│ Haz. repo
-                     │          │ GAP       │ FULL      │ only
-Strong wind          │ #4       │ ██░░░░░░░░│ ██████████│ Haz. repo
-                     │          │ PROXY     │ FULL      │ dominant
-Tornado              │ #5       │ ░░░░░░░░░░│ ██████████│ Haz. repo
-                     │          │ GAP       │ FULL      │ only
-Heat (nacelle)       │ #6       │ █████░░░░░│ █████░░░░░│ BOTH
-                     │          │ PARTIAL   │ NRI       │ (partial)
-```
+| Hazard | Priority | LTRisk | Haz. Repo | Combined |
+|---|---|---|---|---|
+| Icing shutdown (BI) | #1 | PROXY | NRI | BOTH (partial) |
+| Wind fatigue (P-M) | #2 | FULL (≈0) | N/A | LTRisk only |
+| Hail (blade erosion) | #3 | GAP | FULL | Haz. repo only |
+| Strong wind | #4 | PROXY | FULL | Haz. repo dominant |
+| Tornado | #5 | GAP | FULL | Haz. repo only |
+| Heat (nacelle) | #6 | PARTIAL | NRI | BOTH (partial) |
 
 ---
 
