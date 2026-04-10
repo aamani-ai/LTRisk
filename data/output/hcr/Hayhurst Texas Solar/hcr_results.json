@@ -1,6 +1,6 @@
 {
   "site_id": "Hayhurst Texas Solar",
-  "generated": "2026-04-10T07:33:36.689175",
+  "generated": "2026-04-10T07:59:18.157329",
   "baseline_years": [
     1985,
     2014
@@ -11,8 +11,22 @@
   ],
   "n_models": 20,
   "classification": "Canonical hazards from InfraSure hazards repo",
-  "routing": "Published scaling where available; direct computation where necessary",
-  "bi_note": "Additional_BI = baseline_BI \u00d7 HCR. Assumes BI \u221d damage (linearity). See hcr_redefined_freq_severity.md \u00a74.",
+  "hcr_definition": "HCR = frequency_ratio \u00d7 severity_ratio - 1 (expected shortfall decomposition)",
+  "severity_integration": {
+    "method": "E[excess] = frequency \u00d7 mean_excess (exact identity)",
+    "applied_to": [
+      "riverine_flood_daily"
+    ],
+    "range_reported": [
+      "heat_wave (published scaling may embed severity)"
+    ],
+    "not_applied": [
+      "riverine_flood_rx5day (already measures intensity)",
+      "ice_storm (compound threshold)",
+      "strong_wind (HCR \u2248 0)"
+    ]
+  },
+  "bi_note": "Additional_BI = baseline_BI \u00d7 HCR. Use hcr_combined where severity is integrated. For heat_wave: report range (hcr_freq to hcr_combined).",
   "hazard_config": {
     "heat_wave": {
       "canonical_name": "Heat Wave",
@@ -63,40 +77,42 @@
     "heat_wave": {
       "ssp245": {
         "canonical_name": "Heat Wave",
-        "mean_hcr": 0.172242,
-        "min_hcr": 0.117947,
-        "max_hcr": 0.226538,
         "computation": "published_scaling",
+        "mean_hcr_freq": 0.172242,
+        "mean_severity_ratio": 1.4094,
+        "mean_hcr_combined": 0.652164,
         "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017",
-        "scaling_factor": 2.5
+        "scaling_factor": 2.5,
+        "severity_note": "CAUTION: Published scaling may already embed severity. hcr_combined may double-count. Report as range: hcr_freq=+0.1722 to hcr_combined=+0.6522"
       },
       "ssp585": {
         "canonical_name": "Heat Wave",
-        "mean_hcr": 0.199702,
-        "min_hcr": 0.113559,
-        "max_hcr": 0.285845,
         "computation": "published_scaling",
+        "mean_hcr_freq": 0.199702,
+        "mean_severity_ratio": 1.4788,
+        "mean_hcr_combined": 0.774156,
         "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017",
-        "scaling_factor": 2.5
+        "scaling_factor": 2.5,
+        "severity_note": "CAUTION: Published scaling may already embed severity. hcr_combined may double-count. Report as range: hcr_freq=+0.1997 to hcr_combined=+0.7742"
       }
     },
     "ice_storm": {
       "ssp245": {
         "canonical_name": "Ice Storm",
-        "mean_hcr": -0.396226,
-        "min_hcr": -0.413814,
-        "max_hcr": -0.378639,
         "computation": "direct_counting",
+        "mean_hcr_freq": -0.396226,
+        "mean_severity_ratio": 1.0,
+        "mean_hcr_combined": -0.396226,
         "baseline_annual_rate": 0.62,
         "future_annual_rate": 0.37,
         "rate_unit": "days/yr"
       },
       "ssp585": {
         "canonical_name": "Ice Storm",
-        "mean_hcr": -0.444744,
-        "min_hcr": -0.69097,
-        "max_hcr": -0.198518,
         "computation": "direct_counting",
+        "mean_hcr_freq": -0.444744,
+        "mean_severity_ratio": 1.0,
+        "mean_hcr_combined": -0.444744,
         "baseline_annual_rate": 0.62,
         "future_annual_rate": 0.34,
         "rate_unit": "days/yr"
@@ -105,20 +121,20 @@
     "riverine_flood_daily": {
       "ssp245": {
         "canonical_name": "Riverine Flood",
-        "mean_hcr": 0.025342,
-        "min_hcr": -0.001473,
-        "max_hcr": 0.052158,
         "computation": "direct_counting",
+        "mean_hcr_freq": 0.025342,
+        "mean_severity_ratio": 1.0329,
+        "mean_hcr_combined": 0.059059,
         "baseline_annual_rate": 2.43,
         "future_annual_rate": 2.49,
         "rate_unit": "days/yr"
       },
       "ssp585": {
         "canonical_name": "Riverine Flood",
-        "mean_hcr": 0.055479,
-        "min_hcr": 0.031644,
-        "max_hcr": 0.079315,
         "computation": "direct_counting",
+        "mean_hcr_freq": 0.055479,
+        "mean_severity_ratio": 1.0658,
+        "mean_hcr_combined": 0.124925,
         "baseline_annual_rate": 2.43,
         "future_annual_rate": 2.57,
         "rate_unit": "days/yr"
@@ -127,20 +143,20 @@
     "riverine_flood_rx5day": {
       "ssp245": {
         "canonical_name": "Riverine Flood",
-        "mean_hcr": 0.008272,
-        "min_hcr": -0.012236,
-        "max_hcr": 0.02878,
         "computation": "direct_counting",
+        "mean_hcr_freq": 0.008272,
+        "mean_severity_ratio": 1.0,
+        "mean_hcr_combined": 0.008272,
         "baseline_annual_rate": 60.16,
         "future_annual_rate": 60.65,
         "rate_unit": "mm"
       },
       "ssp585": {
         "canonical_name": "Riverine Flood",
-        "mean_hcr": 0.025819,
-        "min_hcr": 0.009836,
-        "max_hcr": 0.041803,
         "computation": "direct_counting",
+        "mean_hcr_freq": 0.025819,
+        "mean_severity_ratio": 1.0,
+        "mean_hcr_combined": 0.025819,
         "baseline_annual_rate": 60.16,
         "future_annual_rate": 61.71,
         "rate_unit": "mm"
@@ -149,19 +165,19 @@
     "strong_wind": {
       "ssp245": {
         "canonical_name": "Strong Wind",
-        "mean_hcr": -0.022011,
-        "min_hcr": -0.023233,
-        "max_hcr": -0.020461,
         "computation": "published_scaling",
+        "mean_hcr_freq": -0.022011,
+        "mean_severity_ratio": 1.0,
+        "mean_hcr_combined": -0.022011,
         "published_source": "Linear assumed; SCVR \u2248 0 at TX sites",
         "scaling_factor": 1.0
       },
       "ssp585": {
         "canonical_name": "Strong Wind",
-        "mean_hcr": -0.025834,
-        "min_hcr": -0.029007,
-        "max_hcr": -0.024198,
         "computation": "published_scaling",
+        "mean_hcr_freq": -0.025834,
+        "mean_severity_ratio": 1.0,
+        "mean_hcr_combined": -0.025834,
         "published_source": "Linear assumed; SCVR \u2248 0 at TX sites",
         "scaling_factor": 1.0
       }
