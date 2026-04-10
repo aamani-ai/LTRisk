@@ -1,18 +1,19 @@
 # Climate Risk Orchestrator — Routing Layer
 
-**The orchestrator is the decision layer between the SCVR Report and the
-financial channels.** It maps InfraSure's canonical hazard taxonomy to
-LTRisk's climate signal capabilities, determines which metric to use for
-each hazard, and routes outputs to the correct financial channel.
+**The orchestrator maps InfraSure's 10 canonical hazards to LTRisk's
+climate signal capabilities.** For each hazard, it determines: what
+computation method to use, whether severity is integrated, and how the
+result connects to the hazards repo's baseline BI.
 
 ```
-SCVR Report              ORCHESTRATOR              Financial Channels
-(what changed?)          (where does it go?)       (what's the $ impact?)
+SCVR Report                ORCHESTRATOR                Financial Channels
+(what changed?)            (for each canonical hazard)  (what's the $ impact?)
 
-7 variables          →   Hazard Taxonomy       →   Channel 1 (BI/HCR)
-6+ metrics each          Metric Selection          Channel 2 (EFR/IUL)
-Tail Confidence          Channel Routing           Risk Flags
-                         Coverage Map              Documented Gaps
+7 variables            →   Computation method       →   HCR (freq × severity)
+6+ metrics each            (published scaling or        → Additional_BI
+Tail Confidence             direct computation)      →   EFR (degradation)
+Severity diagnostic        Severity integration     →   Risk flags
+                           BI baseline availability  →   Documented gaps
 ```
 
 This doc bridges two InfraSure pipelines:
@@ -21,52 +22,29 @@ This doc bridges two InfraSure pipelines:
 
 ---
 
-## 1. Purpose — The Missing Layer
+## 1. Purpose
 
-### What Exists Today
+For each of InfraSure's 10 canonical hazards, the orchestrator answers:
 
-```
-SCVR Report says:  "tasmax shifted +6.9%, Tail Confidence HIGH"
-                   "pr shifted -0.1%, Tail Confidence DIVERGENT"
+1. **Can LTRisk compute an HCR?**
+   Published scaling where a peer-reviewed factor exists.
+   Direct computation from daily CMIP6 data where it doesn't.
+   Documented gap where CMIP6 can't project the hazard at all.
 
-But then what?
+2. **Is severity integrated?**
+   HCR = frequency_ratio × severity_ratio (expected shortfall decomposition).
+   For direct counting hazards: severity is genuinely additive.
+   For published scaling: severity may already be embedded (report as range).
 
-  → Which hazards does this affect?
-  → Should we use the mean SCVR or the P95?
-  → Does it go to Channel 1 (BI) or Channel 2 (EFR)?
-  → Or is it a risk indicator that can't be forced into $ formula?
-  → Does the hazards repo already have historical data for this?
-```
+3. **Does baseline BI exist?**
+   Hazards repo has BI for 3 hazards (Hail, Tornado, Strong Wind).
+   NRI has EAL for all (but EAL ≠ BI — linearity assumption required).
+   Formula: Additional_BI = baseline_BI × HCR.
 
-Today, these answers are scattered across 5+ documents. The orchestrator
-consolidates them into one place — the single source of truth for routing.
-
-### What the Orchestrator Provides
-
-```
-RESPONSIBILITY 1: HAZARD TAXONOMY
-  "What climate phenomena exist, and what are they called?"
-  Maps InfraSure's 10 canonical hazards + additional hazards
-  to specific physical mechanisms and asset vulnerabilities.
-
-RESPONSIBILITY 2: METRIC SELECTION
-  "Given this hazard and the Report Card, which SCVR metric matters?"
-  Tail Confidence drives the choice: mean SCVR, P95/CVaR,
-  direct daily count, or "not computable."
-
-RESPONSIBILITY 3: CHANNEL ROUTING
-  "Where does each hazard's output flow in the financial model?"
-  Channel 1 (BI): operational shutdown → lost revenue
-  Channel 2 (EFR): equipment degradation → life shortening
-  Risk Flag: probabilistic → flagged, no deterministic $ yet
-  Gap: not computable from available data
-
-RESPONSIBILITY 4: PIPELINE COMPLEMENTARITY
-  "How do the historical and forward-looking pipelines connect?"
-  Hazards repo provides baseline EAL (historical frequency × severity)
-  LTRisk provides climate change delta (how frequency/severity shifts)
-  Together: climate-adjusted risk = baseline × (1 + HCR)
-```
+4. **Where do the two pipelines complement each other?**
+   Hazards repo covers historical frequency + severity (backward).
+   LTRisk covers climate change delta (forward).
+   Together: future_risk = baseline × (1 + HCR).
 
 ---
 
@@ -111,11 +89,12 @@ formal NOAA definition and is tracked in the hazards repo codebase.
 
 ---
 
-## 3. LTRisk's Climate Signal Capabilities (Bottom-Up)
+
+---
+
+## 3. LTRisk's Climate Signal Capabilities
 
 ### 3A. SCVR Report Card — 7 Variables
-
-What the SCVR pipeline produces for each variable (from NB03):
 
 ```
 Variable    SCVR (SSP585)   Tail Conf.   Annual Strategy    Signal
@@ -129,44 +108,47 @@ hurs        -0.036          MODERATE     period_average     Small
 rsds        +0.003          MODERATE     period_average     Near zero
 ```
 
-### 3B. Computation Modes Available
+### 3B. Computation Methods
 
 ```
-FOR CHANNEL 1 (HCR — Business Interruption):
-  Pathway A: SCVR × scaling factor (fast, parametric)
-  Pathway B: Direct daily hazard counting from 28-model CMIP6 data (exact)
+PUBLISHED SCALING (where peer-reviewed factor exists):
+  Use the published result. It IS empirical counting done by other
+  researchers — we reuse their peer-reviewed work.
+  
+  Heat wave:    SCVR_tasmax × 2.5 (Diffenbaugh 2017, PNAS)
+  Strong wind:  SCVR_sfcWind × 1.0 (trivial, ≈ 0)
+  Hurricane:    Knutson 2020 consensus
+  Coastal flood: IPCC SLR × exponential amplification
 
-FOR CHANNEL 2 (EFR — Equipment Degradation):
-  Mode A: Apply physics model to mean-shifted conditions (fast)
-  Mode B: Integrate physics model over daily data (exact, mandatory for C-M)
+DIRECT COMPUTATION (where no published scaling exists):
+  Count threshold exceedances AND compute mean excess (severity)
+  from daily CMIP6 data across 20+ models.
+  
+  Riverine flood: Rx5day + daily P95 exceedance (from daily pr)
+  Ice storm:      Compound threshold (tasmin<0, tasmax>0, pr>0.5, hurs>85%)
+  Wildfire:       FWI composite (tasmax, hurs, sfcWind, pr)
+  Winter weather: Compound threshold (pr + tasmin < 0°C)
 
-BOTH use the same decision criterion:
-  Tail Confidence HIGH    → Mode/Pathway A preferred
-  Tail Confidence LOW/DIV → Mode/Pathway B mandatory
+NOT COMPUTABLE FROM CMIP6:
+  Hail:    needs CAPE, wind shear, freezing level
+  Tornado: needs upper-air profiles
 ```
 
-### 3C. What We CAN Compute vs What We CAN'T
+### 3C. Severity Diagnostic
 
 ```
-COMPUTABLE FROM NEX-GDDP CMIP6:
-  ✅ Heat waves (tasmax + tasmin compound thresholds)
-  ✅ Freeze-thaw cycles (tasmin < 0 AND tasmax > 0)
-  ✅ Frost days (tasmin < 0)
-  ✅ Extreme precipitation / Rx5day (pr daily)
-  ✅ Dry spells (consecutive days pr < 1mm)
-  ✅ FWI proxy (tasmax + hurs + sfcWind + pr composite)
-  ✅ Wind extremes (sfcWind, poor proxy — daily mean, not gusts)
-  ✅ Icing proxy (tasmin < 0 AND hurs > 90%)
-  ✅ Thermal aging acceleration (Peck's from SCVR_tas + SCVR_hurs)
-  ✅ Thermal cycling fatigue (Coffin-Manson from daily counts)
+For each hazard, NB04a computes BOTH:
+  1. Frequency: how many events cross the threshold
+  2. Severity: mean excess above threshold (how far above)
 
-NOT COMPUTABLE FROM NEX-GDDP:
-  ❌ Hail (requires CAPE, wind shear, freezing level — not in dataset)
-  ❌ Tornado (requires CAPE, storm-relative helicity)
-  ❌ Hurricane track/intensity (requires SST, upper-air profiles)
-  ❌ Coastal flooding (requires sea level rise + storm surge models)
-  ❌ Lightning (requires convective parameters)
-  ❌ Earthquake (not climate-related)
+Combined HCR = (1 + HCR_freq) × severity_ratio - 1
+
+  Heat wave:     freq +20%, severity +48% → combined +20% to +34% (range)
+  Riverine flood: freq +5.5%, severity +6.5% → combined +12.5%
+  Rx5day:        already measures intensity — severity ratio = 1.0
+  Ice storm:     compound threshold — severity ratio = 1.0 (ambiguous)
+
+See severity_sensitivity.md for dependencies and Gen.1→2→3 evolution.
 ```
 
 ---
@@ -283,9 +265,10 @@ Weather       │                  │ (compound       │                     �
 ══════════════╧══════════════════╧═════════════════╧═════════════════════╧═════════════════╝
 
 ADDITIONAL: EFR (Equipment Degradation — separate from HCR, not event-driven)
-  Peck's (thermal aging):     Mode A (published Arrhenius from SCVR_tas)
-  Coffin-Manson (cycling):    Mode B (direct freeze-thaw counts from daily data)
-  Palmgren-Miner (wind):      Mode A (SCVR_sfcWind ≈ 0, effectively zero)
+  Peck's (thermal aging):     Published Arrhenius from SCVR_tas
+  Coffin-Manson (cycling):    Direct freeze-thaw counts from daily data
+  Palmgren-Miner (wind):      Published S-N from SCVR_sfcWind (≈ 0, effectively zero)
+```
 
 ### Key Observations
 
@@ -308,107 +291,71 @@ ADDITIONAL: EFR (Equipment Degradation — separate from HCR, not event-driven)
 
 ---
 
+
+---
+
 ## 5. The Routing Rules
 
 ### Rule 1: Start From Canonical Hazards
 
-```
-For each of InfraSure's 10 canonical hazards, ask:
+For each of InfraSure's 10 canonical hazards:
+1. Can LTRisk compute an HCR? (yes / blocked)
+2. What computation method? (published scaling / direct computation)
+3. Is severity integrated? (yes / range / not applicable)
+4. Does baseline BI exist? (hazards repo BI / NRI EAL only / none)
 
-  1. Can LTRisk compute an HCR for this hazard?
-     → YES (CMIP6 data + published scaling or direct computation)
-     → NO (data not available — hail, tornado)
-
-  2. If YES: what's the best computation method?
-     → Published scaling exists? Use it. (Heat wave: 2.5× from PNAS)
-     → No published scaling? Compute directly from daily data.
-     → Published external data? Use it. (Hurricane: Knutson 2020)
-
-  3. Does baseline BI exist from the hazards repo?
-     → YES (hail, tornado, strong wind — full BI computation)
-     → NO (heat, flood, ice, wildfire — only NRI EAL, which ≠ BI)
-
-  4. Can we compute Additional_BI?
-     → BOTH baseline_BI + HCR exist → clean: Additional_BI = baseline_BI × HCR
-     → Only baseline_BI exists (no HCR) → report historical BI only
-     → Only HCR exists (no baseline_BI) → need proxy or new BI methodology
-```
-
-### Rule 2: Computation Method (driven by data availability)
+### Rule 2: Computation Method
 
 ```
-For each hazard where HCR IS computable:
+Published peer-reviewed scaling exists?
+├── YES: Use it (traceable, defensible)
+│        Heat wave: SCVR_tasmax × 2.5 (Diffenbaugh 2017)
+│        Hurricane: Knutson 2020 consensus
+│        Coastal flood: IPCC SLR projections
+│
+└── NO: Compute directly from daily CMIP6 data
+         Count threshold exceedances + compute severity diagnostic
+         Riverine flood, ice storm, wildfire, winter weather
 
-  Published peer-reviewed scaling exists?
-  ├── YES: Use it (traceable, defensible)
-  │        Heat wave: SCVR_tasmax × 2.5 (Diffenbaugh 2017)
-  │        Hurricane: Knutson 2020 consensus
-  │        Coastal flood: IPCC SLR projections
-  │
-  └── NO: Compute directly from daily CMIP6 data
-           Extreme precip: count Rx5day exceedances
-           Ice storm: compound threshold counting
-           Wildfire: FWI from daily data
-           Winter weather: compound threshold counting
-           
-  This is NOT a preference hierarchy. It's a data availability question.
-  Published scaling IS empirical counting done by other researchers.
-  See: pathway_defensibility.md
+This is a data availability question, not a preference hierarchy.
+Published scaling IS empirical counting done by other researchers.
+See: pathway_defensibility.md
 ```
 
 ### Rule 3: Financial Channel
 
 ```
-  HCR hazards (event-driven BI):
-    Formula: Additional_BI = baseline_BI × HCR
-    Where baseline_BI comes from hazards repo (when available)
-    Assumption: BI changes proportionally to damage (linearity)
+HCR hazards (event-driven BI):
+  Formula: Additional_BI = baseline_BI × HCR
+  Where baseline_BI comes from hazards repo (when available)
+  HCR captures frequency × severity (expected shortfall decomposition)
+  Linearity assumption: BI ∝ damage (documented)
 
-  EFR (continuous degradation — separate from HCR):
-    Formula: climate_degrad = EFR × std_degrad × t + IUL truncation
-    Peck's, Coffin-Manson, Palmgren-Miner (unchanged)
+EFR (continuous degradation — separate from HCR):
+  Peck's thermal aging (published Arrhenius from SCVR_tas)
+  Coffin-Manson cycling (direct freeze-thaw counts from daily data)
+  Palmgren-Miner wind fatigue (SCVR_sfcWind ≈ 0, effectively zero)
 
-  Risk indicators (probabilistic, no deterministic $):
-    Elevated risk conditions, but P(event | condition) << 1
-    Report direction + magnitude. Phase 2: frequency × severity model.
-    Examples: wildfire (high FWI ≠ fire), drought/dry spell
+Risk indicators (probabilistic, no deterministic $):
+  Wildfire (FWI proxy), drought/dry spell
+  Report direction + magnitude. Phase 2: frequency × severity model.
 
-  NOT COMPUTABLE FROM AVAILABLE DATA  → Documented Gap
-    Hazard is real and potentially material, but our data can't quantify it.
-    Flag in reporting. Hazards repo may have historical EAL.
-    Examples: hail, tornado, hurricane, coastal flood
+Documented gaps (not computable from CMIP6):
+  Hail, tornado — use hazards repo historical BI
+  Hurricane, coastal flood — use published external projections
 ```
 
-### Rule 3: Pipeline Complementarity (LTRisk + Hazards Repo)
+### Rule 4: Pipeline Complementarity
 
 ```
-INPUT: Which pipeline(s) cover this hazard?
+LTRisk covers:  climate change DELTA (how much risk CHANGES)
+Hazards repo:   historical BASELINE (how much risk EXISTS today)
 
-  BOTH PIPELINES COVER IT:
-    Hazards repo: historical frequency and EAL (NOAA 1996-2024)
-    LTRisk: climate change delta (CMIP6 2026-2055)
-    USE: climate-adjusted risk = baseline_EAL × (1 + HCR)
-    ALSO: cross-validate (does LTRisk's forward projection match
-           the trend in NOAA historical data?)
-    Examples: heat wave, riverine flood, strong wind
+Combined: future_risk = baseline × (1 + HCR)
 
-  HAZARDS REPO ONLY:
-    Hazard has historical data but no CMIP6-computable forward projection.
-    USE: baseline_EAL from hazards repo as the risk estimate.
-    FLAG: "No climate change projection available. Historical rate assumed."
-    OPPORTUNITY: EAL provides baseline_BI_pct for Channel 1 formula.
-    Examples: hail (baseline EAL = ~$X/yr from NOAA), tornado, hurricane
-
-  LTRISK ONLY:
-    Hazard is a continuous degradation process, not a discrete event.
-    No NOAA event type corresponds to "your panels aged 11% faster."
-    USE: EFR physics models (Peck's, Coffin-Manson, Palmgren-Miner)
-    Examples: thermal aging, thermal cycling fatigue, wind structural fatigue
-
-  NEITHER PIPELINE:
-    Hazard exists but neither pipeline quantifies it well.
-    FLAG: documented gap with priority ranking from asset risk profile.
-    Examples: lightning (planned), earthquake (planned for seismic zones)
+For hazards BOTH cover:     cross-validate forward vs historical trend
+For hazards only A covers:  use historical (no climate delta available)
+For hazards only B covers:  need baseline from hazards repo or NRI proxy
 ```
 
 ---
@@ -424,7 +371,7 @@ INPUT: Which pipeline(s) cover this hazard?
 | Heat wave (BI) | #3 | FULL | NRI EAL | BOTH | HCR +20-34%, cross-validate vs NOAA |
 | Riverine flood | #4 | PARTIAL | FULL (HAZUS) | BOTH | LTRisk: Rx5day. Haz repo: depth |
 | Wildfire | #5 | PROXY (FWI) | FULL (FSF) | BOTH | LTRisk: FWI proxy. Haz repo: NOAA |
-| Freeze-thaw (C-M) | #6 | FULL | N/A | LTRisk only | EFR via Mode B cycle counts |
+| Freeze-thaw (C-M) | #6 | FULL | N/A | LTRisk only | EFR via direct cycle counts |
 | Tornado | #7 | GAP | FULL (Feuerstein) | Haz. repo only | NOAA events + damage curve |
 | Strong wind | #8 | PROXY | FULL (Unanwa) | BOTH (haz dom.) | LTRisk: poor proxy (daily mean) |
 | Winter weather | #9 | PARTIAL | NRI EAL | BOTH (partial) | LTRisk: frost/ice proxy |
@@ -452,10 +399,12 @@ INPUT: Which pipeline(s) cover this hazard?
 
 ---
 
+
+---
+
 ## 7. Worked Example — Hayhurst Solar, Full Routing
 
-Walking through every hazard for one asset, showing the orchestrator's
-decision at each step.
+Walking through key hazards for one asset:
 
 ```
 ASSET: Hayhurst Texas Solar, 24.8 MW, SSP5-8.5, Year 2040
@@ -464,341 +413,259 @@ STEP 1: Read SCVR Report Card
   tasmax: +0.080, HIGH        tas: +0.105, HIGH
   tasmin: +0.173, MODERATE    pr: -0.007, DIVERGENT
   sfcWind: -0.026, MOD/HIGH   hurs: -0.036, MODERATE
-  rsds: +0.003, MODERATE
 
 STEP 2: Route each hazard
 
-  HEAT WAVE (BI):
-    Rule 1: tasmax HIGH → Mean SCVR sufficient → Pathway A
-    Rule 2: Operational shutdown → Channel 1
-    Rule 3: Hazards repo has NRI EAL → cross-validate
-    Result: HCR_heat = 0.080 × 2.5 = 0.200
-            BI_loss = $2.17M × 1.0% × 0.200 = $4,340/yr
+  HEAT WAVE:
+    Method: Published scaling (SCVR_tasmax × 2.5, Diffenbaugh 2017)
+    HCR_freq: 0.080 × 2.5 = +20.0%
+    Severity: mean excess 1.29°C → 1.91°C, ratio = 1.48
+    HCR range: +20% (published alone) to +34% (× severity)
+    Caveat: published 2.5× may already embed severity
+    Baseline BI: NOT available from hazards repo (NRI EAL only)
 
-  HEAT WAVE (Peck's aging):
-    Rule 1: tas HIGH → Mean SCVR sufficient → Mode A
-    Rule 2: Cumulative stress → Channel 2
-    Rule 3: LTRisk only (no historical EAL for degradation)
-    Result: EFR_peck = 0.11, climate_degrad(14) = 0.0077
-            Gen loss: 418 MWh/yr = $16,720/yr
+  RIVERINE FLOOD (daily P95):
+    Method: Direct counting (no published site-level scaling)
+    HCR_freq: +5.5% (from daily threshold counting)
+    Severity: mean excess 7.79mm → 8.30mm, ratio = 1.065
+    HCR_combined: 1.055 × 1.065 - 1 = +12.5%
+    Baseline BI: NOT available (NRI EAL only)
 
-  HAIL:
-    Rule 1: N/A — not computable from CMIP6
-    Rule 2: N/A
-    Rule 3: Hazards repo has NOAA events + Thirza damage curve
-    Result: DOCUMENTED GAP in LTRisk. Use hazards repo EAL.
-            Hazards repo EAL_hail(Hayhurst) = $X/yr (from NOAA)
+  RIVERINE FLOOD (Rx5day):
+    Method: Direct counting (max 5-day rolling precipitation)
+    HCR: +2.6% (already measures intensity in mm, no separate severity)
+    Baseline BI: NOT available
 
-  RIVERINE FLOOD:
-    Rule 1: pr DIVERGENT → Mandatory Pathway B
-    Rule 2: Operational shutdown → Channel 1
-    Rule 3: Both pipelines — cross-validate LTRisk Rx5day trend vs NOAA
-    Result: HCR_flood = 0.020 (from Pathway B Rx5day counting)
-            BI_loss = $2.17M × 0.3% × 0.020 = $130/yr
-
-  WILDFIRE:
-    Rule 1: FWI composite, LOW confidence → Risk flag
-    Rule 2: Probabilistic → cannot force into BI formula
-    Rule 3: Hazards repo has FSF damage curve + NOAA events
-    Result: RISK FLAG — FWI trend = +11% (SSP585)
-            Direction: increasing risk. No deterministic $ in Phase 1.
-            Hazards repo EAL_wildfire provides baseline estimate.
-
-  FREEZE-THAW (Coffin-Manson):
-    Rule 1: tasmax/tasmin for 0°C crossing — use daily counts → Mode B
-    Rule 2: Cumulative material stress → Channel 2
-    Rule 3: LTRisk only
-    Result: 45.71 → 31.55 cycles/yr = -31% fewer cycles
-            EFR_coffin = NEGATIVE (benefit — fewer damaging cycles)
+  ICE STORM:
+    Method: Direct counting (4-variable compound threshold)
+    HCR_freq: -44.5% (warming reduces icing — BENEFIT)
+    Severity: not applied (compound threshold, ambiguous)
+    Baseline BI: NOT available
 
   STRONG WIND:
-    Rule 1: sfcWind MOD → Pathway A acceptable, but proxy quality poor
-    Rule 2: Cut-out → Channel 1 (if any events)
-    Rule 3: Hazards repo has NOAA + Unanwa curve
-    Result: HCR_wind ≈ 0 (0 baseline cut-out days at Hayhurst)
-            Hazards repo provides wind risk estimate from NOAA events.
+    Method: Published scaling (1.0×)
+    HCR: ~0% (SCVR_sfcWind ≈ 0, no climate signal)
+    Baseline BI: YES (hazards repo has full BI from NOAA events)
+    Additional_BI = baseline_BI × 0 ≈ $0
 
-  TORNADO, HURRICANE, COASTAL FLOOD:
-    All → DOCUMENTED GAP. Hazards repo covers with NOAA historical data.
-    Inland TX: hurricane and coastal flood are low priority.
-    Tornado: moderate priority — hazards repo EAL applies.
+  HAIL (documented gap):
+    LTRisk: CANNOT compute (no CAPE in CMIP6)
+    Hazards repo: HAS full BI ($24K/yr est. from NOAA events)
+    Report: "Historical hail BI: $24K/yr. Climate projection: not available."
 
-STEP 3: Aggregate
-
-  Channel 1 (BI):     ~$4,470/yr additional (heat + flood + wind)
-  Channel 2 (EFR):    EFR_combined ≈ 0.078 → ~$17K/yr + IUL shortening
-  Risk Flags:         Wildfire (+11% FWI trend), Drought/dry spell
-  Gaps:               Hail (#2 priority), tornado, hurricane, coastal
+  WILDFIRE (risk indicator):
+    Method: FWI proxy from daily data
+    Direction: -0.5% (SSP585 — FWI flips at this site)
+    No deterministic $ — flagged only
 ```
 
 ---
 
 ## 8. Draft hazard_taxonomy.yaml Schema
 
-Machine-readable version of the routing matrix. When the YAML becomes code,
-NB04 would load this to determine its routing automatically.
+Machine-readable version of the routing matrix. When the YAML becomes
+code, NB04a would load this to determine its routing automatically.
 
 ```yaml
 # hazard_taxonomy.yaml — Climate Risk Orchestrator Configuration
-# Version: 1.0 (Phase 1)
-# This file defines the routing for each hazard through the LTRisk pipeline.
+# Version: 2.0 (aligned with canonical hazards, severity integration)
 
 metadata:
-  version: "1.0"
+  version: "2.0"
   last_updated: "2026-04"
   asset_types: ["solar_pv", "onshore_wind"]
   scenarios: ["ssp245", "ssp585"]
+  hcr_definition: "frequency_ratio × severity_ratio - 1 (expected shortfall)"
 
 hazards:
 
-  # ── CHANNEL 1: BUSINESS INTERRUPTION ──────────────────────────
-
-  heat_wave_bi:
+  # ── CANONICAL: Heat Wave ───────────────────────────────────────────
+  heat_wave:
     canonical_name: "Heat Wave"
     category: "bi_event"
-    definition: "3+ consecutive days, tasmax AND tasmin > per-DOY P90"
-    noaa_event_types: ["Heat", "Excessive Heat"]
+    computation: "published_scaling"
+    scaling: 2.5
+    published_source: "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017"
     input_variables: ["tasmax", "tasmin"]
-    scvr_metric: "mean_scvr"
-    tail_confidence_required: "HIGH"
-    computation_mode: "pathway_a"
-    scaling_factor: 2.5
-    financial_channel: "channel_1_bi"
-    bi_mechanism: "inverter_thermal_shutdown"
-    baseline_bi_pct:
-      solar_pv: { low: 0.005, mid: 0.010, high: 0.020 }
-      onshore_wind: { low: 0.001, mid: 0.002, high: 0.005 }
-    coverage: "full"
-    confidence: "high"
+    threshold: "Compound: 3+ consec. days, both > per-DOY P90"
+    severity_integrated: "range"
+    severity_note: "Published 2.5× may embed severity. Report range."
+    baseline_bi_available: false
+    baseline_bi_source: "NRI EAL only"
 
-  extreme_precip:
+  # ── CANONICAL: Riverine Flood (daily exceedance) ───────────────────
+  riverine_flood_daily:
     canonical_name: "Riverine Flood"
+    sub_metric: "P95 daily exceedance"
     category: "bi_event"
-    definition: "pr exceeds P95 wet-day threshold"
-    noaa_event_types: ["Flood", "Flash Flood", "Heavy Rain"]
+    computation: "direct_counting"
     input_variables: ["pr"]
-    scvr_metric: "p95_cvar"
-    tail_confidence_required: "any"  # always Pathway B for pr
-    computation_mode: "pathway_b"
-    financial_channel: "channel_1_bi"
-    bi_mechanism: "site_flooding_downtime"
-    baseline_bi_pct:
-      solar_pv: { low: 0.001, mid: 0.003, high: 0.005 }
-    coverage: "partial"
-    confidence: "moderate"
+    threshold: "Daily pr > P95 wet-day threshold"
+    severity_integrated: true
+    severity_note: "Combined freq × severity. No double-counting risk."
+    baseline_bi_available: false
 
-  flood_rx5day:
+  # ── CANONICAL: Riverine Flood (Rx5day) ─────────────────────────────
+  riverine_flood_rx5day:
     canonical_name: "Riverine Flood"
+    sub_metric: "5-day max precipitation"
     category: "bi_event"
-    definition: "Maximum rolling 5-day precipitation sum"
-    noaa_event_types: ["Flood", "Flash Flood"]
+    computation: "direct_counting"
     input_variables: ["pr"]
-    scvr_metric: "p95_cvar"
-    computation_mode: "pathway_b"
-    financial_channel: "channel_1_bi"
-    coverage: "partial"
+    threshold: "Annual max rolling 5-day sum (mm)"
+    severity_integrated: "already_captured"
+    severity_note: "Measures intensity (mm), not count. Severity in metric."
+    baseline_bi_available: false
 
-  wind_cutout:
+  # ── CANONICAL: Strong Wind ─────────────────────────────────────────
+  strong_wind:
     canonical_name: "Strong Wind"
     category: "bi_event"
-    definition: "sfcWind > 15 m/s daily mean (poor gust proxy)"
-    noaa_event_types: ["Thunderstorm Wind", "Strong Wind", "High Wind"]
+    computation: "published_scaling"
+    scaling: 1.0
     input_variables: ["sfcWind"]
-    scvr_metric: "mean_scvr"
-    computation_mode: "pathway_a"
-    scaling_factor: 1.0
-    financial_channel: "channel_1_bi"
-    coverage: "proxy"
-    confidence: "low"
-    notes: "Daily mean, not gusts. 0 baseline days at Hayhurst."
+    threshold: "Daily mean sfcWind > 15 m/s (proxy — not gusts)"
+    severity_integrated: false
+    severity_note: "HCR ≈ 0 — severity is moot"
+    baseline_bi_available: true
+    baseline_bi_source: "Hazards repo: NOAA events + Unanwa damage curve"
 
-  icing_shutdown:
+  # ── CANONICAL: Ice Storm ───────────────────────────────────────────
+  ice_storm:
     canonical_name: "Ice Storm"
     category: "bi_event"
-    definition: "tasmin < 0 AND hurs > 90% (surface proxy)"
-    noaa_event_types: ["Ice Storm"]
-    input_variables: ["tasmin", "hurs"]
-    computation_mode: "pathway_b"
-    financial_channel: "channel_1_bi"
-    coverage: "proxy"
+    computation: "direct_counting"
+    input_variables: ["tasmin", "tasmax", "pr", "hurs"]
+    threshold: "Compound: tasmin<0, tasmax>0, pr>0.5mm, hurs>85%"
+    severity_integrated: false
+    severity_note: "Compound threshold — severity ambiguous"
+    baseline_bi_available: false
 
-  # ── CHANNEL 2: EQUIPMENT DEGRADATION ──────────────────────────
-
-  thermal_aging:
-    canonical_name: "Heat Wave"  # same hazard, different channel
-    category: "degradation"
-    definition: "Continuous thermal stress from elevated mean temperature"
-    input_variables: ["tas", "hurs"]
-    scvr_metric: "mean_scvr"
-    computation_mode: "mode_a"
-    physics_model: "pecks_arrhenius"
-    parameters:
-      activation_energy_eV: 0.7
-      humidity_exponent: 2.66
-    financial_channel: "channel_2_efr"
-    coverage: "full"
-    confidence: "high"
-
-  thermal_cycling:
-    canonical_name: "Winter Weather"  # freeze-thaw component
-    category: "degradation"
-    definition: "Days where tasmin < 0°C AND tasmax > 0°C"
-    input_variables: ["tasmax", "tasmin"]
-    scvr_metric: "direct_daily_count"
-    computation_mode: "mode_b"  # mandatory — Mode A gives wrong direction
-    physics_model: "coffin_manson"
-    parameters:
-      fatigue_exponent: 2.0
-    financial_channel: "channel_2_efr"
-    coverage: "full"
-    confidence: "high"
-    notes: "Mode B mandatory. Mode A gives wrong sign at warming sites."
-
-  wind_fatigue:
-    canonical_name: "Strong Wind"
-    category: "degradation"
-    definition: "Cumulative structural fatigue from wind load cycles"
-    input_variables: ["sfcWind"]
-    scvr_metric: "mean_scvr"
-    computation_mode: "mode_a"
-    physics_model: "palmgren_miner"
-    financial_channel: "channel_2_efr"
-    coverage: "full"
-    confidence: "low"
-    notes: "SCVR_sfcWind ≈ 0 at pilot sites. EFR ≈ 0."
-
-  # ── RISK INDICATORS ───────────────────────────────────────────
-
+  # ── CANONICAL: Wildfire (risk indicator) ───────────────────────────
   wildfire:
     canonical_name: "Wildfire"
     category: "risk_indicator"
-    definition: "FWI composite > baseline P90"
-    noaa_event_types: ["Wildfire"]
+    computation: "direct_counting"
     input_variables: ["tasmax", "hurs", "sfcWind", "pr"]
-    scvr_metric: "composite_fwi"
-    financial_channel: "risk_flag"
-    coverage: "proxy"
-    confidence: "low"
-    notes: "Phase 2: P(fire|FWI) × E[loss|fire]. Hazards repo has FSF curve."
+    threshold: "FWI proxy: 0.3×T + 0.3×(1-H) + 0.2×W + 0.2×(1-P)"
+    severity_integrated: false
+    note: "High FWI ≠ fire. Probabilistic treatment needed."
 
+  # ── CANONICAL: Drought / Dry Spell (risk indicator) ────────────────
   dry_spell:
     canonical_name: "Drought"
     category: "risk_indicator"
-    definition: "Maximum consecutive days with pr < 1mm"
-    noaa_event_types: ["Drought"]
+    computation: "direct_counting"
     input_variables: ["pr"]
-    scvr_metric: "period_average"
-    financial_channel: "risk_flag"
-    coverage: "proxy"
-    notes: "Soiling component → performance. Fire component → wildfire indicator."
+    threshold: "Max consecutive days with pr < 1mm"
 
-  # ── DOCUMENTED GAPS ───────────────────────────────────────────
+  # ── DEGRADATION → EFR (Channel 2) ─────────────────────────────────
+  freeze_thaw:
+    canonical_name: "Winter Weather"
+    category: "degradation"
+    efr_model: "coffin_manson"
+    computation: "direct_counting"
+    input_variables: ["tasmin", "tasmax"]
+    threshold: "Days where tasmin < 0°C AND tasmax > 0°C"
+    note: "Published mean approximation gives wrong direction. Direct counts mandatory."
 
+  frost_days:
+    canonical_name: "Winter Weather"
+    category: "degradation"
+    efr_model: "coffin_manson"
+    input_variables: ["tasmin"]
+    threshold: "Days where tasmin < 0°C"
+
+  cold_wave:
+    canonical_name: "Winter Weather"
+    category: "degradation"
+    efr_model: "coffin_manson"
+    input_variables: ["tasmin", "tasmax"]
+    threshold: "Compound: 3+ consec. days, both temps < P10"
+
+  # ── DOCUMENTED GAPS ────────────────────────────────────────────────
   hail:
     canonical_name: "Hail"
     category: "gap"
-    noaa_event_types: ["Hail"]
-    input_variables: []  # requires CAPE, wind shear — not in NEX-GDDP
-    financial_channel: "gap"
-    coverage: "gap"
-    hazards_repo_coverage: "full"  # NOAA events + Thirza damage curve
-    notes: "#2 priority risk for solar. Historical EAL from hazards repo."
+    reason: "Requires CAPE, wind shear — not in NEX-GDDP"
+    hazards_repo: "Full BI computation (Thirza damage curve)"
 
   tornado:
     canonical_name: "Tornado"
     category: "gap"
-    noaa_event_types: ["Tornado"]
-    input_variables: []
-    financial_channel: "gap"
-    coverage: "gap"
-    hazards_repo_coverage: "full"
+    reason: "Requires upper-air data"
+    hazards_repo: "Full BI computation (Feuerstein damage curve)"
 
   hurricane:
     canonical_name: "Hurricane"
     category: "gap"
-    noaa_event_types: ["Hurricane", "Tropical Storm"]
-    input_variables: []
-    financial_channel: "gap"
-    coverage: "gap"
-    hazards_repo_coverage: "full"
+    reason: "Requires SST, ocean dynamics"
+    published_scaling: "Knutson 2020: freq -5-10%, wind +5%, rain +14%"
 
   coastal_flood:
     canonical_name: "Coastal Flood"
     category: "gap"
-    noaa_event_types: ["Coastal Flood", "Storm Surge/Tide"]
-    input_variables: []
-    financial_channel: "gap"
-    coverage: "gap"
-    hazards_repo_coverage: "full"
-    notes: "Inland TX sites: low priority."
+    reason: "Requires SLR + surge models"
+    published_scaling: "Buchanan 2020: 10-1000× per 0.5m SLR"
 ```
 
 ---
 
 ## 9. Connection to FIDUCEO Uncertainty Mapping
 
-The orchestrator's routing decisions map directly to the FIDUCEO uncertainty
-layers documented in [FIDUCEO-Style Uncertainty Mapping](../../discussion/uncertainty/FIDUCEO-Style%20Uncertainty%20Mapping_%20LTRisk.md):
+The orchestrator's routing decisions map to FIDUCEO uncertainty layers:
 
-```
-Orchestrator Decision          FIDUCEO Layer           Uncertainty Type
-─────────────────────          ─────────────           ────────────────
-Metric selection               Layer 1 (SCVR)          u(x₁): model spread
-  (mean vs P95 vs daily)       Which metric is input?   Type A (statistical)
+| Orchestrator Decision | FIDUCEO Layer | Uncertainty Type |
+|---|---|---|
+| Computation method selection | Layer 2 (HCR/EFR) | Type B (methodological) |
+| Severity integration choice | Layer 2 (HCR) | Structural (double-counting risk) |
+| Baseline BI availability | Layer 3 (Financial) | Type B (data availability) |
+| Coverage gap (blocked hazards) | All layers | Structural (missing data) |
 
-Channel assignment             Layer 2A (HCR) or        u(x₂): threshold def
-  (BI vs EFR vs flag)          Layer 2B (EFR)           u(x₃): scaling/physics
-                                                        Type B (systematic)
-
-Coverage assessment            All layers               Structural uncertainty
-  (FULL vs GAP)                Missing data             Not quantifiable
-```
-
-The FIDUCEO doc traces uncertainty through each layer. The orchestrator tells
-you WHICH layer each hazard enters — and therefore which uncertainty budget
-applies.
+See [FIDUCEO uncertainty mapping](../../discussion/uncertainty/FIDUCEO-Style%20Uncertainty%20Mapping_%20LTRisk.md).
 
 ---
 
 ## 10. Open Questions
 
-1. **Compound hazard confidence:** Heat wave requires tasmax (HIGH) AND
-   tasmin (MODERATE). What confidence does the compound get? Current approach:
-   use the LOWER confidence (conservative). Alternative: weighted by
-   contribution.
+1. **Severity double-counting for published scaling:** The 2.5× from
+   Diffenbaugh may already embed severity. Multiplying by our severity
+   ratio (1.48) risks double-counting. Report as range until resolved.
 
-2. **Site-specificity:** The routing matrix uses Hayhurst values. Should it
-   change per site? Probably yes for coverage assessment (coastal sites have
-   different priorities) but routing RULES should be universal.
+2. **Baseline BI gap:** 7/10 hazards lack baseline BI from the hazards
+   repo. The clean formula `Additional_BI = baseline_BI × HCR` works
+   for 0/10 hazards today. Closing requires expanding hazards repo BI
+   coverage to heat, flood, ice, wildfire.
 
-3. **When does the YAML become code?** The schema above could be loaded by
-   NB04 as a config file instead of hardcoding routing decisions. This would
-   make NB04 configuration-driven rather than code-driven.
+3. **Linearity assumption:** Applying damage-level HCR to BI assumes
+   BI ∝ damage. This underestimates for heat (BI grows faster than
+   property damage) and overestimates for hail (property damage grows
+   faster than BI). Documented as Gen.1 assumption.
 
-4. **Cross-validation protocol:** For hazards both pipelines cover (heat wave,
-   flood), what's the formal cross-validation process? Compare LTRisk's
-   forward HCR trend against NOAA's historical trend? What's "agreement"?
+4. **Severity sensitivity:** Severity ratio depends on threshold
+   definition (P90 gives 1.48; P95 might give 1.71). A ±20% shift
+   in severity moves heat wave HCR by ±36 percentage points. Getting
+   severity right matters MORE than getting frequency scaling right.
 
-5. **Hazards repo EAL as baseline_BI_pct:** The hazards repo computes
-   site-specific EAL from NOAA events. Can this directly provide the
-   baseline_BI_pct that Channel 1 needs? E.g., EAL_heat(Hayhurst) / Revenue
-   = baseline_BI_pct_heat. This would solve the biggest unknown in Channel 1.
+5. **When does the YAML become code?** The schema above could be loaded
+   by NB04a as a config file instead of hardcoding routing decisions.
 
 ---
 
 ## Next
 
-- [07 - HCR: Hazard Change Ratio](07_hcr_hazard_change.md) — Detailed computation for Channel 1 BI hazards
-- [08 - EFR: Equipment Degradation](08_efr_equipment_degradation.md) — Detailed computation for Channel 2 degradation models
-- [09 - NAV Impairment Chain](09_nav_impairment_chain.md) — How both channels combine in the financial model
+- [07 — HCR: Hazard Change Ratio](07_hcr_hazard_change.md) — Detailed HCR methodology with severity
+- [08 — EFR: Equipment Degradation](08_efr_equipment_degradation.md) — Channel 2 (parallel to HCR)
+- [09 — NAV Impairment Chain](09_nav_impairment_chain.md) — How both channels combine
 
 ## Discussion Docs
 
-- [HCR/EFR boundary](../../discussion/hcr_financial/hcr_efr_boundary.md) — Why hazards are classified into 3 categories
-- [EFR two modes](../../discussion/efr_degradation/efr_two_modes.md) — Why EFR has Mode A/B (same Jensen's issue as HCR)
-- [Top-down meets bottom-up](../../discussion/architecture/top_down_meets_bottom_up.md) — Why both approaches are needed
-- [Channel 1 BI calculation](../../discussion/hcr_financial/channel_1_bi_calculation.md) — Three approaches to convert HCR to dollars
-- [Channel 2 EFR financial](../../discussion/efr_degradation/channel_2_efr_financial.md) — How EFR becomes generation loss + IUL
-- [FIDUCEO uncertainty mapping](../../discussion/uncertainty/FIDUCEO-Style%20Uncertainty%20Mapping_%20LTRisk.md) — Uncertainty propagation through each layer
+- [HCR redefined (freq + severity)](../../discussion/hcr_financial/hcr_redefined_freq_severity.md) — Full argument + Gen.1 assumptions
+- [Top-down canonical reframe](../../discussion/hcr_financial/hcr_top_down_reframe.md) — Starting from 10 canonical hazards
+- [Severity sensitivity](../../discussion/hcr_financial/severity_sensitivity.md) — Dependencies and Gen.1→2→3 evolution
+- [Published scaling defensibility](../../discussion/hcr_financial/pathway_defensibility.md) — Why published scaling where available
+- [Pipeline complementarity](../../discussion/architecture/pipeline_complementarity.md) — How the two pipelines connect
+- [BI methodology foundations](../../discussion/bi_methodology/01_what_is_bi.md) — What BI is and isn't
+- [FIDUCEO uncertainty](../../discussion/uncertainty/FIDUCEO-Style%20Uncertainty%20Mapping_%20LTRisk.md) — Uncertainty propagation
 
 Return to [Index](../00_index.md) for the full learning guide table of contents.
