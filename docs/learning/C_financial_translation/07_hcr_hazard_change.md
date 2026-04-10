@@ -1,14 +1,37 @@
 # HCR — Hazard Change Ratio
- 
-**HCR translates a climate distribution shift (SCVR) into a hazard-specific impact ratio.** It answers: *"If the temperature distribution shifted +8%, how many more heat wave days does that produce?"*
- 
-The answer is not 8%. A small shift in the mean can cause a large change in threshold exceedances — this non-linear amplification is what HCR captures.
- 
+
+**HCR measures how much climate change shifts the expected annual damage
+from a specific hazard.** It captures BOTH the change in how often events
+occur (frequency) AND the change in how bad each event is (severity).
+
+```
+HCR = (future_expected_damage - baseline_expected_damage) / baseline_expected_damage
+
+  HCR = +0.30  means 30% MORE expected annual damage than the baseline
+  HCR = -0.45  means 45% LESS expected annual damage (a warming benefit)
+  HCR = 0      means no change
+
+  HCR is computed for each of InfraSure's 10 canonical hazards
+  (Hail, Tornado, Strong Wind, Winter Weather, Ice Storm, Wildfire,
+   Hurricane, Heat Wave, Riverine Flood, Coastal Flood).
+  
+  Where LTRisk can project the change: HCR is computed from CMIP6 data.
+  Where it can't (hail, tornado): HCR is not available (documented gap).
+```
+
+> **Important: BI vs EAL.** HCR measures the change in DAMAGE (which
+> relates to EAL — total economic loss). To translate HCR into Business
+> Interruption (BI — specifically lost revenue from downtime), an
+> additional step is needed: `Additional_BI = baseline_BI × HCR`. This
+> assumes BI changes proportionally to damage (a linearity assumption
+> documented in [hcr_redefined_freq_severity.md](../../discussion/hcr_financial/hcr_redefined_freq_severity.md)).
+
 ---
- 
+
 ## 1. The Simple Version
- 
-SCVR tells you *"the distribution shifted."* HCR tells you *"that shift created this many more hazard events."*
+
+SCVR tells you *"the distribution shifted."* HCR tells you *"that shift
+created more hazard events that are also more intense."*
  
 ```
 SCVR says:                                HCR says:
