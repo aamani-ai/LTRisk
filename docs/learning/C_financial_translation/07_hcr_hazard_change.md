@@ -54,8 +54,129 @@ Strong Wind     ~0%               ~0%                         OK — both flat
 ```
 
 **For 4 of 10 canonical hazards, frequency-only tells the wrong story.**
-The redefined HCR captures both frequency and severity through the
-damage function applied to daily data.
+
+---
+
+## 1B. The Two Components: Frequency × Severity
+
+### The Mathematical Identity
+
+The expected annual excess above a threshold decomposes exactly:
+
+```
+E[annual excess above T] = P(X > T) × E[X - T | X > T]
+                         = frequency  × mean_excess
+                         = "how often" × "how far above"
+
+This is the law of iterated expectations — an identity, not an approximation.
+No assumptions needed beyond stationarity within each 30-year window.
+```
+
+Therefore HCR can be decomposed:
+
+```
+HCR_combined = frequency_ratio × severity_ratio - 1
+
+Where:
+  frequency_ratio = freq_future / freq_baseline = (1 + HCR_freq)
+  severity_ratio  = mean_excess_future / mean_excess_baseline
+
+  Both are computable from the daily CMIP6 data we already process.
+```
+
+### Worked Example: Heat Wave at Hayhurst (SSP5-8.5)
+
+```
+Frequency:  baseline ~36.5 exceedance days → future ~101 days
+            HCR_freq = +177% (but we use 2.5× published scaling → +20%)
+
+Severity:   mean excess above P90 threshold:
+            baseline = 1.29°C above threshold
+            future   = 1.91°C above threshold
+            severity_ratio = 1.91 / 1.29 = 1.48 (+48%)
+
+If we combine (using direct counting + severity):
+  HCR_combined = (1 + 1.77) × 1.48 - 1 = +310% (direct counting, very high)
+  
+If we combine (using published 2.5× + severity):
+  HCR_combined = (1 + 0.20) × 1.48 - 1 = +78%
+  
+But: see the CRITICAL CAVEAT below about double-counting.
+```
+
+### Worked Example: Riverine Flood (Daily P95, SSP5-8.5)
+
+```
+Frequency:  HCR_freq = +5.5% (from direct counting)
+
+Severity:   mean excess above P95 wet-day threshold:
+            baseline = 7.79 mm above threshold
+            future   = 8.30 mm above threshold
+            severity_ratio = 8.30 / 7.79 = 1.065 (+6.5%)
+
+Combined:   HCR_combined = 1.055 × 1.065 - 1 = +12.4%
+
+For direct counting, this is straightforward — no double-counting risk
+because the counting never captured severity in the first place.
+
+Note: Rx5day (+2.6%) does NOT need severity integration because it
+already measures intensity (mm), not frequency.
+```
+
+### CRITICAL CAVEAT: Double-Counting Risk With Published Scaling
+
+```
+When a published scaling factor (like Diffenbaugh's 2.5×) was derived
+from climate model output, the researchers counted events in a WARMER
+climate where events are BOTH more frequent AND more intense.
+
+The 2.5× factor may ALREADY embed some severity change.
+If we ALSO multiply by our severity ratio (1.48×), we may DOUBLE-COUNT
+the severity component.
+
+FOR DIRECT COUNTING (flood, ice storm):
+  Severity IS genuinely missing — we count events equally regardless
+  of intensity. Safe to add severity ratio.
+
+FOR PUBLISHED SCALING (heat wave 2.5×):
+  UNCERTAIN whether severity is already included. The 2.5× was derived
+  from empirical event counting that implicitly captured intensity change.
+  
+  Honest reporting for heat wave:
+    Lower bound: +20% (published scaling alone — may include some severity)
+    Upper bound: +78% (published scaling × severity ratio — may double-count)
+    Truth: likely between the two, but we cannot decompose the 2.5× into
+           its frequency and severity components without reproducing
+           Diffenbaugh's original analysis.
+```
+
+### When to Apply Severity Integration (Per Hazard)
+
+```
+HAZARD                  SEVERITY           DOUBLE-COUNT      RECOMMENDATION
+                        INTEGRATION?       RISK?
+═══════════════════     ════════════       ═══════════       ═══════════════
+heat_wave               UNCERTAIN          YES               Report RANGE
+(published 2.5×)        2.5× may embed     (published factor   (+20% to +78%)
+                        severity            from empirical       
+                                           counting)            
+
+riverine_flood_daily    YES — add it       NO                Combined: +12.4%
+(direct counting)       Counting misses    (counting never     (freq 5.5% ×
+                        severity            had severity)       sev 6.5%)
+
+riverine_flood_rx5day   NO — already       N/A               Keep +2.6% as-is
+                        captures intensity  (measures mm,       
+                        (mm, not count)     not count)          
+
+ice_storm               KEEP FREQ-ONLY     AMBIGUOUS         Keep -44.5%
+(compound threshold)    Compound makes     (4-var threshold     (severity unclear
+                        "excess" ambiguous  has no single       for compound)
+                                           intensity axis)     
+
+strong_wind             MOOT               N/A               Keep ~0%
+                        HCR ≈ 0            (no signal)         
+```
 
 ---
 
@@ -229,13 +350,16 @@ DOES A PUBLISHED PEER-REVIEWED SCALING FACTOR EXIST FOR THIS HAZARD?
     researchers — we reuse their peer-reviewed result.
 
   NO → Compute directly from daily CMIP6 data:
-    Count hazard events in baseline and future periods.
-    HCR = (future_count - baseline_count) / baseline_count
+    Count hazard events AND compute mean excess above threshold.
+    HCR_freq = (future_count - baseline_count) / baseline_count
+    severity_ratio = mean_excess_future / mean_excess_baseline
+    HCR_combined = (1 + HCR_freq) × severity_ratio - 1
     
-    Riverine flood: Rx5day from daily precipitation
-    Ice storm:      Compound threshold counting
-    Wildfire:       FWI from daily data
-    Winter weather: Compound threshold counting
+    Riverine flood (daily): freq +5.5% × severity +6.5% = combined +12.4%
+    Riverine flood (Rx5day): already captures intensity — no severity needed
+    Ice storm: compound threshold — keep frequency-only (severity ambiguous)
+    Wildfire: FWI from daily data (severity integration TBD)
+    Winter weather: compound threshold counting (severity integration TBD)
     
     This is NOT a "fallback." It's the only option when no one
     has published the scaling. See pathway_defensibility.md.
@@ -243,18 +367,19 @@ DOES A PUBLISHED PEER-REVIEWED SCALING FACTOR EXIST FOR THIS HAZARD?
 
 ### The Scaling Factors
 
-| Hazard | Scaling | Method | Published Source | Cross-Validation |
-|--------|---------|--------|-----------------|------------------|
-| Heat wave | 2.5 (2.0–3.0) | Published scaling | Diffenbaugh 2017 (PNAS); Cowan 2017 | NB04a implied = 2.7× (8%) |
-| Riverine flood | N/A | Direct counting | None — C-C 7%/°C is moisture, not flood freq | Mandatory (Jensen's) |
-| Ice storm | N/A | Direct counting | None — no compound icing scaling | Jeong 2019 validates direction |
-| Wildfire | N/A | Direct counting (FWI) | Abatzoglou 2016 validates direction | FWI P90 counting |
-| Strong wind | 1.0 | Published (trivial) | None — SCVR ≈ 0 | Signal ≈ 0 |
-| Hurricane | Knutson consensus | Published external | Knutson et al. 2020 (BAMS) | Not cross-validated |
-| Coastal flood | SLR × amplification | Published external | Buchanan 2020; IPCC AR6 | Not applicable inland |
-| Hail | — | BLOCKED | Not computable from CMIP6 | Hazards repo covers |
-| Tornado | — | BLOCKED | Not computable from CMIP6 | SPC data covers |
-| Winter weather | N/A | Direct counting | Not yet implemented | Feasible |
+| Hazard | Method | Severity Included? | HCR Estimate (SSP585) | Published Source |
+|--------|--------|-------------------|----------------------|-----------------|
+| Heat wave | Published scaling (2.5×) | UNCERTAIN — 2.5× may embed severity. Report range: +20% to +78% | +20% (scaling) to +78% (× severity) | Diffenbaugh 2017 (PNAS) |
+| Riverine flood (daily) | Direct counting + severity | YES — combined: freq ×  severity | +12.4% (freq 5.5% × sev 6.5%) | C-C 7%/°C validates direction |
+| Riverine flood (Rx5day) | Direct counting (mm) | ALREADY CAPTURED — measures intensity | +2.6% (as-is) | Standard hydrology metric |
+| Ice storm | Direct counting | NO — compound threshold, severity ambiguous | -44.5% (freq only) | Jeong 2019 validates direction |
+| Wildfire | Direct counting (FWI) | TBD — FWI is a composite index | TBD | Abatzoglou 2016 |
+| Strong wind | Published (1.0×) | MOOT — HCR ≈ 0 | ~0% | SCVR ≈ 0 |
+| Hurricane | Published external | PARTIALLY — Knutson reports freq + intensity separately | +7% to +43% (combined) | Knutson 2020 (BAMS) |
+| Coastal flood | Published SLR | YES — SLR amplification captures both | 10-1000× | Buchanan 2020; IPCC AR6 |
+| Hail | BLOCKED | N/A | N/A | Hazards repo covers |
+| Tornado | BLOCKED | N/A | N/A | SPC data covers |
+| Winter weather | Direct counting | TBD | TBD (decreasing) | Not yet implemented |
 
 ### Annual Interpolation (3-Anchor Fit)
 
