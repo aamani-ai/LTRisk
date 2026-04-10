@@ -476,6 +476,89 @@ THEY DON'T OVERLAP:
 
 ---
 
+## 10. Gen.1 Assumptions — "Good Enough" and How to Improve
+
+Every Gen.1 assumption below is documented, defensible for a first pass,
+and has a concrete path to resolution.
+
+```
+#  ASSUMPTION                     WHY "GOOD ENOUGH"              PATH TO RESOLUTION
+─  ─────────────────────────────  ─────────────────────────────  ─────────────────────────────
+
+1  BI changes proportionally      For most hazards, BI and       Develop BI-specific damage
+   to total damage                total damage move in the       functions D_BI(intensity)
+   (linearity: BI ∝ EAL)         same direction. The ratio      per hazard. For heat wave:
+                                  may shift 20-50% but not       D_BI is purely shutdown hours
+                                  change sign. Order of          (no property damage), so
+                                  magnitude is preserved.        compute directly from derating
+                                                                 curve — bypasses assumption.
+
+2  Severity stays constant        For heat wave and flood,       Redefine HCR using damage
+   within old HCR                 frequency is the dominant      function D(intensity) applied
+   (old HCR = frequency only)     signal (~70% of change).       to daily data (Phase 2).
+                                  Missing severity adds           Same Pathway B loop, different
+                                  ~30-50% underestimate,         function. Computationally
+                                  not order of magnitude.        trivial once D is defined.
+                                  Exception: hurricane/wildfire
+                                  where severity dominates.
+
+3  Damage functions from          These are published, peer-     Calibrate against InfraSure
+   hazards repo are correct       reviewed curves (Thirza,       field data. The hazards repo
+   for our asset types            HAZUS, Unanwa). They're        already has subsystem-level
+                                  the best available. Used by    decomposition and stow-angle
+                                  the entire insurance industry. adjustments for solar.
+
+4  CMIP6 models adequately        28-model ensemble reduces      Cross-validate against ERA5
+   represent future climate       individual model bias.         reanalysis for the baseline
+                                  NEX-GDDP is bias-corrected    period (1985-2014). SCVR
+                                  and downscaled. This is the    Report Card already flags
+                                  standard for climate risk.     model disagreement via IQR.
+
+5  Hazards with no HCR            For hail and tornado:          For hail: literature suggests
+   (blocked from CMIP6)           the historical frequency IS    damage likely increases
+   use HCR = 0                    the best estimate when we      (larger stones). Flag as
+                                  can't project. This is         directional estimate from
+                                  conservative for hazards       Raupach 2021. For tornado:
+                                  where risk is increasing.      genuinely unknown.
+
+6  NRI EAL used as proxy          NRI EAL is the most            Expand hazards repo BI
+   for baseline BI where          comprehensive public dataset   methodology to cover heat,
+   hazards repo BI doesn't        for hazard losses. BI is a     flood, ice, wildfire.
+   exist (Scenario C1)            fraction of EAL (~10-40%       Once available, replace
+                                  depending on hazard). Using    NRI proxy with actual BI.
+                                  EAL × estimated BI_fraction
+                                  gets order of magnitude.
+
+7  Published scaling factors      2.5× for heat wave is from     Cross-validate at every site
+   (e.g., 2.5× for heat wave)    PNAS (Diffenbaugh 2017).       using Pathway B direct
+   apply at our specific sites    Global/regional average may    counting. Hayhurst: implied
+                                  differ from site-specific.     scaling 2.7× (within 8%).
+                                  Cross-validation addresses     Expand to Maverick and
+                                  this.                          future sites.
+
+8  The "fewer but fiercer"        Using published consensus      Phase 2: compute CIR with
+   pattern for hurricane is       (Knutson 2020) is standard.    wind-damage power law to
+   adequately captured by         For inland TX sites,           capture nonlinear intensity
+   published scaling              hurricane exposure is low       effect. Phase 3: Emanuel-
+                                  regardless. Matters more       style synthetic TC
+                                  for coastal assets.            downscaling.
+
+9  Three-year anchor linear       For temperature-driven         Phase 2: test nonlinear fits
+   fit for annual HCR             hazards (R² > 0.97), linear   (quadratic through 6 anchors).
+   interpolation                  is excellent. For precip       For precipitation: report
+                                  (R² = 0.59), period-average   decade values only, don't
+                                  is used instead.               interpolate.
+
+10 EFR and HCR are independent   Physically different            Phase 2: check for
+   channels — no interaction      mechanisms (continuous stress   interaction effects.
+                                  vs discrete events). A heat    Example: does faster aging
+                                  event doesn't make panels      (EFR) make panels MORE
+                                  age AND shut down as one       vulnerable to hail (HCR)?
+                                  combined effect in the model.  Likely second-order.
+```
+
+---
+
 ## Key References
 
 | Paper | Finding | DOI |
