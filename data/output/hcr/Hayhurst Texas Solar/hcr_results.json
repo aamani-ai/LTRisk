@@ -1,6 +1,6 @@
 {
   "site_id": "Hayhurst Texas Solar",
-  "generated": "2026-04-09T17:34:10.101408",
+  "generated": "2026-04-09T20:00:21.440291",
   "baseline_years": [
     1985,
     2014
@@ -16,40 +16,46 @@
     "extreme_precip": {
       "category": "bi_event",
       "channel": 1,
-      "pathway": "B",
+      "computation": "direct_counting",
       "scaling": null,
+      "reason": "No published site-level scaling; mean SCVR \u2248 0 but extremes increase (Jensen's)",
       "input_var": "pr",
       "confidence": "preliminary"
     },
     "flood_rx5day": {
       "category": "bi_event",
       "channel": 1,
-      "pathway": "B",
+      "computation": "direct_counting",
       "scaling": null,
+      "reason": "No published Rx5day scaling; same Jensen's issue as extreme_precip",
       "input_var": "pr",
       "confidence": "preliminary"
     },
     "heat_wave": {
       "category": "bi_event",
       "channel": 1,
-      "pathway": "A",
+      "computation": "published_scaling",
       "scaling": 2.5,
+      "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017 (Sci. Reports)",
+      "cross_validation": "NB04a Pathway B implied scaling = 2.7\u00d7 (within 8%)",
       "input_var": "tasmax",
       "confidence": "working_estimate"
     },
     "icing_shutdown": {
       "category": "bi_event",
       "channel": 1,
-      "pathway": "B",
+      "computation": "direct_counting",
       "scaling": null,
+      "reason": "No published compound icing scaling; requires multi-variable threshold",
       "input_var": "tasmin",
       "confidence": "preliminary"
     },
     "wind_extreme": {
       "category": "bi_event",
       "channel": 1,
-      "pathway": "A",
+      "computation": "published_scaling",
       "scaling": 1.0,
+      "published_source": "None \u2014 linear assumed; SCVR \u2248 0, choice irrelevant",
       "input_var": "sfcWind",
       "confidence": "low"
     }
@@ -60,35 +66,35 @@
         "mean_hcr": 0.025342,
         "min_hcr": -0.001473,
         "max_hcr": 0.052158,
-        "pathway": "B",
-        "baseline_days_per_year": 2.43,
-        "future_days_per_year": 2.49
+        "pathway": "direct_counting",
+        "baseline_annual_rate": 2.43,
+        "future_annual_rate": 2.49
       },
       "ssp585": {
         "mean_hcr": 0.055479,
         "min_hcr": 0.031644,
         "max_hcr": 0.079315,
-        "pathway": "B",
-        "baseline_days_per_year": 2.43,
-        "future_days_per_year": 2.57
+        "pathway": "direct_counting",
+        "baseline_annual_rate": 2.43,
+        "future_annual_rate": 2.57
       }
     },
     "flood_rx5day": {
       "ssp245": {
-        "mean_hcr": 2.024816,
-        "min_hcr": 1.963291,
-        "max_hcr": 2.086341,
-        "pathway": "B",
-        "baseline_days_per_year": 2.01,
-        "future_days_per_year": 2.02
+        "mean_hcr": 0.008272,
+        "min_hcr": -0.012236,
+        "max_hcr": 0.02878,
+        "pathway": "direct_counting",
+        "baseline_annual_rate": 2.01,
+        "future_annual_rate": 2.02
       },
       "ssp585": {
-        "mean_hcr": 2.077459,
-        "min_hcr": 2.029507,
-        "max_hcr": 2.12541,
-        "pathway": "B",
-        "baseline_days_per_year": 2.01,
-        "future_days_per_year": 2.06
+        "mean_hcr": 0.025819,
+        "min_hcr": 0.009836,
+        "max_hcr": 0.041803,
+        "pathway": "direct_counting",
+        "baseline_annual_rate": 2.01,
+        "future_annual_rate": 2.06
       }
     },
     "heat_wave": {
@@ -96,17 +102,17 @@
         "mean_hcr": 0.172242,
         "min_hcr": 0.117947,
         "max_hcr": 0.226538,
-        "pathway": "A",
-        "baseline_days_per_year": 1.52,
-        "future_days_per_year": 14.01
+        "pathway": "published_scaling",
+        "baseline_annual_rate": 1.52,
+        "future_annual_rate": 14.01
       },
       "ssp585": {
         "mean_hcr": 0.199702,
         "min_hcr": 0.113559,
         "max_hcr": 0.285845,
-        "pathway": "A",
-        "baseline_days_per_year": 1.52,
-        "future_days_per_year": 19.62
+        "pathway": "published_scaling",
+        "baseline_annual_rate": 1.52,
+        "future_annual_rate": 19.62
       }
     },
     "icing_shutdown": {
@@ -114,17 +120,17 @@
         "mean_hcr": -0.396226,
         "min_hcr": -0.413814,
         "max_hcr": -0.378639,
-        "pathway": "B",
-        "baseline_days_per_year": 0.62,
-        "future_days_per_year": 0.37
+        "pathway": "direct_counting",
+        "baseline_annual_rate": 0.62,
+        "future_annual_rate": 0.37
       },
       "ssp585": {
         "mean_hcr": -0.444744,
         "min_hcr": -0.69097,
         "max_hcr": -0.198518,
-        "pathway": "B",
-        "baseline_days_per_year": 0.62,
-        "future_days_per_year": 0.34
+        "pathway": "direct_counting",
+        "baseline_annual_rate": 0.62,
+        "future_annual_rate": 0.34
       }
     },
     "wind_extreme": {
@@ -132,17 +138,17 @@
         "mean_hcr": -0.022011,
         "min_hcr": -0.023233,
         "max_hcr": -0.020461,
-        "pathway": "A",
-        "baseline_days_per_year": 0.0,
-        "future_days_per_year": 0.0
+        "pathway": "published_scaling",
+        "baseline_annual_rate": 0.0,
+        "future_annual_rate": 0.0
       },
       "ssp585": {
         "mean_hcr": -0.025834,
         "min_hcr": -0.029007,
         "max_hcr": -0.024198,
-        "pathway": "A",
-        "baseline_days_per_year": 0.0,
-        "future_days_per_year": 0.0
+        "pathway": "published_scaling",
+        "baseline_annual_rate": 0.0,
+        "future_annual_rate": 0.0
       }
     }
   },
