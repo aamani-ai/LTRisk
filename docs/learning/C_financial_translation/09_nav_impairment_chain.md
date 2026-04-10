@@ -155,6 +155,88 @@ CHANNEL 3: PERFORMANCE / RESOURCE (negligible)
 
 ---
 
+## 3B. Channel 1 BI — Baseline Availability and Assumptions
+
+### The BI Formula
+
+```
+Additional_climate_BI(hazard, t) = baseline_BI(hazard) × HCR(hazard, t)
+
+Where:
+  baseline_BI = historical annual BI from the hazards repo ($/yr)
+  HCR = climate change damage ratio from LTRisk (fractional)
+  
+  This gives the EXTRA BI caused by climate change on top of the
+  historical baseline.
+  
+  Total future BI = baseline_BI + Additional_climate_BI
+                  = baseline_BI × (1 + HCR)
+```
+
+### Three Scenarios for Baseline BI Availability
+
+```
+SCENARIO A — Both baseline_BI and HCR exist for the same hazard:
+  Additional_BI = baseline_BI × HCR   (clean, defensible)
+  
+  Currently: ONLY Strong Wind has both, but HCR ≈ 0 (no climate signal)
+  → Effectively 0 hazards have this clean formula working today.
+
+SCENARIO B — Hazards repo has baseline_BI but LTRisk cannot compute HCR:
+  Hazards: Hail, Tornado
+  
+  Report historical baseline_BI only (no climate delta):
+    "Hail BI: $24K/yr historical. Climate projection: not available."
+  Assume HCR = 0 (historical frequency persists). Conservative.
+
+SCENARIO C — LTRisk has HCR but no baseline_BI exists:
+  Hazards: Heat Wave, Riverine Flood, Ice Storm, Wildfire, Hurricane,
+           Coastal Flood, Winter Weather (7 hazards)
+  
+  Three options:
+    C1: Use NRI EAL as proxy (EAL ≠ BI; requires linearity assumption)
+    C2: Expand hazards repo to compute BI for these hazards
+    C3: Compute BI directly in LTRisk from damage functions
+```
+
+### The Linearity Assumption
+
+```
+When using NRI EAL as a proxy for BI, or when applying a damage-level
+HCR to BI, we assume:
+
+  "BI changes proportionally to total damage."
+  If total damage increases 30%, BI also increases 30%.
+  This means: BI/EAL ratio stays constant under climate change.
+
+WHY THIS MAY NOT HOLD:
+
+  Heat wave:
+    BI (shutdown hours): INCREASES with hotter events
+    Property damage: near-zero (heat doesn't break panels)
+    → BI grows FASTER than EAL → assumption UNDERESTIMATES BI change
+  
+  Hail:
+    BI (recovery downtime): proportional to damage%
+    Property damage: grows nonlinearly with stone size
+    → Property damage may grow faster → assumption OVERESTIMATES BI change
+  
+  Flood:
+    Both BI (access) and property damage (submersion) grow with depth
+    → Assumption roughly holds
+
+GEN.1: Accept linearity assumption. Document it.
+        Order of magnitude is preserved even if ratio shifts 20-50%.
+GEN.2: Develop BI-specific damage functions D_BI(intensity) per hazard.
+```
+
+> **BI vs EAL:** BI = lost revenue from downtime. EAL = total economic
+> loss (property damage + BI + indirect). The hazards repo computes BI
+> for 3 hazards (Hail, Tornado, Strong Wind). NRI computes EAL for all
+> 18 hazard types. Never interchange them.
+
+---
+
 ## 4. Complete Worked Example: Hayhurst SSP5-8.5
 
 ### Input Parameters

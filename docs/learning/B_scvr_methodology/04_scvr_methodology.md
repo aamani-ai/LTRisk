@@ -825,10 +825,11 @@ rsds (solar radiation):
 SCVR(t) per variable
     │
     ├──► Channel 1: HCR (Hazard Change Ratio)
-    │    "How many more hazard events per year?"
-    │    SCVR × scaling factor (Pathway A)
-    │    or direct daily counting (Pathway B)
-    │    → BI_loss ($) → subtracted from CFADS
+    │    "How much does expected annual damage change?"
+    │    Captures BOTH frequency AND severity shifts.
+    │    Published scaling where peer-reviewed factor exists
+    │    or direct computation from daily CMIP6 data.
+    │    → Additional_BI = baseline_BI × HCR → subtracted from CFADS
     │
     └──► Channel 2: EFR (Equipment Failure Ratio)
          "How much faster does equipment degrade?"

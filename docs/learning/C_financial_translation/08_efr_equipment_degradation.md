@@ -6,11 +6,12 @@ EFR and HCR are parallel channels: SCVR branches into HCR (→ Channel 1: busine
 
 EFR uses three well-established engineering models — Peck's (thermal aging), Coffin-Manson (thermal cycling fatigue), and Palmgren-Miner (structural fatigue) — to quantify how climate change accelerates the physical wear-out of renewable energy assets.
 
-### Two Input Modes (Mirroring HCR's Pathway A/B)
+### Two Input Modes
 
-Like HCR, EFR can be computed in **two modes** because the physics models
-are non-linear functions — Jensen's inequality means applying them to the
-mean temperature gives a different answer than integrating over daily data:
+Like HCR, EFR can be computed in **two modes** — published physics applied
+to mean conditions (Mode A) or direct integration over daily data (Mode B).
+The choice depends on whether the mean-based approximation is accurate
+enough for that specific physics model:
 
 ```
 Mode A (SCVR-based):   Apply physics model to mean-shifted conditions
