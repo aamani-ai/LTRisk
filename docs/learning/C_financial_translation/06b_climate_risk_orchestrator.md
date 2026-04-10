@@ -173,43 +173,75 @@ NOT COMPUTABLE FROM NEX-GDDP:
 
 ## 4. The Bridge — Mapping Hazards to Signals
 
-This is the core artifact of the orchestrator. Each row maps one of
-InfraSure's canonical hazards to the appropriate LTRisk computation
-and financial channel.
+This is the core artifact of the orchestrator. For each of InfraSure's
+10 canonical hazards, it answers three questions:
+
+1. **Can LTRisk compute an HCR?** (and how — published scaling or direct computation)
+2. **Does baseline BI exist?** (from the hazards repo — BI specifically, not EAL)
+3. **Can we compute Additional_BI?** (requires BOTH HCR + baseline BI for the same hazard)
+
+> **BI vs EAL reminder:** BI = lost revenue from downtime. EAL = total
+> economic loss (property damage + BI + indirect). The hazards repo
+> computes BI for 3 hazards (Hail, Tornado, Strong Wind). NRI computes
+> EAL for all hazards. Using EAL where BI is needed requires a linearity
+> assumption. See [hcr_redefined_freq_severity.md](../../discussion/hcr_financial/hcr_redefined_freq_severity.md) Section 4.
 
 ### Full Routing Matrix
 
 ```
-CANONICAL     │ LTRisk         │ SCVR Metric    │ Tail   │ Comp.  │ Financial  │ LTRisk  │ Hazards │
-HAZARD        │ Variables      │ Used           │ Conf.  │ Mode   │ Channel    │ Coverage│ Repo EAL│
-══════════════╪════════════════╪════════════════╪════════╪════════╪════════════╪═════════╪═════════╡
-Heat Wave     │ tasmax, tasmin  │ Mean SCVR      │ HIGH   │ Path A │ Ch1 (BI)   │ FULL    │ NRI EAL │
-              │                │ (×2.5 scaling) │        │ (2.5×) │ shutdown   │         │ No dmg  │
-              │                │                │        │        │            │         │ curve   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Heat Wave     │ tas, hurs      │ Mean SCVR      │ HIGH   │ Mode A │ Ch2 (EFR)  │ FULL    │ —       │
-(Peck's       │                │ (continuous)   │        │ Peck's │ degradation│         │         │
- aging)       │                │                │        │        │ + IUL      │         │         │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Hail          │ —              │ NOT COMPUTABLE │ N/A    │ —      │ GAP        │ GAP     │ NOAA    │
-              │ (no CAPE in    │                │        │        │ (documented│         │ events  │
-              │  NEX-GDDP)    │                │        │        │  gap)      │         │ + Thirza│
-              │                │                │        │        │            │         │ curve   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Tornado       │ —              │ NOT COMPUTABLE │ N/A    │ —      │ GAP        │ GAP     │ NOAA +  │
-              │                │                │        │        │            │         │ Feuerst.│
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Strong Wind   │ sfcWind        │ Mean SCVR      │ MOD    │ Path A │ Ch1 (BI)   │ PROXY   │ NOAA +  │
-              │ (daily mean,   │ (×1.0 scaling) │        │ (1.0×) │ cut-out    │ (daily  │ Unanwa  │
-              │  not gusts)   │                │        │        │            │ mean)   │ curve   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Winter        │ tasmin, pr     │ Direct count   │ MOD    │ Mode B │ Ch2 (EFR)  │ PARTIAL │ NRI +   │
-Weather       │                │ (freeze-thaw   │        │ C-M    │ Coffin-    │         │ Ederen  │
-              │                │  cycles)       │        │        │ Manson     │         │ curve   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Ice Storm     │ tasmin, hurs   │ Direct count   │ MOD    │ Path B │ Ch1 (BI)   │ PROXY   │ NRI +   │
-              │ pr             │ (compound      │        │        │ icing      │ (surface│ PNNL    │
-              │                │  threshold)    │        │        │ shutdown   │ only)   │ curve   │
+CANONICAL     │ HCR              │ COMPUTATION     │ BASELINE BI         │ CAN COMPUTE     │
+HAZARD        │ COMPUTABLE?      │ METHOD          │ (hazards repo)      │ Additional_BI?  │
+══════════════╪══════════════════╪═════════════════╪═════════════════════╪═════════════════╡
+Heat Wave     │ YES              │ Published       │ NO (not in hazards  │ NO — missing    │
+              │                  │ scaling (2.5×,  │ repo BI yet; NRI    │ baseline BI.    │
+              │                  │ Diffenbaugh)    │ EAL only)           │ Need Option C2  │
+              │                  │                 │                     │ or C3.          │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Hail          │ NO (needs CAPE,  │ BLOCKED         │ YES — full BI calc  │ NO — missing    │
+              │ shear — not in   │                 │ (Thirza damage      │ HCR. Use        │
+              │ NEX-GDDP)       │                 │ curve + recovery)   │ historical BI.  │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Tornado       │ NO (needs upper  │ BLOCKED         │ YES — full BI calc  │ NO — missing    │
+              │ air data)        │                 │ (Feuerstein curve)  │ HCR. Use        │
+              │                  │                 │                     │ historical BI.  │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Strong Wind   │ YES (~0 signal)  │ Published       │ YES — full BI calc  │ YES but ≈ $0    │
+              │                  │ scaling (1.0×)  │ (Unanwa curve)      │ (HCR ≈ 0)      │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Riverine      │ YES              │ Direct counting │ NO (NRI EAL only,   │ PARTIAL —       │
+Flood         │                  │ (Rx5day from    │ not BI)             │ NRI EAL proxy   │
+              │                  │ daily pr)       │                     │ + linearity     │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Ice Storm     │ YES              │ Direct counting │ NO (NRI EAL only)   │ PARTIAL         │
+              │                  │ (compound       │                     │                 │
+              │                  │ threshold)      │                     │                 │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Wildfire      │ YES              │ Direct counting │ NO (NRI EAL only)   │ PARTIAL         │
+              │                  │ (FWI from       │                     │                 │
+              │                  │ daily data)     │                     │                 │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Hurricane     │ YES (published)  │ Published       │ NO (NRI EAL only)   │ PARTIAL         │
+              │                  │ scaling         │                     │                 │
+              │                  │ (Knutson 2020)  │                     │                 │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Coastal       │ YES (SLR-based)  │ Published SLR   │ NO (NRI EAL only)   │ PARTIAL         │
+Flood         │                  │ projections     │                     │                 │
+──────────────┼──────────────────┼─────────────────┼─────────────────────┼─────────────────┤
+Winter        │ YES              │ Direct counting │ NO (NRI EAL only)   │ PARTIAL         │
+Weather       │                  │ (compound       │                     │                 │
+              │                  │ threshold)      │                     │                 │
+══════════════╧══════════════════╧═════════════════╧═════════════════════╧═════════════════╝
+
+ADDITIONAL: EFR (Equipment Degradation — separate from HCR, not event-driven)
+  Peck's (thermal aging):     Mode A (published Arrhenius from SCVR_tas)
+  Coffin-Manson (cycling):    Mode B (direct freeze-thaw counts from daily data)
+  Palmgren-Miner (wind):      Mode A (SCVR_sfcWind ≈ 0, effectively zero)
+
+SUMMARY:
+  Hazards with BOTH baseline BI + HCR:    1 (Strong Wind — but HCR ≈ 0)
+  Hazards with baseline BI but no HCR:    2 (Hail, Tornado — blocked)
+  Hazards with HCR but no baseline BI:    7 (Heat, Flood, Ice, Wildfire, etc.)
+  Clean Additional_BI computation:        effectively 0 out of 10 today
 ──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
 Wildfire      │ tasmax, hurs,  │ FWI composite  │ LOW    │ —      │ RISK FLAG  │ PROXY   │ NRI +   │
               │ sfcWind, pr    │ (proxy)        │        │        │ (probabil.)│ (FWI)   │ FSF     │
@@ -264,46 +296,67 @@ Dry Spell     │                │ (dry spell     │        │        │ (s
 
 ---
 
-## 5. The Three Routing Rules
+## 5. The Routing Rules
 
-### Rule 1: Metric Selection (driven by Tail Confidence)
-
-```
-INPUT: Variable's Tail Confidence flag from SCVR Report Card
-
-  HIGH       → Mean SCVR is sufficient for this variable
-               Use Pathway A (HCR) or Mode A (EFR)
-               Example: tasmax → Peck's uses Mean SCVR directly
-
-  MODERATE   → Mean SCVR usable but report P95 alongside
-               Use Pathway A + cross-validate with B
-               Example: tasmin → Peck's uses Mean SCVR, flag uncertainty
-
-  LOW        → Mean SCVR unreliable — tail metrics preferred
-               Prefer Pathway B / Mode B
-               Example: sfcWind → daily data if wind matters at site
-
-  DIVERGENT  → Mean and tail disagree — SCVR excluded
-               Mandatory Pathway B / Mode B
-               Example: pr → count actual flood events from daily data
-```
-
-### Rule 2: Channel Assignment (driven by physical mechanism)
+### Rule 1: Start From Canonical Hazards
 
 ```
-INPUT: How does this hazard affect the asset financially?
+For each of InfraSure's 10 canonical hazards, ask:
 
-  OPERATIONAL SHUTDOWN/CURTAILMENT    → Channel 1 (HCR → BI_loss)
-    Plant could produce but doesn't because of the event.
-    Formula: BI_loss = HCR × baseline_BI_pct × Revenue
-    Examples: heat wave curtailment, flood downtime, icing shutdown
+  1. Can LTRisk compute an HCR for this hazard?
+     → YES (CMIP6 data + published scaling or direct computation)
+     → NO (data not available — hail, tornado)
 
-  CUMULATIVE MATERIAL STRESS          → Channel 2 (EFR → degradation + IUL)
-    Equipment ages faster. Plant operates normally during stress.
-    Formula: climate_degrad = EFR × std_degrad × t
-    Examples: Peck's thermal aging, Coffin-Manson cycling, Palmgren-Miner
+  2. If YES: what's the best computation method?
+     → Published scaling exists? Use it. (Heat wave: 2.5× from PNAS)
+     → No published scaling? Compute directly from daily data.
+     → Published external data? Use it. (Hurricane: Knutson 2020)
 
-  PROBABILISTIC RISK INDICATOR        → Risk Flag (no deterministic $)
+  3. Does baseline BI exist from the hazards repo?
+     → YES (hail, tornado, strong wind — full BI computation)
+     → NO (heat, flood, ice, wildfire — only NRI EAL, which ≠ BI)
+
+  4. Can we compute Additional_BI?
+     → BOTH baseline_BI + HCR exist → clean: Additional_BI = baseline_BI × HCR
+     → Only baseline_BI exists (no HCR) → report historical BI only
+     → Only HCR exists (no baseline_BI) → need proxy or new BI methodology
+```
+
+### Rule 2: Computation Method (driven by data availability)
+
+```
+For each hazard where HCR IS computable:
+
+  Published peer-reviewed scaling exists?
+  ├── YES: Use it (traceable, defensible)
+  │        Heat wave: SCVR_tasmax × 2.5 (Diffenbaugh 2017)
+  │        Hurricane: Knutson 2020 consensus
+  │        Coastal flood: IPCC SLR projections
+  │
+  └── NO: Compute directly from daily CMIP6 data
+           Extreme precip: count Rx5day exceedances
+           Ice storm: compound threshold counting
+           Wildfire: FWI from daily data
+           Winter weather: compound threshold counting
+           
+  This is NOT a preference hierarchy. It's a data availability question.
+  Published scaling IS empirical counting done by other researchers.
+  See: pathway_defensibility.md
+```
+
+### Rule 3: Financial Channel
+
+```
+  HCR hazards (event-driven BI):
+    Formula: Additional_BI = baseline_BI × HCR
+    Where baseline_BI comes from hazards repo (when available)
+    Assumption: BI changes proportionally to damage (linearity)
+
+  EFR (continuous degradation — separate from HCR):
+    Formula: climate_degrad = EFR × std_degrad × t + IUL truncation
+    Peck's, Coffin-Manson, Palmgren-Miner (unchanged)
+
+  Risk indicators (probabilistic, no deterministic $):
     Elevated risk conditions, but P(event | condition) << 1
     Report direction + magnitude. Phase 2: frequency × severity model.
     Examples: wildfire (high FWI ≠ fire), drought/dry spell
