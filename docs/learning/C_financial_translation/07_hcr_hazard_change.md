@@ -206,14 +206,19 @@ Cross-check:   NB04a direct counting gives implied scaling = 2.7× (within 8%)
 Direction:     STRONGLY INCREASING
 HCR estimate:  +20% per SSP5-8.5 epoch (freq only); +30-50% with severity
 
-Hayhurst (SSP5-8.5):
-  Year     SCVR_tasmax   × 2.5    = HCR       Interpretation
-  ────     ──────────    ─────    ─────────   ──────────────
-  2030     0.042          2.5     0.105       10% more heat damage
-  2035     0.056          2.5     0.140       14%
-  2040     0.074          2.5     0.185       19%
-  2045     0.086          2.5     0.215       22%
-  2050     0.092          2.5     0.230       23%
+Hayhurst (SSP5-8.5), severity_ratio = 1.48 (events 48% more intense):
+
+  Year   SCVR_tasmax  ×2.5  HCR_freq   ×sev    HCR_combined   Report as
+  ────   ──────────   ────  ────────   ─────   ────────────   ──────────
+  2030   0.042        2.5   +10.5%     ×1.48   +15.5%         range +10% to +16%
+  2035   0.056        2.5   +14.0%     ×1.48   +20.7%         range +14% to +21%
+  2040   0.074        2.5   +18.5%     ×1.48   +27.4%         range +19% to +27%
+  2045   0.086        2.5   +21.5%     ×1.48   +31.8%         range +22% to +32%
+  2050   0.092        2.5   +23.0%     ×1.48   +34.0%         range +23% to +34%
+
+  Report as RANGE because published 2.5× may already embed some severity.
+  Lower = freq only (published scaling). Upper = freq × severity.
+  See Section 1B for the double-counting caveat.
 ```
 
 #### Riverine Flood
