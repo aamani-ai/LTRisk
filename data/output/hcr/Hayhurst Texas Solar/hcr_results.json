@@ -1,6 +1,6 @@
 {
   "site_id": "Hayhurst Texas Solar",
-  "generated": "2026-04-09T20:26:13.466000",
+  "generated": "2026-04-10T07:33:36.689175",
   "baseline_years": [
     1985,
     2014
@@ -10,117 +10,79 @@
     2055
   ],
   "n_models": 20,
-  "classification": "3-category (BI events / degradation / risk indicators)",
-  "routing_decision": "Published scaling where available (heat, wind); direct counting where necessary (precip, icing)",
+  "classification": "Canonical hazards from InfraSure hazards repo",
+  "routing": "Published scaling where available; direct computation where necessary",
+  "bi_note": "Additional_BI = baseline_BI \u00d7 HCR. Assumes BI \u221d damage (linearity). See hcr_redefined_freq_severity.md \u00a74.",
   "hazard_config": {
-    "extreme_precip": {
-      "category": "bi_event",
-      "channel": 1,
-      "computation": "direct_counting",
-      "scaling": null,
-      "reason": "No published site-level scaling; mean SCVR \u2248 0 but extremes increase (Jensen's)",
-      "input_var": "pr",
-      "confidence": "preliminary"
-    },
-    "flood_rx5day": {
-      "category": "bi_event",
-      "channel": 1,
-      "computation": "direct_counting",
-      "scaling": null,
-      "reason": "No published Rx5day scaling; same Jensen's issue as extreme_precip",
-      "input_var": "pr",
-      "confidence": "preliminary"
-    },
     "heat_wave": {
+      "canonical_name": "Heat Wave",
       "category": "bi_event",
-      "channel": 1,
       "computation": "published_scaling",
       "scaling": 2.5,
-      "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017 (Sci. Reports)",
-      "cross_validation": "NB04a Pathway B implied scaling = 2.7\u00d7 (within 8%)",
+      "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017",
       "input_var": "tasmax",
-      "confidence": "working_estimate"
+      "baseline_bi": false
     },
-    "icing_shutdown": {
+    "ice_storm": {
+      "canonical_name": "Ice Storm",
       "category": "bi_event",
-      "channel": 1,
       "computation": "direct_counting",
       "scaling": null,
-      "reason": "No published compound icing scaling; requires multi-variable threshold",
       "input_var": "tasmin",
-      "confidence": "preliminary"
+      "baseline_bi": false
     },
-    "wind_extreme": {
+    "riverine_flood_daily": {
+      "canonical_name": "Riverine Flood",
+      "sub_metric": "P95 daily exceedance",
       "category": "bi_event",
-      "channel": 1,
+      "computation": "direct_counting",
+      "scaling": null,
+      "input_var": "pr",
+      "baseline_bi": false
+    },
+    "riverine_flood_rx5day": {
+      "canonical_name": "Riverine Flood",
+      "sub_metric": "5-day max (Rx5day)",
+      "category": "bi_event",
+      "computation": "direct_counting",
+      "scaling": null,
+      "input_var": "pr",
+      "baseline_bi": false
+    },
+    "strong_wind": {
+      "canonical_name": "Strong Wind",
+      "category": "bi_event",
       "computation": "published_scaling",
       "scaling": 1.0,
-      "published_source": "None \u2014 linear assumed; SCVR \u2248 0, choice irrelevant",
+      "published_source": "Linear assumed; SCVR \u2248 0 at TX sites",
       "input_var": "sfcWind",
-      "confidence": "low"
+      "baseline_bi": true
     }
   },
   "epoch_summary": {
-    "extreme_precip": {
-      "ssp245": {
-        "mean_hcr": 0.025342,
-        "min_hcr": -0.001473,
-        "max_hcr": 0.052158,
-        "computation": "direct_counting",
-        "baseline_annual_rate": 2.43,
-        "future_annual_rate": 2.49,
-        "rate_unit": "days/yr"
-      },
-      "ssp585": {
-        "mean_hcr": 0.055479,
-        "min_hcr": 0.031644,
-        "max_hcr": 0.079315,
-        "computation": "direct_counting",
-        "baseline_annual_rate": 2.43,
-        "future_annual_rate": 2.57,
-        "rate_unit": "days/yr"
-      }
-    },
-    "flood_rx5day": {
-      "ssp245": {
-        "mean_hcr": 0.008272,
-        "min_hcr": -0.012236,
-        "max_hcr": 0.02878,
-        "computation": "direct_counting",
-        "baseline_annual_rate": 60.16,
-        "future_annual_rate": 60.65,
-        "rate_unit": "mm"
-      },
-      "ssp585": {
-        "mean_hcr": 0.025819,
-        "min_hcr": 0.009836,
-        "max_hcr": 0.041803,
-        "computation": "direct_counting",
-        "baseline_annual_rate": 60.16,
-        "future_annual_rate": 61.71,
-        "rate_unit": "mm"
-      }
-    },
     "heat_wave": {
       "ssp245": {
+        "canonical_name": "Heat Wave",
         "mean_hcr": 0.172242,
         "min_hcr": 0.117947,
         "max_hcr": 0.226538,
         "computation": "published_scaling",
-        "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017 (Sci. Reports)",
+        "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017",
         "scaling_factor": 2.5
       },
       "ssp585": {
+        "canonical_name": "Heat Wave",
         "mean_hcr": 0.199702,
         "min_hcr": 0.113559,
         "max_hcr": 0.285845,
         "computation": "published_scaling",
-        "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017 (Sci. Reports)",
+        "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017",
         "scaling_factor": 2.5
       }
     },
-    "icing_shutdown": {
+    "ice_storm": {
       "ssp245": {
+        "canonical_name": "Ice Storm",
         "mean_hcr": -0.396226,
         "min_hcr": -0.413814,
         "max_hcr": -0.378639,
@@ -130,6 +92,7 @@
         "rate_unit": "days/yr"
       },
       "ssp585": {
+        "canonical_name": "Ice Storm",
         "mean_hcr": -0.444744,
         "min_hcr": -0.69097,
         "max_hcr": -0.198518,
@@ -139,27 +102,86 @@
         "rate_unit": "days/yr"
       }
     },
-    "wind_extreme": {
+    "riverine_flood_daily": {
       "ssp245": {
+        "canonical_name": "Riverine Flood",
+        "mean_hcr": 0.025342,
+        "min_hcr": -0.001473,
+        "max_hcr": 0.052158,
+        "computation": "direct_counting",
+        "baseline_annual_rate": 2.43,
+        "future_annual_rate": 2.49,
+        "rate_unit": "days/yr"
+      },
+      "ssp585": {
+        "canonical_name": "Riverine Flood",
+        "mean_hcr": 0.055479,
+        "min_hcr": 0.031644,
+        "max_hcr": 0.079315,
+        "computation": "direct_counting",
+        "baseline_annual_rate": 2.43,
+        "future_annual_rate": 2.57,
+        "rate_unit": "days/yr"
+      }
+    },
+    "riverine_flood_rx5day": {
+      "ssp245": {
+        "canonical_name": "Riverine Flood",
+        "mean_hcr": 0.008272,
+        "min_hcr": -0.012236,
+        "max_hcr": 0.02878,
+        "computation": "direct_counting",
+        "baseline_annual_rate": 60.16,
+        "future_annual_rate": 60.65,
+        "rate_unit": "mm"
+      },
+      "ssp585": {
+        "canonical_name": "Riverine Flood",
+        "mean_hcr": 0.025819,
+        "min_hcr": 0.009836,
+        "max_hcr": 0.041803,
+        "computation": "direct_counting",
+        "baseline_annual_rate": 60.16,
+        "future_annual_rate": 61.71,
+        "rate_unit": "mm"
+      }
+    },
+    "strong_wind": {
+      "ssp245": {
+        "canonical_name": "Strong Wind",
         "mean_hcr": -0.022011,
         "min_hcr": -0.023233,
         "max_hcr": -0.020461,
         "computation": "published_scaling",
-        "published_source": "None \u2014 linear assumed; SCVR \u2248 0, choice irrelevant",
+        "published_source": "Linear assumed; SCVR \u2248 0 at TX sites",
         "scaling_factor": 1.0
       },
       "ssp585": {
+        "canonical_name": "Strong Wind",
         "mean_hcr": -0.025834,
         "min_hcr": -0.029007,
         "max_hcr": -0.024198,
         "computation": "published_scaling",
-        "published_source": "None \u2014 linear assumed; SCVR \u2248 0, choice irrelevant",
+        "published_source": "Linear assumed; SCVR \u2248 0 at TX sites",
         "scaling_factor": 1.0
       }
     }
   },
+  "severity_diagnostic": {
+    "heat_wave_mean_excess": {
+      "baseline": 1.289,
+      "ssp245": 1.817,
+      "ssp585": 1.907
+    },
+    "riverine_flood_mean_excess": {
+      "baseline": 7.789,
+      "ssp245": 8.046,
+      "ssp585": 8.302
+    }
+  },
   "risk_indicators": {
     "dry_spell": {
+      "canonical_name": "Drought",
       "ssp245": {
         "direction": "increasing",
         "magnitude_pct": 12.1,
@@ -171,7 +193,8 @@
         "n_models": 20
       }
     },
-    "fire_weather": {
+    "wildfire": {
+      "canonical_name": "Wildfire",
       "ssp245": {
         "direction": "increasing",
         "magnitude_pct": 0.6,
@@ -184,7 +207,13 @@
       }
     }
   },
-  "degradation_hazards_moved_to_efr": [
+  "not_computable": {
+    "Hail": "Needs CAPE, wind shear \u2014 not in NEX-GDDP. Hazards repo has full BI.",
+    "Tornado": "Needs upper-air data. Hazards repo has full BI.",
+    "Hurricane": "Needs SST, ocean dynamics. Published: Knutson 2020 (fewer but fiercer).",
+    "Coastal Flood": "Needs SLR + surge. Published: Buchanan 2020 (exponential)."
+  },
+  "degradation_to_efr": [
     "cold_wave",
     "freeze_thaw",
     "frost_days"
