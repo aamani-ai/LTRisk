@@ -87,21 +87,28 @@ Where:
 ### Worked Example: Heat Wave at Hayhurst (SSP5-8.5)
 
 ```
-Frequency:  baseline ~36.5 exceedance days → future ~101 days
-            HCR_freq = +177% (but we use 2.5× published scaling → +20%)
+Frequency (from published scaling):
+  HCR_freq = SCVR_tasmax × 2.5 = 0.080 × 2.5 = +20%
+  Source: Diffenbaugh et al. 2017 (PNAS)
 
-Severity:   mean excess above P90 threshold:
-            baseline = 1.29°C above threshold
-            future   = 1.91°C above threshold
-            severity_ratio = 1.91 / 1.29 = 1.48 (+48%)
-
-If we combine (using direct counting + severity):
-  HCR_combined = (1 + 1.77) × 1.48 - 1 = +310% (direct counting, very high)
+Severity (from our daily CMIP6 data):
+  Mean excess above per-DOY P90 threshold:
+    Baseline = 1.29°C above threshold (on days that exceed it)
+    Future   = 1.91°C above threshold
+    severity_ratio = 1.91 / 1.29 = 1.48 (+48%)
   
-If we combine (using published 2.5× + severity):
+  Events are not just more frequent — each event is 48% more
+  intense above the threshold than in the baseline climate.
+
+Combined (frequency × severity):
   HCR_combined = (1 + 0.20) × 1.48 - 1 = +78%
-  
-But: see the CRITICAL CAVEAT below about double-counting.
+
+RANGE TO REPORT:
+  Lower bound: +20% (published scaling alone)
+    Rationale: the 2.5× may already embed some severity
+  Upper bound: +78% (published scaling × severity ratio)
+    Rationale: severity is genuinely increasing (+48%)
+  Truth: between the two — see CRITICAL CAVEAT below
 ```
 
 ### Worked Example: Riverine Flood (Daily P95, SSP5-8.5)
