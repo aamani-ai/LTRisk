@@ -1,6 +1,6 @@
 {
   "site_id": "Hayhurst Texas Solar",
-  "generated": "2026-04-09T20:00:21.440291",
+  "generated": "2026-04-09T20:26:13.466000",
   "baseline_years": [
     1985,
     2014
@@ -11,7 +11,7 @@
   ],
   "n_models": 20,
   "classification": "3-category (BI events / degradation / risk indicators)",
-  "routing_decision": "BI events: Pathway A (heat, wind) or B (precip, icing) | Degradation: \u2192 EFR | Indicators: flagged",
+  "routing_decision": "Published scaling where available (heat, wind); direct counting where necessary (precip, icing)",
   "hazard_config": {
     "extreme_precip": {
       "category": "bi_event",
@@ -66,17 +66,19 @@
         "mean_hcr": 0.025342,
         "min_hcr": -0.001473,
         "max_hcr": 0.052158,
-        "pathway": "direct_counting",
+        "computation": "direct_counting",
         "baseline_annual_rate": 2.43,
-        "future_annual_rate": 2.49
+        "future_annual_rate": 2.49,
+        "rate_unit": "days/yr"
       },
       "ssp585": {
         "mean_hcr": 0.055479,
         "min_hcr": 0.031644,
         "max_hcr": 0.079315,
-        "pathway": "direct_counting",
+        "computation": "direct_counting",
         "baseline_annual_rate": 2.43,
-        "future_annual_rate": 2.57
+        "future_annual_rate": 2.57,
+        "rate_unit": "days/yr"
       }
     },
     "flood_rx5day": {
@@ -84,17 +86,19 @@
         "mean_hcr": 0.008272,
         "min_hcr": -0.012236,
         "max_hcr": 0.02878,
-        "pathway": "direct_counting",
-        "baseline_annual_rate": 2.01,
-        "future_annual_rate": 2.02
+        "computation": "direct_counting",
+        "baseline_annual_rate": 60.16,
+        "future_annual_rate": 60.65,
+        "rate_unit": "mm"
       },
       "ssp585": {
         "mean_hcr": 0.025819,
         "min_hcr": 0.009836,
         "max_hcr": 0.041803,
-        "pathway": "direct_counting",
-        "baseline_annual_rate": 2.01,
-        "future_annual_rate": 2.06
+        "computation": "direct_counting",
+        "baseline_annual_rate": 60.16,
+        "future_annual_rate": 61.71,
+        "rate_unit": "mm"
       }
     },
     "heat_wave": {
@@ -102,17 +106,17 @@
         "mean_hcr": 0.172242,
         "min_hcr": 0.117947,
         "max_hcr": 0.226538,
-        "pathway": "published_scaling",
-        "baseline_annual_rate": 1.52,
-        "future_annual_rate": 14.01
+        "computation": "published_scaling",
+        "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017 (Sci. Reports)",
+        "scaling_factor": 2.5
       },
       "ssp585": {
         "mean_hcr": 0.199702,
         "min_hcr": 0.113559,
         "max_hcr": 0.285845,
-        "pathway": "published_scaling",
-        "baseline_annual_rate": 1.52,
-        "future_annual_rate": 19.62
+        "computation": "published_scaling",
+        "published_source": "Diffenbaugh et al. 2017 (PNAS); Cowan et al. 2017 (Sci. Reports)",
+        "scaling_factor": 2.5
       }
     },
     "icing_shutdown": {
@@ -120,17 +124,19 @@
         "mean_hcr": -0.396226,
         "min_hcr": -0.413814,
         "max_hcr": -0.378639,
-        "pathway": "direct_counting",
+        "computation": "direct_counting",
         "baseline_annual_rate": 0.62,
-        "future_annual_rate": 0.37
+        "future_annual_rate": 0.37,
+        "rate_unit": "days/yr"
       },
       "ssp585": {
         "mean_hcr": -0.444744,
         "min_hcr": -0.69097,
         "max_hcr": -0.198518,
-        "pathway": "direct_counting",
+        "computation": "direct_counting",
         "baseline_annual_rate": 0.62,
-        "future_annual_rate": 0.34
+        "future_annual_rate": 0.34,
+        "rate_unit": "days/yr"
       }
     },
     "wind_extreme": {
@@ -138,17 +144,17 @@
         "mean_hcr": -0.022011,
         "min_hcr": -0.023233,
         "max_hcr": -0.020461,
-        "pathway": "published_scaling",
-        "baseline_annual_rate": 0.0,
-        "future_annual_rate": 0.0
+        "computation": "published_scaling",
+        "published_source": "None \u2014 linear assumed; SCVR \u2248 0, choice irrelevant",
+        "scaling_factor": 1.0
       },
       "ssp585": {
         "mean_hcr": -0.025834,
         "min_hcr": -0.029007,
         "max_hcr": -0.024198,
-        "pathway": "published_scaling",
-        "baseline_annual_rate": 0.0,
-        "future_annual_rate": 0.0
+        "computation": "published_scaling",
+        "published_source": "None \u2014 linear assumed; SCVR \u2248 0, choice irrelevant",
+        "scaling_factor": 1.0
       }
     }
   },

@@ -165,24 +165,32 @@ Indicators                 dry_spell                    "risk_indicators" sectio
 
 ## Computation Modes
 
-Both channels use the same routing logic — the SCVR Report Card's Tail
-Confidence flag determines which mode is used:
+The computation approach for each hazard depends on whether a published,
+peer-reviewed scaling factor exists:
 
 ```
-                    CHANNEL 1 (HCR)          CHANNEL 2 (EFR)
-                    ───────────────          ───────────────
-Tail Conf. HIGH:    Pathway A preferred      Mode A preferred
-                    (SCVR × scaling)         (SCVR → physics)
+                    CHANNEL 1 (HCR)               CHANNEL 2 (EFR)
+                    ───────────────               ───────────────
+Published scaling   Use it (traceable,            Use it (Peck's Arrhenius
+exists?             peer-reviewed)                from IEC 61215)
+                    Example: heat_wave × 2.5      Example: 2^(ΔT/10)
+                    (Diffenbaugh 2017, PNAS)
 
-Tail Conf. DIVERG:  Pathway B mandatory      Mode B mandatory
-                    (direct counting)        (daily integration)
+No published        Compute directly from         Compute directly from
+scaling?            daily CMIP6 data              daily cycle counts
+                    Example: count Rx5day events  Example: count freeze-thaw
+                    (no published site-level       cycles (published SCVR
+                     scaling for flood freq.)      approximation gives wrong
+                                                   direction)
 
-WHY:
-  Pathway/Mode A uses the MEAN shift (SCVR) — avoids threshold subjectivity
-  Pathway/Mode B uses DAILY DATA — captures non-linear effects A misses
-  
-  A is preferred because it's more defensible (no arbitrary thresholds)
-  B is mandatory when A gives wrong answers (Jensen's inequality)
+Report Card         Mandatory direct counting     Mandatory direct integration
+DIVERGENT?          (published scaling gives       (published model gives
+                     wrong sign — Jensen's)         wrong direction)
+
+KEY INSIGHT:
+  Published scaling IS empirical counting done by other researchers.
+  Diffenbaugh et al. counted heat events in CMIP models and found 2.5×.
+  We reuse their result. Where no one has done this, we do it ourselves.
   
   See: docs/discussion/hcr_financial/pathway_defensibility.md
 ```
@@ -193,17 +201,34 @@ WHY:
 
 ```
 CHANNEL 1 — HCR (Business Interruption):
-  heat_wave:       +20.0% more events  (Pathway A, 2.5× scaling)
-  extreme_precip:  +5.3%               (Pathway B, direct counting)
-  flood_rx5day:    +2.5%               (Pathway B)
-  icing_shutdown:  -5.2% (benefit)     (Pathway B)
-  wind_extreme:    -2.6%               (Pathway A)
+
+  Published scaling (peer-reviewed):
+    heat_wave:       +20.0%  (Diffenbaugh 2017, PNAS; scaling 2.5×)
+    wind_extreme:    -2.6%   (linear, SCVR ≈ 0 — essentially no signal)
+
+  Direct counting (no published scaling exists):
+    extreme_precip:  +5.5%   base=2.4 → fut=2.6 days/yr
+    flood_rx5day:    +2.6%   base=60.2 → fut=61.7 mm (5-day max precip)
+    icing_shutdown:  -44.5%  base=0.6 → fut=0.3 days/yr (warming benefit)
+
+  Note: heat_wave does NOT show day counts because the published 2.5×
+  scaling was calibrated for a different threshold definition than our
+  Pathway B counter. Showing both creates a false 20% vs 1207% confusion.
+  Cross-validation (implied scaling 2.7×) is in the notebook analysis cells.
 
 CHANNEL 2 — EFR (Equipment Degradation):
-  Peck's (Mode A):          +15.6% faster aging
-  Coffin-Manson (Mode B):   -30.1% fewer freeze-thaw cycles (benefit)
-  Combined (80/20):         +6.5% net degradation acceleration
-  IUL:                      23.4 years (EUL=25, 1.6 years lost)
+
+  Published physics (Arrhenius/IEC):
+    Peck's thermal aging:    +15.6% faster aging (Mode A, 2^(ΔT/10))
+
+  Direct counting (published model gives wrong direction):
+    Coffin-Manson cycling:   -30.1% fewer freeze-thaw cycles (Mode B, benefit)
+
+  Dormant (SCVR ≈ 0):
+    Palmgren-Miner wind:     ≈ 0% (wind distribution unchanged)
+
+  Combined (80% Peck's + 20% C-M):  +6.5% net degradation acceleration
+  IUL: 23.4 years (EUL=25, 1.6 years lost)
 
 RISK INDICATORS:
   fire_weather:  -0.5% (decreasing at this site under SSP585)
