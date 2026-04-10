@@ -174,19 +174,51 @@ NOT COMPUTABLE FROM NEX-GDDP:
 ## 4. The Bridge — Mapping Hazards to Signals
 
 This is the core artifact of the orchestrator. For each of InfraSure's
-10 canonical hazards, it answers three questions:
+10 canonical hazards, it shows: what can LTRisk compute, how, with what
+severity treatment, and whether baseline BI exists for the dollar conversion.
 
-1. **Can LTRisk compute an HCR?** (and how — published scaling or direct computation)
-2. **Does baseline BI exist?** (from the hazards repo — BI specifically, not EAL)
-3. **Can we compute Additional_BI?** (requires BOTH HCR + baseline BI for the same hazard)
+> **BI vs EAL:** BI = lost revenue from downtime. EAL = total economic
+> loss. The hazards repo computes BI for 3 hazards (Hail, Tornado,
+> Strong Wind). NRI computes EAL for all hazards. EAL ≠ BI. Applying
+> HCR (damage-level) to BI requires a linearity assumption.
+> See [hcr_redefined_freq_severity.md](../../discussion/hcr_financial/hcr_redefined_freq_severity.md).
 
-> **BI vs EAL reminder:** BI = lost revenue from downtime. EAL = total
-> economic loss (property damage + BI + indirect). The hazards repo
-> computes BI for 3 hazards (Hail, Tornado, Strong Wind). NRI computes
-> EAL for all hazards. Using EAL where BI is needed requires a linearity
-> assumption. See [hcr_redefined_freq_severity.md](../../discussion/hcr_financial/hcr_redefined_freq_severity.md) Section 4.
+### The Routing Matrix
 
-### Full Routing Matrix
+| Canonical Hazard | HCR Computable? | Computation Method | Severity | HCR Estimate (SSP585) | Baseline BI? | Additional_BI? |
+|---|---|---|---|---|---|---|
+| **Heat Wave** | YES | Published scaling (2.5×, Diffenbaugh 2017) | RANGE: sev=1.48 (+48%). Published scaling may embed severity. Report +20% to +34% | +20% (freq) to +34% (×sev) | NO (NRI EAL only) | NO — missing baseline BI |
+| **Riverine Flood** (daily P95) | YES | Direct counting | YES: sev=1.07. Frequency counting misses severity — add it | +12.5% (combined) | NO (NRI EAL only) | PARTIAL (NRI proxy) |
+| **Riverine Flood** (Rx5day) | YES | Direct counting (mm) | ALREADY CAPTURED — measures intensity not count | +2.6% | NO (NRI EAL only) | PARTIAL |
+| **Strong Wind** | YES (~0) | Published scaling (1.0×) | MOOT — HCR ≈ 0 | ~0% | YES (full BI) | YES but ≈ $0 |
+| **Ice Storm** | YES | Direct counting (compound) | NO — compound threshold, severity ambiguous | -44.5% (benefit) | NO (NRI EAL only) | PARTIAL |
+| **Wildfire** | YES | Direct counting (FWI) | TBD — FWI is composite | TBD (risk indicator) | NO (NRI EAL only) | PARTIAL |
+| **Hurricane** | YES (published) | Published consensus (Knutson 2020) | PARTIALLY — freq down, intensity up, combined +7-43% | +7% to +43% | NO (NRI EAL only) | PARTIAL |
+| **Coastal Flood** | YES (SLR) | Published SLR × amplification | YES — SLR captures both | 10-1000× | NO (NRI EAL only) | PARTIAL |
+| **Winter Weather** | YES | Direct counting (compound) | TBD | Decreasing | NO (NRI EAL only) | PARTIAL |
+| **Hail** | **BLOCKED** | Needs CAPE, shear — not in CMIP6 | N/A | N/A | YES (full BI, Thirza curve) | NO — missing HCR |
+| **Tornado** | **BLOCKED** | Needs upper-air data | N/A | N/A | YES (full BI, Feuerstein curve) | NO — missing HCR |
+
+**EFR (Equipment Degradation) — separate channel, not event-driven:**
+
+| Model | Method | Input | Status |
+|---|---|---|---|
+| Peck's (thermal aging) | Published Arrhenius from SCVR_tas | tas, hurs | Active — EFR ≈ +15.6% (SSP585) |
+| Coffin-Manson (cycling) | Direct freeze-thaw counts from daily data | tasmin, tasmax | Active — EFR ≈ -30.1% (fewer cycles, benefit) |
+| Palmgren-Miner (wind) | SCVR_sfcWind (≈ 0 at TX sites) | sfcWind | Dormant — EFR ≈ 0 |
+
+**Summary:**
+
+```
+Hazards with BOTH baseline BI + HCR:    1 (Strong Wind — but HCR ≈ 0)
+Hazards with baseline BI but no HCR:    2 (Hail, Tornado — CMIP6 blocked)
+Hazards with HCR but no baseline BI:    7 (Heat, Flood, Ice, Wildfire, etc.)
+Clean Additional_BI computation:        effectively 0 out of 10 today
+
+The two pipelines cover DIFFERENT hazards.
+Closing the gap requires expanding hazards repo BI coverage to
+include heat wave, flood, ice storm, wildfire, etc.
+```
 
 ```
 CANONICAL     │ HCR              │ COMPUTATION     │ BASELINE BI         │ CAN COMPUTE     │
@@ -237,62 +269,24 @@ ADDITIONAL: EFR (Equipment Degradation — separate from HCR, not event-driven)
   Coffin-Manson (cycling):    Mode B (direct freeze-thaw counts from daily data)
   Palmgren-Miner (wind):      Mode A (SCVR_sfcWind ≈ 0, effectively zero)
 
-SUMMARY:
-  Hazards with BOTH baseline BI + HCR:    1 (Strong Wind — but HCR ≈ 0)
-  Hazards with baseline BI but no HCR:    2 (Hail, Tornado — blocked)
-  Hazards with HCR but no baseline BI:    7 (Heat, Flood, Ice, Wildfire, etc.)
-  Clean Additional_BI computation:        effectively 0 out of 10 today
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Wildfire      │ tasmax, hurs,  │ FWI composite  │ LOW    │ —      │ RISK FLAG  │ PROXY   │ NRI +   │
-              │ sfcWind, pr    │ (proxy)        │        │        │ (probabil.)│ (FWI)   │ FSF     │
-              │                │                │        │        │            │         │ curve   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Hurricane     │ —              │ NOT COMPUTABLE │ N/A    │ —      │ GAP        │ GAP     │ NOAA +  │
-              │                │                │        │        │            │         │ PNNL    │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Riverine      │ pr             │ P95/CVaR       │ DIVERG │ Path B │ Ch1 (BI)   │ PARTIAL │ NOAA +  │
-Flood         │                │ (Rx5day count) │        │        │ downtime   │ (pr     │ HAZUS   │
-              │                │                │        │        │            │ only)   │ curve   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Coastal       │ —              │ NOT COMPUTABLE │ N/A    │ —      │ GAP        │ GAP     │ NOAA +  │
-Flood         │ (needs SLR +   │                │        │        │            │         │ HAZUS   │
-              │  surge model)  │                │        │        │            │         │ curve   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Freeze-Thaw   │ tasmax, tasmin  │ Direct count   │ HIGH   │ Mode B │ Ch2 (EFR)  │ FULL    │ —       │
-(Coffin-      │                │ (0°C crossings)│ (temp) │ C-M    │ Coffin-    │         │(not in  │
- Manson)      │                │                │        │        │ Manson     │         │ haz.    │
-              │                │                │        │        │            │         │ repo)   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Wind Fatigue  │ sfcWind        │ Mean SCVR      │ MOD    │ Mode A │ Ch2 (EFR)  │ FULL    │ —       │
-(Palmgren-    │                │ (≈0 at sites)  │        │ P-M    │ Palmgren-  │ (but    │(not in  │
- Miner)       │                │                │        │        │ Miner      │ EFR≈0)  │ haz.    │
-              │                │                │        │        │            │         │ repo)   │
-──────────────┼────────────────┼────────────────┼────────┼────────┼────────────┼─────────┼─────────┤
-Drought /     │ pr             │ Period-average  │ LOW    │ —      │ RISK FLAG  │ PROXY   │ NRI     │
-Dry Spell     │                │ (dry spell     │        │        │ (soiling + │ (dry    │ EAL     │
-              │                │  length)       │        │        │  fire fuel)│ days)   │         │
-══════════════╧════════════════╧════════════════╧════════╧════════╧════════════╧═════════╧═════════╝
-```
+### Key Observations
 
-### Key Observations from the Matrix
+1. **Hail is the #1 gap** — highest financial priority for solar (from insurance
+   data) but not computable from CMIP6. The hazards repo has historical BI.
+   This is where pipeline complementarity matters most.
 
-1. **Heat Wave appears TWICE** — once as Channel 1 BI (inverter shutdown, HCR)
-   and once as Channel 2 EFR (Peck's thermal aging). Same hazard, two financial
-   mechanisms, correctly separated.
+2. **Severity changes the numbers significantly** — heat wave goes from +20%
+   (frequency only) to +20-34% range (with severity). Flood goes from +5.5%
+   to +12.5%. See [severity_sensitivity.md](../../discussion/hcr_financial/severity_sensitivity.md).
 
-2. **Hail is the #1 gap** — highest financial priority for solar (from insurance
-   data) but not computable from CMIP6. The hazards repo has it via NOAA. This
-   is where pipeline complementarity matters most.
+3. **Two blocked hazards** (hail, tornado) have full BI from the hazards repo
+   but no climate delta from LTRisk. Use historical BI until projections exist.
 
-3. **Four hazards are NOT COMPUTABLE from CMIP6** (hail, tornado, hurricane,
-   coastal flood). All four are covered by the hazards repo's historical EAL.
+4. **Seven hazards** can be projected by LTRisk but lack baseline BI from the
+   hazards repo. Need NRI EAL proxy (with linearity assumption) or expanded BI coverage.
 
-4. **Two hazards are RISK FLAGS** (wildfire, drought/dry spell). They have
-   climate signals but the relationship to financial loss is probabilistic,
-   not deterministic.
-
-5. **Freeze-thaw and wind fatigue are LTRisk-only** — the hazards repo doesn't
-   model continuous degradation. This is where LTRisk adds unique value.
+5. **EFR is separate** — Peck's, Coffin-Manson, and Palmgren-Miner are continuous
+   degradation models, not event-driven. The hazards repo doesn't cover these.
 
 ---
 
